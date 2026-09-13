@@ -47,10 +47,7 @@
 #  13  送付文面の 1 文が 60 字超
 #      ユーザー入力が文面の依頼のとき、文面行 (> ※ ■ ・ 始まり) に 61 字以上の文がある
 #      根拠: 一文は 60 字前後まで
-#  14  指摘への理由なしの撤回・同意
-#      ユーザー入力に否定・矛盾の指摘があり、応答が 200 字未満で撤回・同意語を含み、
-#      理由・根拠・変わった事実のいずれも書いていない
-#      根拠: 根拠は外部動作に置く。指摘には確認済みの事実を再掲する
+#  14  (欠番。利用者の発言の語だけでは指摘かどうかを判定できないため削除した)
 #  15  見出し・表のセルが文で終わる
 #      見出し行 (#) と表のセル (|) の末尾が「です」「ます」「する」「ない」等の述語
 #      根拠: 表のセル・見出しは体言止めか名詞句で書く
@@ -457,24 +454,6 @@ if pat_on 13; then
     if [[ -n "$long_sents" ]]; then
       first=$(printf '%s\n' "$long_sents" | head -1 | LC_ALL=C.UTF-8 grep -oE '^.{1,30}')
       violations+=("文面の1文が60字超: [${first}…] (Output Style「Concise JA」「一文は60字前後まで」。文を分ける)")
-    fi
-  fi
-fi
-
-# 10-J) パターン 14: 指摘への理由なしの撤回・同意
-# ユーザー入力に否定・矛盾の指摘があり、応答が短く (200 字未満) 撤回・同意の語を含み、
-# 理由・根拠・変わった事実のいずれも書いていなければ止める。
-if pat_on 14; then
-  critique_re='いらない|いりません|違う|違います|ゴミ|嘘|二転三転|矛盾|なめて|さぼって|保身|おかしい|間違'
-  concede_re='いりません|外します|取り下げます|撤回します|訂正します|そのとおりです|おっしゃるとおり|ご指摘のとおり|不要です'
-  reason_re='理由は|根拠は|変わった事実|変わっていない|事実は|実測|確認した結果|出典|事実を再掲'
-  if [[ -n "${user_text:-}" ]] && printf '%s' "$user_text" | grep -qE "$critique_re"; then
-    concede_hits=$(printf '%s' "$filtered_text" | grep -oE "$concede_re" || true)
-    resp_len=$(printf '%s' "$filtered_text" | LC_ALL=C.UTF-8 wc -m)
-    if [[ -n "$concede_hits" && ${resp_len:-0} -lt 200 ]] \
-      && ! printf '%s' "$filtered_text" | grep -qE "$reason_re"; then
-      joined=$(printf '%s\n' "$concede_hits" | sort -u | head -3 | tr '\n' ',' | sed 's/,$//')
-      violations+=("理由なしの撤回・同意: [$joined] (指摘には確認済みの事実を再掲し、どの根拠が変わったかを書く。変わっていなければ結論を変えない)")
     fi
   fi
 fi
