@@ -1,4 +1,4 @@
-# mamezou-plugins
+# mamezou-claude-plugins
 
 mamezou の Claude Code プラグイン集です。1つの marketplace として登録し、要るものだけ入れます。
 
@@ -14,9 +14,9 @@ hook は操作と応答を検査して止める道具、Skill は作業のとき
 Claude Code を起動して実行します。install は必要なプラグインだけ実行します。
 
 ```
-/plugin marketplace add mamezou/mamezou-plugins
-/plugin install harness-ja@mamezou-plugins
-/plugin install architecture-diagram@mamezou-plugins
+/plugin marketplace add mamezou/mamezou-claude-plugins
+/plugin install harness-ja@mamezou-claude-plugins
+/plugin install architecture-diagram@mamezou-claude-plugins
 ```
 
 harness-ja は導入後に利用側プロジェクトで `/harness-ja:harness-init` を実行します。

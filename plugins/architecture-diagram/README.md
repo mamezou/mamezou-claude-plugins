@@ -12,8 +12,8 @@
 Claude Code では、marketplace から導入する。次の2行は Claude Code を起動して実行する。
 
 ```
-/plugin marketplace add mamezou/mamezou-plugins
-/plugin install architecture-diagram@mamezou-plugins
+/plugin marketplace add mamezou/mamezou-claude-plugins
+/plugin install architecture-diagram@mamezou-claude-plugins
 ```
 
 「構成図」「draw.io」「図をレビュー」を含む依頼で読み込まれる。手動で呼ぶときの名前は
@@ -23,8 +23,8 @@ SKILL.md 形式に対応する他のエージェントで使う場合は、リ�
 `plugins/architecture-diagram/` を skills ディレクトリへ置く。
 
 ```sh
-git clone https://github.com/mamezou/mamezou-plugins
-cp -r mamezou-plugins/plugins/architecture-diagram ~/.claude/skills/architecture-diagram
+git clone https://github.com/mamezou/mamezou-claude-plugins
+cp -r mamezou-claude-plugins/plugins/architecture-diagram ~/.claude/skills/architecture-diagram
 ```
 
 ## 中身

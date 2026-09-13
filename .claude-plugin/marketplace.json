@@ -1,5 +1,5 @@
 {
-  "name": "mamezou-plugins",
+  "name": "mamezou-claude-plugins",
   "description": "mamezou の Claude Code プラグイン集。クラウド運用の hook と、構成図の Skill",
   "owner": {
     "name": "mamezou",

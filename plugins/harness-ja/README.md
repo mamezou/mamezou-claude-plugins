@@ -53,8 +53,8 @@
 次の2行は Claude Code 内で実行します。
 
 ```
-/plugin marketplace add mamezou/mamezou-plugins
-/plugin install harness-ja@mamezou-plugins
+/plugin marketplace add mamezou/mamezou-claude-plugins
+/plugin install harness-ja@mamezou-claude-plugins
 ```
 
 利用側プロジェクトで初期設定を行います。

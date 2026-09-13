@@ -5,8 +5,8 @@
   "author": {
     "name": "mamezou"
   },
-  "homepage": "https://github.com/mamezou/mamezou-plugins",
-  "repository": "https://github.com/mamezou/mamezou-plugins",
+  "homepage": "https://github.com/mamezou/mamezou-claude-plugins",
+  "repository": "https://github.com/mamezou/mamezou-claude-plugins",
   "license": "MIT",
   "keywords": ["hooks", "japanese", "writing-style", "guardrails", "sre"]
 }
