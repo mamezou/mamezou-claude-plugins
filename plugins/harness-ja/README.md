@@ -2,14 +2,17 @@
 
 クラウド変更コマンドの停止と、設定・規則ファイルの保護を中心に、応答の文体検査を任意で
 加える Claude Code プラグインです。hook が実行前・応答終了時に検査し、条件を満たさない
-操作と応答を止めます。日本語で応答するプロジェクト向けで、案件固有の値は利用側の
+操作と応答を止めます。日本語で応答するプロジェクト向けで、プロジェクト固有の設定は利用側の
 `.claude/harness.json` に置きます。
 
-止める対象は次の3つです。
+主な機能は次の3つです。
 
-1. az / aws / cdk の変更系コマンド。手順書の Read と、利用者の承認の文字列の両方が必要
-2. `.claude/` 配下(設定・hook・rules・skills)の書き換え。利用者の承認の文字列が必要
-3. 応答の文体違反。既定は4種類のみで、設定で増やせる
+1. az / aws / cdk の変更系コマンドの停止。手順書の Read と、利用者の承認の文字列の両方が必要
+2. `.claude/` 配下(設定・hook・rules・skills)の書き換えの停止。利用者の承認の文字列が必要
+3. 応答の文体検査。既定は4種類のみで、設定で増やせる
+
+送付文面の検査、必読資料の先読みの強制、インライン PowerShell の検査(任意)も行います。
+条件は「hook の一覧」を参照してください。
 
 `.claude/harness.json` が無い間、hook は何もしません。まず `/harness-ja:harness-init` を
 実行してください。
@@ -47,6 +50,8 @@
 
 ## インストール
 
+次の2行は Claude Code 内で実行します。
+
 ```
 /plugin marketplace add mamezou/mamezou-plugins
 /plugin install harness-ja@mamezou-plugins
@@ -59,18 +64,18 @@
 ```
 
 `.claude/harness.json` の作成、rules テンプレートの複製、`.gitignore` の追記を行います。
-作成された `harness.json` を案件に合わせて書き換えてください。Output Style は `/config`
-から「Concise JA」を選びます。
+作成された `harness.json` をプロジェクト固有の設定に書き換えてください。Output Style は
+`/config` から「Concise JA」を選びます。
 
 ## hook の一覧
 
 | hook | イベント | 止める条件 | バイパス |
 |---|---|---|---|
 | `cloud-change-check.sh` | PreToolUse(Bash) | az / aws / cdk の変更系コマンドで、手順書の Read と `[change-go: <案件>]` のいずれかが無い。変更系を検知したのに設定のどの案件にも一致しないときも止める | `[hook-bypass: cloud-change]` |
-| `harness-change-check.sh` | PreToolUse(Bash / Write / Edit) | `.claude/` 配下(hooks / rules / skills / settings 等)の書き換えで、`[harness-go]` が無い。例外として、プラグイン配下からの `cp`、`mkdir`、`.claude/harness.json` の新規作成は初期設定のため通す | なし(承認の文字列がバイパスを兼ねる) |
+| `harness-change-check.sh` | PreToolUse(Bash / Write / Edit / MultiEdit) | `.claude/` 配下(hooks / rules / skills / settings 等)の書き換えで、`[harness-go]` が無い。例外として、プラグイン配下からの `cp`、`mkdir`、`.claude/harness.json` の新規作成は初期設定のため通す | なし(承認の文字列がバイパスを兼ねる) |
 | `response-quality.sh` | Stop | 応答本文に文体違反(既定は4種類。下の表を参照) | `[hook-bypass: response-quality]` |
-| `draft-precheck.sh` | PreToolUse(Write / Edit) | 送付文面に内部パス・ローカル拡張子・組版記号・外部 AI 言及・禁止語・長い識別子の繰り返し | `[hook-bypass: draft-precheck]` |
-| `require-reading.sh` | PreToolUse(Write / Edit) | 必読資料を直近で Read せずに対象ファイルを編集 | `[hook-bypass: resource-reading]` |
+| `draft-precheck.sh` | PreToolUse(Write / Edit / MultiEdit) | 送付文面に内部パス・ローカル拡張子・組版記号・外部 AI 言及・禁止語・長い識別子の繰り返し | `[hook-bypass: draft-precheck]` |
+| `require-reading.sh` | PreToolUse(Write / Edit / MultiEdit) | 必読資料を直近で Read せずに対象ファイルを編集 | `[hook-bypass: resource-reading]` |
 | `no-inline-powershell.sh` | Stop | 5行以上の PowerShell をファイル化せずにコードブロックで提示(既定は無効) | なし |
 
 設定ファイルが見つからない場合、6本とも何もしません。設定ファイルはあるが JSON として

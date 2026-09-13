@@ -42,9 +42,12 @@ cp -n "${CLAUDE_PLUGIN_ROOT}"/rules-templates/*.md .claude/rules/
 6. Output Style を使う場合は `/config` から「Concise JA」を選ぶよう案内する。
 7. 週次のレビューは `/harness-ja:harness-review` で行うことを案内する。
 8. 設定内容を要約して報告する。書き換えた・作成したファイルのパスを列挙する。
+9. サンプル値(`project-a` 等)を残していないか、利用者に `.claude/harness.json` を開いて確認してもらう。
 
 ## 完了条件
 
 - `.claude/harness.json` が存在し `jq . .claude/harness.json` が通る
 - `.claude/rules/` にテンプレート2本がある
 - `.gitignore` に1行がある
+- `examples/harness.json` のサンプル値(`project-a` 等)をプロジェクト固有の値に置き換えたか、
+  使わない機能を `enabled: false` にした

@@ -1,5 +1,4 @@
 {
-  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "mamezou-plugins",
   "description": "mamezou の Claude Code プラグイン集。クラウド運用の hook と、構成図の Skill",
   "owner": {

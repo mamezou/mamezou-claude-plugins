@@ -1,6 +1,6 @@
 #!/bin/bash
 # 送付文面の事前検査 hook (PreToolUse, matcher=Write|Edit|MultiEdit)
-# 先方・内部へ送る文面へ、内部表現・造語・組版記号・外部 AI 言及が混入するのを止める。
+# 先方・内部へ送る文面へ、内部パスやローカル拡張子・造語・組版記号・外部 AI 言及が混入するのを止める。
 #
 # 発火条件:
 #   - 編集対象のパスが draftPrecheck.targets[] のいずれか (bash の case パターン) に一致

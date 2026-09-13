@@ -8,8 +8,8 @@
 
 - 公式アイコン: [Azure architecture icons](https://learn.microsoft.com/en-us/azure/architecture/icons/)
 - 確認項目: `azure-checklist.md`
-- PNG書き出し: `../scripts/export-png.sh`
-- テンプレート: `../assets/template-azure.drawio`(style文字列はここから写す)
+- PNG書き出し: `${CLAUDE_SKILL_DIR}/scripts/export-png.sh`
+- テンプレート: `${CLAUDE_SKILL_DIR}/assets/template-azure.drawio`(style文字列はここから写す)
 
 Draw.io Desktopは内蔵のAzureアイコンセット(azure2)を同梱し、CLI書き出しでも描画する。
 内蔵セットにあるサービスはダウンロードもSVGの埋め込みも不要で、styleからファイルパスを参照するだけでよい。
@@ -131,7 +131,7 @@ image;aspect=fixed;html=1;image=img/lib/azure2/<カテゴリ>/<ファイル名>.
 1. 本ガイドと`azure-checklist.md`を読む。
 2. 図の目的と読者が確認する判断事項を一文で定義する。
 3. テナント、サブスクリプション、仮想ネットワーク、サブネットのうち実在する境界を先に配置する。
-4. 主要な構成要素を左から右へ並べ、公式アイコンへ置き換える。style文字列は`../assets/template-azure.drawio`から写す。
+4. 主要な構成要素を左から右へ並べ、公式アイコンへ置き換える。style文字列は`${CLAUDE_SKILL_DIR}/assets/template-azure.drawio`から写す。
 5. 閉域アクセスを示す場合は、サブネット内にPrivate Endpointを配置し、対象のリージョンサービスへ線で結ぶ。
 6. 実線と破線で接続関係を記載する。
 7. 設計上の前提と対象外を、装飾線のない通常テキストまたは番号付きコールアウトで追記する。
@@ -145,6 +145,6 @@ image;aspect=fixed;html=1;image=img/lib/azure2/<カテゴリ>/<ファイル名>.
 - draw.io元データとPNGは同じ基底名にする。
 - draw.io元データを正とし、PNGは掲載用の派生成果物として扱う。
 - Draw.io Desktopの`drawio`コマンドをPATHに通して使用する。AppImageの一時パスを通常手順に使用しない。
-- PNGは`../scripts/export-png.sh`で書き出す。既定では1400×900ピクセルの白背景へ配置し、出力寸法を検証する。
+- PNGは`${CLAUDE_SKILL_DIR}/scripts/export-png.sh`で書き出す。既定では1400×900ピクセルの白背景へ配置し、出力寸法を検証する。
 - スクリプトを使用できない場合は、Draw.io Desktopからページ単位、余白0、拡大率100%でPNGを書き出し、1400×900ピクセルであることを確認する。
 - PNGを書き出した後、解像度、文字切れ、線、アイコン、重なりを目視確認する。

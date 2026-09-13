@@ -8,8 +8,8 @@
 
 - 公式アイコン: [AWS Architecture Icons](https://aws.amazon.com/jp/architecture/icons/)
 - 確認項目: `aws-checklist.md`
-- PNG書き出し: `../scripts/export-png.sh`
-- テンプレート: `../assets/template-aws.drawio`(style文字列はここから写す)
+- PNG書き出し: `${CLAUDE_SKILL_DIR}/scripts/export-png.sh`
+- テンプレート: `${CLAUDE_SKILL_DIR}/assets/template-aws.drawio`(style文字列はここから写す)
 
 AWS公式アイコンのSVGは、上のページからツールキットをダウンロードして使う。容量が大きいため
 本リポジトリには同梱しない。draw.ioでは内蔵の `mxgraph.aws4.*` 図形を使えばSVGの埋め込みは不要。
@@ -114,7 +114,7 @@ AWS公式の2026年4月版Microsoft PowerPointツールキットは、テーマ�
 - draw.io元データとPNGは同じ基底名にする。
 - draw.io元データを正とし、PNGは掲載用の派生成果物として扱う。
 - Draw.io Desktopの`drawio`コマンドをPATHに通して使用する。AppImageの一時パスを通常手順に使用しない。
-- PNGは`../scripts/export-png.sh`で書き出す。デスクトップ環境では`drawio`、画面のない環境では`xvfb-run -a drawio --no-sandbox`をスクリプトが選択する。
+- PNGは`${CLAUDE_SKILL_DIR}/scripts/export-png.sh`で書き出す。デスクトップ環境では`drawio`、画面のない環境では`xvfb-run -a drawio --no-sandbox`をスクリプトが選択する。
 - スクリプトはDraw.ioの出力を、左40ピクセル・上18ピクセルの余白で1400×900ピクセルの白背景へ配置し、出力寸法を検証する(いずれも環境変数で変更可。`drawio.md` 参照)。
 - 書き出しには`drawio`、`ffmpeg`、`ffprobe`、`fontconfig`、IPA Pゴシックが必要であり、画面のない環境では`xvfb-run`も必要とする。
 - スクリプトを使用できない場合は、Draw.io Desktopからページ単位、余白0、拡大率100%でPNGを書き出し、1400×900ピクセルであることを確認する。

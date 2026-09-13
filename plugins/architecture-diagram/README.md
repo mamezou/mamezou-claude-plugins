@@ -9,14 +9,23 @@
 
 ## 使い方
 
-Claude Code では、このリポジトリを skills ディレクトリに置く。
+Claude Code では、marketplace から導入する。次の2行は Claude Code を起動して実行する。
 
-```sh
-git clone https://github.com/mamezou/architecture-diagram ~/.claude/skills/architecture-diagram
+```
+/plugin marketplace add mamezou/mamezou-plugins
+/plugin install architecture-diagram@mamezou-plugins
 ```
 
-プロジェクト単位なら `.claude/skills/architecture-diagram/`。「構成図」「draw.io」「図をレビュー」を含む依頼で読み込まれる。
-SKILL.md 形式に対応する他のエージェントでも使える。
+「構成図」「draw.io」「図をレビュー」を含む依頼で読み込まれる。手動で呼ぶときの名前は
+`/architecture-diagram:architecture-diagram`。
+
+SKILL.md 形式に対応する他のエージェントで使う場合は、リポジトリを clone し
+`plugins/architecture-diagram/` を skills ディレクトリへ置く。
+
+```sh
+git clone https://github.com/mamezou/mamezou-plugins
+cp -r mamezou-plugins/plugins/architecture-diagram ~/.claude/skills/architecture-diagram
+```
 
 ## 中身
 
@@ -38,8 +47,11 @@ SKILL.md 形式に対応する他のエージェントでも使える。
 `drawio`(Draw.io Desktop)、`ffmpeg`、`ffprobe`、`fontconfig`、図で指定したフォント
 (既定 `IPAPGothic`。環境変数 `DIAGRAM_FONT` で変更)。画面のない環境では `xvfb-run`。
 
+Claude Code から使うときは Skill が `${CLAUDE_SKILL_DIR}` で場所を解決します。手で実行するときは
+clone したリポジトリのパスで実行します。
+
 ```sh
-scripts/export-png.sh assets/template-aws.drawio
+bash plugins/architecture-diagram/scripts/export-png.sh <図の .drawio>
 ```
 
 ## ライセンス

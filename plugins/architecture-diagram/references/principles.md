@@ -35,9 +35,9 @@ AWS構成図では、AWS公式グループ色の使用を認めている。`aws-
 
 ## 元データとPNG
 
-- `.drawio` が正データ、PNGは掲載用の派生成果物。両方を同じ基底名で置く
+- `.drawio` が編集元(正本)、PNGは掲載用の派生成果物。両方を同じ基底名で置く
 - `.drawio` を変更したらPNGを出力し直す
-- 書き出しは `../scripts/export-png.sh <input.drawio> [output.png]` を使う。1400×900の白背景へ配置し、出力寸法を検証する
+- 書き出しは `${CLAUDE_SKILL_DIR}/scripts/export-png.sh <input.drawio> [output.png]` を使う。1400×900の白背景へ配置し、出力寸法を検証する
 
 1400×900に収まらない図を書き出す場合は、スクリプトを使わずDraw.io Desktopから
 ページ単位・余白0・拡大率100%で書き出し、寸法を目視で確認する。

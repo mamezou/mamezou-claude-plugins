@@ -17,7 +17,7 @@ description: クラウド構成図を作る・直す・レビューするとき�
 4. 構成要素を左から右に並べ、公式アイコンに置き換える。構成にない要素を足さない
 5. 接続線をすべて引く。線種と動作ラベルで経路を区別し、複数の線種を使うなら凡例を置く
 6. 装飾を引く。白背景、直角、細線。説明文は本文側へ移す。色は意味を決めた線と枠だけに使う
-7. `.drawio` を保存し、`scripts/export-png.sh` でPNGを書き出し、画像を自分で開いて「確認」の項目を見る。
+7. `.drawio` を保存し、`bash "${CLAUDE_SKILL_DIR}/scripts/export-png.sh" <図>` でPNGを書き出し、画像を自分で開いて「確認」の項目を見る。
    最後に、図だけを見て判断事項に答えられるか確かめる
 
 ## ルール
@@ -46,7 +46,7 @@ description: クラウド構成図を作る・直す・レビューするとき�
 - ラベルは読者に合わせる。非専門の読者にはAPI名でなく動作(「差分確認」「反映」)で書く
 - 接続線は直線と直角。矢印ラベルには動作を書く(「呼び出す」「ログを配送」)。線の交差を減らす
 - 全テキストに同じフォントを明示する。未指定だと書き出し環境の代替フォントで字形と改行が変わる
-- `.drawio` を正データにし、PNGは派生物。元データを変えたら書き出し直す
+- `.drawio` を編集元(正本)にし、PNGは派生物。編集元を変えたら書き出し直す
 
 ## AIっぽい図の癖と直し方
 
@@ -59,7 +59,7 @@ description: クラウド構成図を作る・直す・レビューするとき�
 | 矢印がすべて同じでラベルなし | 線種と動作ラベルで経路を区別し、凡例を置く |
 | 「全体像」「基盤」など判断事項のないタイトル | 何を判断する図かをタイトルとサブタイトルに書く |
 | ロゴやアイコンの着色・変形。装飾目的のアイコン追加 | 公式の色と縦横比を維持する。構成にない要素を足さない |
-| Scalable / Secure などのピル、キャッチコピー、フッターの標語 | 削る |
+| Scalable / Secure などの錠剤形のラベル、キャッチコピー、フッターの標語 | 削る |
 
 AI生成の判定基準ではない。目的を決めずに描くと人の図にも出る。
 
@@ -71,7 +71,7 @@ AI生成の判定基準ではない。目的を決めずに描くと人の図に
 読者: <誰が見るか>
 
 この図で判断できるようにすること:
-- <判断事項。例: 基準経路とFirewall経由の経路を区別できる>
+- <判断事項。例: 通常経路とFirewall経由の経路を区別できる>
 
 実構成:
 - <実在する境界とCIDR>
@@ -104,10 +104,10 @@ AI生成の判定基準ではない。目的を決めずに描くと人の図に
 
 | 場面 | 読むもの |
 |---|---|
-| 図全般の原則の詳細、draw.ioのSVG埋め込み | `references/principles.md` |
-| AWS図を描く | `references/aws-guide.md`。style文字列は `assets/template-aws.drawio` を開いて写す |
-| Azure図を描く | `references/azure-guide.md`。style文字列は `assets/template-azure.drawio` を開いて写す |
-| AWS図をレビューする | `references/aws-checklist.md` |
-| Azure図をレビューする | `references/azure-checklist.md` |
-| フォント、PNG書き出し | `references/drawio.md` |
-| PNGを書き出す | `scripts/export-png.sh <input.drawio> [output.png]` |
+| 図全般の原則の詳細、draw.ioのSVG埋め込み | `${CLAUDE_SKILL_DIR}/references/principles.md` |
+| AWS図を描く | `${CLAUDE_SKILL_DIR}/references/aws-guide.md`。style文字列は `${CLAUDE_SKILL_DIR}/assets/template-aws.drawio` を開いて写す |
+| Azure図を描く | `${CLAUDE_SKILL_DIR}/references/azure-guide.md`。style文字列は `${CLAUDE_SKILL_DIR}/assets/template-azure.drawio` を開いて写す |
+| AWS図をレビューする | `${CLAUDE_SKILL_DIR}/references/aws-checklist.md` |
+| Azure図をレビューする | `${CLAUDE_SKILL_DIR}/references/azure-checklist.md` |
+| フォント、PNG書き出し | `${CLAUDE_SKILL_DIR}/references/drawio.md` |
+| PNGを書き出す | `bash "${CLAUDE_SKILL_DIR}/scripts/export-png.sh" <input.drawio> [output.png]` |
