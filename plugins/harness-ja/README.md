@@ -1,4 +1,4 @@
-# claude-code-harness-ja
+# harness-ja
 
 クラウド変更コマンドの停止と、設定・規則ファイルの保護を中心に、応答の文体検査を任意で
 加える Claude Code プラグインです。hook が実行前・応答終了時に検査し、条件を満たさない
@@ -48,8 +48,8 @@
 ## インストール
 
 ```
-/plugin marketplace add mamezou/claude-code-harness-ja
-/plugin install harness-ja@claude-code-harness-ja
+/plugin marketplace add mamezou/mamezou-plugins
+/plugin install harness-ja@mamezou-plugins
 ```
 
 利用側プロジェクトで初期設定を行います。

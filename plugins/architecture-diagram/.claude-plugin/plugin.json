@@ -1,0 +1,12 @@
+{
+  "name": "architecture-diagram",
+  "version": "1.0.0",
+  "description": "判断に使えるクラウド構成図を draw.io で描くための Skill。AI 生成にありがちな装飾を排し、目的と実在する境界から描く。AWS / Azure 対応",
+  "author": {
+    "name": "mamezou"
+  },
+  "homepage": "https://github.com/mamezou/mamezou-plugins",
+  "repository": "https://github.com/mamezou/mamezou-plugins",
+  "license": "MIT",
+  "keywords": ["diagram", "drawio", "aws", "azure", "japanese"]
+}

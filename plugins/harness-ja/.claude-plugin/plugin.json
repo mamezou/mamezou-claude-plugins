@@ -5,8 +5,8 @@
   "author": {
     "name": "mamezou"
   },
-  "homepage": "https://github.com/mamezou/claude-code-harness-ja",
-  "repository": "https://github.com/mamezou/claude-code-harness-ja",
+  "homepage": "https://github.com/mamezou/mamezou-plugins",
+  "repository": "https://github.com/mamezou/mamezou-plugins",
   "license": "MIT",
   "keywords": ["hooks", "japanese", "writing-style", "guardrails", "sre"]
 }

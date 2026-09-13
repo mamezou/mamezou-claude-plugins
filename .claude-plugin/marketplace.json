@@ -1,0 +1,23 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "mamezou-plugins",
+  "description": "mamezou の Claude Code プラグイン集。クラウド運用の hook と、構成図の Skill",
+  "owner": {
+    "name": "mamezou",
+    "url": "https://github.com/mamezou"
+  },
+  "plugins": [
+    {
+      "name": "harness-ja",
+      "source": "./plugins/harness-ja",
+      "description": "クラウド変更コマンドの停止と設定・規則ファイルの保護を hook で機械化する。応答の文体検査は任意",
+      "category": "productivity"
+    },
+    {
+      "name": "architecture-diagram",
+      "source": "./plugins/architecture-diagram",
+      "description": "判断に使えるクラウド構成図を draw.io で描くための Skill。AWS / Azure のガイド・チェックリスト・テンプレート",
+      "category": "productivity"
+    }
+  ]
+}
