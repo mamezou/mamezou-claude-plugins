@@ -1,0 +1,90 @@
+<mxfile host="Electron" version="30.4.1">
+  <diagram id="azure-private-endpoint-path" name="Template">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="page-background" parent="1" style="fontFamily=IPAPGothic;rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=none;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="898" width="1398" x="1" y="1" as="geometry" />
+        </mxCell>
+        <mxCell id="title" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=22;fontStyle=1;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="App ServiceからStorage Accountへの閉域経路" vertex="1">
+          <mxGeometry height="34" width="900" x="40" y="18" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;align=left;verticalAlign=middle;fontColor=#404040;" value="VNet統合とPrivate Endpoint経由の経路を確認し、パブリック経路の遮断を判断する" vertex="1">
+          <mxGeometry height="26" width="1280" x="40" y="54" as="geometry" />
+        </mxCell>
+        <mxCell id="subscription" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#0078D4;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=46;spacingTop=8;fontSize=16;fontStyle=1;fontColor=#0078D4;" value="サブスクリプション" vertex="1">
+          <mxGeometry height="720" width="1320" x="40" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="subscription-icon" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/general/Subscriptions.svg;" value="" vertex="1">
+          <mxGeometry height="26" width="26" x="52" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="vnet" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#0078D4;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=42;spacingTop=8;fontSize=15;fontStyle=1;fontColor=#0078D4;" value="VNet 10.0.0.0/16" vertex="1">
+          <mxGeometry height="500" width="560" x="400" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="vnet-icon" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/networking/Virtual_Networks.svg;" value="" vertex="1">
+          <mxGeometry height="24" width="24" x="410" y="208" as="geometry" />
+        </mxCell>
+        <mxCell id="integration-subnet" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#666666;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;fontSize=13;fontStyle=1;fontColor=#1F1F1F;" value="Integration subnet&#xa;10.0.1.0/24" vertex="1">
+          <mxGeometry height="380" width="220" x="440" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="integration-note" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=center;verticalAlign=middle;fontColor=#666666;" value="App Serviceの&#xa;VNet統合先" vertex="1">
+          <mxGeometry height="40" width="200" x="450" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="pe-subnet" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#666666;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;fontSize=13;fontStyle=1;fontColor=#1F1F1F;" value="PE subnet&#xa;10.0.2.0/24" vertex="1">
+          <mxGeometry height="380" width="220" x="700" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="app-service" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/app_services/App_Services.svg;" value="" vertex="1">
+          <mxGeometry height="64" width="64" x="140" y="428" as="geometry" />
+        </mxCell>
+        <mxCell id="app-service-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1F1F1F;" value="App Service&#xa;Webアプリ" vertex="1">
+          <mxGeometry height="44" width="180" x="82" y="498" as="geometry" />
+        </mxCell>
+        <mxCell id="private-endpoint" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/networking/Private_Endpoint.svg;" value="" vertex="1">
+          <mxGeometry height="64" width="64" x="778" y="428" as="geometry" />
+        </mxCell>
+        <mxCell id="private-endpoint-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1F1F1F;" value="Private Endpoint&#xa;Storage向け" vertex="1">
+          <mxGeometry height="44" width="180" x="720" y="498" as="geometry" />
+        </mxCell>
+        <mxCell id="storage" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/storage/Storage_Accounts.svg;" value="" vertex="1">
+          <mxGeometry height="64" width="64" x="1120" y="428" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1F1F1F;" value="Storage Account" vertex="1">
+          <mxGeometry height="30" width="180" x="1062" y="498" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-vnet-integration" edge="1" parent="1" source="app-service" target="integration-subnet" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#0078D4;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#0078D4;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="VNet統合で送信">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-subnet-pe" edge="1" parent="1" source="integration-subnet" target="private-endpoint" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#0078D4;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#0078D4;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="プライベートIPへ接続">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-pe-storage" edge="1" parent="1" source="private-endpoint" target="storage" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#0078D4;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#0078D4;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="Private Linkで接続">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-public-blocked" edge="1" parent="1" source="app-service" target="storage" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#CC0000;strokeWidth=2;dashed=1;dashPattern=8 4;endArrow=cross;endFill=0;fontSize=12;fontStyle=1;fontColor=#CC0000;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="パブリック経路は遮断">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="172" y="165" />
+              <mxPoint x="1152" y="165" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#AAAAAA;strokeWidth=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontSize=12;fontStyle=1;fontColor=#1F1F1F;" value="凡例" vertex="1">
+          <mxGeometry height="80" width="330" x="990" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-line-private" parent="1" style="fontFamily=IPAPGothic;line;html=1;strokeWidth=2.5;strokeColor=#0078D4;" value="" vertex="1">
+          <mxGeometry height="8" width="50" x="1010" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text-private" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="閉域の通信経路" vertex="1">
+          <mxGeometry height="20" width="220" x="1075" y="744" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-line-blocked" parent="1" style="fontFamily=IPAPGothic;line;html=1;strokeWidth=2;strokeColor=#CC0000;dashed=1;dashPattern=8 4;" value="" vertex="1">
+          <mxGeometry height="8" width="50" x="1010" y="778" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text-blocked" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="遮断された経路" vertex="1">
+          <mxGeometry height="20" width="220" x="1075" y="772" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

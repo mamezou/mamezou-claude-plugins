@@ -1,0 +1,76 @@
+<mxfile host="Electron" version="30.4.1">
+  <diagram id="purpose-driven-after" name="After">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="page-background" parent="1" style="fontFamily=IPAPGothic;rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=none;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="898" width="1398" x="1" y="1" as="geometry" />
+        </mxCell>
+        <mxCell id="title" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=22;fontStyle=1;align=left;verticalAlign=middle;fontColor=#232F3E;" value="AWS Network Firewallの遅延測定経路" vertex="1">
+          <mxGeometry height="34" width="900" x="40" y="18" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;align=left;verticalAlign=middle;fontColor=#414D5C;" value="Phase 0の直接通信を基準に、Phase 1〜3のFirewall経由通信とTCP RTTを比較する" vertex="1">
+          <mxGeometry height="26" width="1280" x="40" y="54" as="geometry" />
+        </mxCell>
+        <mxCell id="aws-cloud" parent="1" style="fontFamily=IPAPGothic;points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=16;fontStyle=1;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;" value="AWS Cloud" vertex="1">
+          <mxGeometry height="735" width="1320" x="40" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="region" parent="1" style="fontFamily=IPAPGothic;rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#687078;dashed=1;dashPattern=8 6;verticalAlign=top;align=left;spacingLeft=18;spacingTop=8;fontSize=15;fontStyle=1;fontColor=#232F3E;" value="東京リージョン ap-northeast-1" vertex="1">
+          <mxGeometry height="650" width="1240" x="80" y="155" as="geometry" />
+        </mxCell>
+        <mxCell id="vpc" parent="1" style="fontFamily=IPAPGothic;points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc2;strokeColor=#8C4FFF;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#8C4FFF;" value="VPC 10.0.0.0/16" vertex="1">
+          <mxGeometry height="565" width="1160" x="120" y="205" as="geometry" />
+        </mxCell>
+        <mxCell id="az" parent="1" style="fontFamily=IPAPGothic;rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB7B8;dashed=1;dashPattern=6 5;verticalAlign=top;align=left;spacingLeft=14;spacingTop=7;fontSize=13;fontStyle=1;fontColor=#414D5C;" value="単一Availability Zone" vertex="1">
+          <mxGeometry height="455" width="1080" x="160" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="client-subnet" parent="1" style="fontFamily=IPAPGothic;rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#147EBA;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;fontSize=13;fontStyle=1;fontColor=#232F3E;" value="Client subnet  10.0.0.0/24" vertex="1">
+          <mxGeometry height="340" width="300" x="205" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="firewall-subnet" parent="1" style="fontFamily=IPAPGothic;rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#147EBA;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;fontSize=13;fontStyle=1;fontColor=#232F3E;" value="Firewall subnet  10.0.1.0/24" vertex="1">
+          <mxGeometry height="340" width="300" x="550" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="server-subnet" parent="1" style="fontFamily=IPAPGothic;rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#147EBA;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;fontSize=13;fontStyle=1;fontColor=#232F3E;" value="Server subnet  10.0.2.0/24" vertex="1">
+          <mxGeometry height="340" width="300" x="895" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="baseline" parent="1" style="fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=#FFFFFF;html=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ec2;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="325" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="baseline-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#232F3E;" value="Baseline EC2&#xa;基準側" vertex="1">
+          <mxGeometry height="48" width="150" x="280" y="477" as="geometry" />
+        </mxCell>
+        <mxCell id="client" parent="1" style="fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=#FFFFFF;html=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ec2;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="325" y="575" as="geometry" />
+        </mxCell>
+        <mxCell id="client-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#232F3E;" value="Client EC2&#xa;測定元" vertex="1">
+          <mxGeometry height="48" width="150" x="280" y="636" as="geometry" />
+        </mxCell>
+        <mxCell id="firewall" parent="1" style="fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=#FFFFFF;html=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_firewall;" value="" vertex="1">
+          <mxGeometry height="64" width="64" x="668" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="firewall-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#232F3E;" value="AWS Network Firewall&#xa;Endpoint" vertex="1">
+          <mxGeometry height="50" width="210" x="595" y="573" as="geometry" />
+        </mxCell>
+        <mxCell id="server" parent="1" style="fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=#FFFFFF;html=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ec2;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="1015" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="server-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#232F3E;" value="Server EC2&#xa;iperf3 / nginx" vertex="1">
+          <mxGeometry height="50" width="170" x="960" y="573" as="geometry" />
+        </mxCell>
+        <mxCell id="phase0" edge="1" parent="1" source="client" target="baseline" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#687078;strokeWidth=2;dashed=1;dashPattern=7 5;endArrow=block;endFill=1;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="phase0-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;fontColor=#414D5C;fillColor=#FFFFFF;strokeColor=none;" value="Phase 0&#xa;直接通信（基準）" vertex="1">
+          <mxGeometry height="44" width="120" x="378" y="506" as="geometry" />
+        </mxCell>
+        <mxCell id="phase1to3-a" edge="1" parent="1" source="client" target="firewall" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#147EBA;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#147EBA;labelBackgroundColor=#FFFFFF;" value="Phase 1〜3  Firewall経由">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="phase1to3-b" edge="1" parent="1" source="firewall" target="server" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#147EBA;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=11;fontColor=#147EBA;labelBackgroundColor=#FFFFFF;" value="検査後に転送">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
