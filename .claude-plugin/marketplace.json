@@ -1,6 +1,6 @@
 {
   "name": "mamezou-claude-plugins",
-  "description": "mamezou の Claude Code プラグイン集。クラウド運用の hook と、構成図の Skill",
+  "description": "mamezou の Claude Code プラグイン集。クラウド運用の hook、構成図の Skill、文書作業のエージェントと Skill",
   "owner": {
     "name": "mamezou",
     "url": "https://github.com/mamezou"
@@ -16,6 +16,12 @@
       "name": "architecture-diagram",
       "source": "./plugins/architecture-diagram",
       "description": "判断に使えるクラウド構成図を draw.io で描くための Skill。AWS / Azure のガイド・チェックリスト・テンプレート",
+      "category": "productivity"
+    },
+    {
+      "name": "docs-tools",
+      "source": "./plugins/docs-tools",
+      "description": "日本語の文書作業を分担するエージェントと Skill。レビュー、リポジトリ調査、送付文面の作成と送付前チェック、作業ログ、外部 CLI へのクロスレビュー依頼",
       "category": "productivity"
     }
   ]

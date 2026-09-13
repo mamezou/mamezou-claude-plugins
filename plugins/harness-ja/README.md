@@ -65,7 +65,7 @@
 
 `.claude/harness.json` の作成、rules テンプレートの複製、`.gitignore` の追記を行います。
 作成された `harness.json` をプロジェクト固有の設定に書き換えてください。Output Style は
-`/config` から「Concise JA」を選びます。
+`/config` で「Concise JA」を選んでください。
 
 ## hook の一覧
 
@@ -79,8 +79,8 @@
 | `no-inline-powershell.sh` | Stop | 5行以上の PowerShell をファイル化せずにコードブロックで提示(既定は無効) | なし |
 
 設定ファイルが見つからない場合、6本とも何もしません。設定ファイルはあるが JSON として
-読めない場合、PreToolUse の4本は「設定ファイルが読めません: <パス>」を出してツールを止め、
-Stop の2本は同じ文を出して応答は止めません。
+読めない場合、PreToolUse の4本は「設定ファイルが読めません: <パス>」を出してツールを止めます。
+Stop の2本は同じ文を出しますが、応答は止めません。
 
 ## 応答の文体検査
 
@@ -136,7 +136,7 @@ Stop の2本は同じ文を出して応答は止めません。
 | `noInlinePowershell.enabled` | 既定は `false`。使う場合だけ `true` にする |
 | `noInlinePowershell.cwdMatch` | 指定すると、cwd がそのディレクトリ名を含むときだけ検査する(案件を限る用途) |
 
-設定ファイルは `HARNESS_CONFIG` 環境変数、`$CLAUDE_PROJECT_DIR/.claude/harness.json`、
+hook は設定ファイルを `HARNESS_CONFIG` 環境変数、`$CLAUDE_PROJECT_DIR/.claude/harness.json`、
 hook 実行時の cwd から上へ辿った `.claude/harness.json` の順で探します。
 
 ## rules テンプレートについて
@@ -167,7 +167,7 @@ hook 実行時の cwd から上へ辿った `.claude/harness.json` の順で探�
 | 検出語の頻度 | 辞書から外す語、閾値を上げる語の候補 |
 | 常に読み込まれる指示の行数 | CLAUDE.md と rules の合計。増え続けていないかの確認 |
 
-Skill は集計を読んだ上で、`harness.json` の変更前後と規則の追記文を【確認点】の型で提示し、
+Skill は集計を読んだ上で、`harness.json` の変更前後と規則の追記文を【確認点】の型で提示します。
 承認された項目だけ反映します。1回のレビューで変える項目は3件までとし、効果を次回の件数で
 確かめてから次を変えます。
 
