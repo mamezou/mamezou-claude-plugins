@@ -28,7 +28,7 @@ Skill は `/docs-tools:send-draft` のように名前空間つきで呼ぶ。エ
 | `agents/repo-survey.md` | リポジトリ内の調査・横断検索・資料要約。根拠をパスと行番号で返す読み取り専用エージェント |
 | `skills/send-draft/SKILL.md` | 先方向け・内部向けの送付文面ドラフトの作り方。設計 5 点の確認、置き場と命名、長さの目安 |
 | `skills/send-draft/templates/*.txt` | 依頼・相談・返信・共有案内・報告・内部連絡のひな形 6 本 |
-| `skills/draft-precheck/SKILL.md` | 送付前チェック。同梱スクリプトの grep(内部パス、組版記号、外部 AI 言及、指示語、括弧注記、1 文 60 字、バイト数)、`docs-tools:doc-review` による文章確認、通し読み |
+| `skills/draft-precheck/SKILL.md` | 送付前チェック。同梱スクリプトの grep(内部パス、組版記号、外部 AI 言及、指示語、括弧注記、1 文 60 字、バイト数)、`docs-tools:doc-review` による文章確認、通し読み、長文資料の構造 (節・表のセル・手順の要素) |
 | `skills/draft-precheck/scripts/precheck.sh` | 上記 grep の本体。`precheck.sh <ファイル>` で単体でも実行できる |
 | `skills/work-log/SKILL.md` | 当日の作業ログ `work-log-YYYYMMDD.md` の作成・追記。書式と定型の記録 |
 | `skills/codex-review/SKILL.md` | 成果物のクロスレビューを Codex CLI へ依頼する手順。ハングを避ける実行形 |

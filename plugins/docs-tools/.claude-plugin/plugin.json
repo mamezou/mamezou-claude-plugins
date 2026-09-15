@@ -1,6 +1,6 @@
 {
   "name": "docs-tools",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "日本語の文書作業を分担するエージェントと Skill。レビュー、リポジトリ調査、送付文面の作成と送付前チェック、作業ログ、外部 CLI へのクロスレビュー依頼",
   "author": {
     "name": "mamezou"
