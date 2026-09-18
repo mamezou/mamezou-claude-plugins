@@ -11,6 +11,7 @@
 - Python: `urllib.parse.quote(svg_text)` でエンコードし、styleの `image=` に指定する
 - AWSは `mxgraph.aws4.*` 図形、Azureは `image=img/lib/azure2/<カテゴリ>/<名前>.svg` の
   内蔵アイコンがあるので、通常は埋め込み不要
+- オンプレミスの機器は、内蔵の `mxgraph.cisco19.*` 図形と `mxgraph.vvd.*` 図形を使う
 
 ## フォント
 

@@ -1,11 +1,11 @@
 # architecture-diagram
 
-判断に使えるクラウド構成図を draw.io で描くための Agent Skill。
-誰が何を判断する図かを先に決める。実在する境界と公式アイコンで描き、AI 生成にありがちな装飾
+判断に使える構成図を draw.io で描くための Agent Skill。クラウドとオンプレミス(事務所・自宅)のネットワークに対応する。
+誰が何を判断する図かを先に決める。実在する境界と公式アイコン(オンプレミスは draw.io 内蔵のアイコン)で描き、AI 生成にありがちな装飾
 (パステル背景、角丸カードの反復、色帯付き注記、造語ラベル、区別のない矢印、公式アイコンの着色)を排する。
 
-ガイド・チェックリスト・テンプレートは AWS と Azure に対応。どちらも draw.io 内蔵のアイコン
-(`mxgraph.aws4`、`azure2`)で描けるため、アイコンセットの別途ダウンロードは不要。
+ガイド・チェックリスト・テンプレートは AWS、Azure、オンプレミスに対応。いずれも draw.io 内蔵のアイコン
+(`mxgraph.aws4`、`azure2`、`mxgraph.cisco19` と `mxgraph.vvd`)で描けるため、アイコンセットの別途ダウンロードは不要。
 
 ## 使い方
 
@@ -37,10 +37,13 @@ cp -r mamezou-claude-plugins/plugins/architecture-diagram ~/.claude/skills/archi
 | `references/aws-checklist.md` | AWS 図の確認チェックリスト |
 | `references/azure-guide.md` | Azure の境界、色、内蔵アイコン、レイアウト |
 | `references/azure-checklist.md` | Azure 図の確認チェックリスト |
+| `references/onprem-guide.md` | オンプレミス・自宅ネットワークの枠の決め方、内蔵アイコン、線種、レイアウト、公開範囲 |
+| `references/onprem-checklist.md` | オンプレミス・自宅ネットワーク図の確認チェックリスト |
 | `references/drawio.md` | フォント、PNG 書き出し |
 | `scripts/export-png.sh` | draw.io → PNG。フォント指定の漏れと出力寸法を検証する |
 | `assets/template-aws.drawio` | AWS 図のテンプレート。style 文字列を写す元 |
 | `assets/template-azure.drawio` | Azure 図のテンプレート。style 文字列を写す元 |
+| `assets/template-onprem.drawio` | オンプレミス図のテンプレート。style 文字列を写す元 |
 
 ## PNG 書き出しに必要なもの
 

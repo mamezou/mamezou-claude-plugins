@@ -5,7 +5,7 @@ mamezou が公開している Claude Code のプラグイン集です。利用�
 | プラグイン | 種類 | 働き |
 |---|---|---|
 | [harness-ja](plugins/harness-ja/) | hook | クラウド変更コマンド(az / aws / cdk)は、手順書の Read と `[change-go: <案件>]` だけの行がなければ実行させない。`.claude/` 配下の書き換えは、`[harness-go]` だけの行がなければ実行させない。送付文面の内部パスやローカル拡張子も止める。応答の文体検査は任意 |
-| [architecture-diagram](plugins/architecture-diagram/) | Skill | クラウド構成図を draw.io で描くときの手順・原則・チェックリスト・テンプレート(AWS / Azure) |
+| [architecture-diagram](plugins/architecture-diagram/) | Skill | 構成図を draw.io で描くときの手順・原則・チェックリスト・テンプレート(AWS / Azure / オンプレミス) |
 | [docs-tools](plugins/docs-tools/) | エージェント + Skill | 文書作業の分担。差分レビュー・リポジトリ調査の読み取り専用エージェント、送付文面の型と送付前チェック、作業ログ、Codex CLI へのクロスレビュー依頼 |
 
 hook は操作と応答を検査して止める道具、Skill は作業のときに読み込まれる知識、エージェントは調査やレビューを引き受ける読み取り専用の分担先です。

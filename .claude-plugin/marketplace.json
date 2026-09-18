@@ -15,7 +15,7 @@
     {
       "name": "architecture-diagram",
       "source": "./plugins/architecture-diagram",
-      "description": "判断に使えるクラウド構成図を draw.io で描くための Skill。AWS / Azure のガイド・チェックリスト・テンプレート",
+      "description": "判断に使える構成図を draw.io で描くための Skill。AWS / Azure / オンプレミスのガイド・チェックリスト・テンプレート",
       "category": "productivity"
     },
     {

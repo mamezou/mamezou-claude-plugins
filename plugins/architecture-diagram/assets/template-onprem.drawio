@@ -1,0 +1,166 @@
+<mxfile host="Electron" version="30.4.1">
+  <diagram id="onprem-site-network" name="Template">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="page-background" parent="1" style="fontFamily=IPAPGothic;rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=none;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="898" width="1398" x="1" y="1" as="geometry" />
+        </mxCell>
+        <mxCell id="title" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=22;fontStyle=1;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="拠点ネットワークの構成と拠点外からの到達経路" vertex="1">
+          <mxGeometry height="34" width="900" x="40" y="18" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;align=left;verticalAlign=middle;fontColor=#404040;" value="機器の所属セグメントと通信が通る機器を確認し、セグメント間の通信制限を判断する" vertex="1">
+          <mxGeometry height="26" width="1280" x="40" y="54" as="geometry" />
+        </mxCell>
+        <mxCell id="internet" parent="1" style="fontFamily=IPAPGothic;sketch=0;html=1;aspect=fixed;pointerEvents=1;shape=mxgraph.cisco19.cloud;fillColor=#6B6B6B;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;fontSize=12;fontColor=#1F1F1F;" value="インターネット" vertex="1">
+          <mxGeometry height="48" width="80" x="80" y="191" as="geometry" />
+        </mxCell>
+        <mxCell id="remote-client" parent="1" style="fontFamily=IPAPGothic;sketch=0;html=1;aspect=fixed;pointerEvents=1;shape=mxgraph.cisco19.laptop2;fillColor=#FAFAFA;strokeColor=#005073;verticalLabelPosition=bottom;verticalAlign=top;align=center;fontSize=12;fontColor=#1F1F1F;" value="拠点外の端末&#10;VPN クライアント" vertex="1">
+          <mxGeometry height="35" width="50" x="95" y="555" as="geometry" />
+        </mxCell>
+        <mxCell id="site" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#404040;strokeWidth=2;verticalAlign=bottom;align=left;spacingLeft=12;spacingBottom=8;fontSize=16;fontStyle=1;fontColor=#1F1F1F;" value="拠点" vertex="1">
+          <mxGeometry height="590" width="1140" x="220" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="onu" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#666666;strokeWidth=1;fontSize=12;fontColor=#1F1F1F;align=center;verticalAlign=middle;" value="回線終端装置" vertex="1">
+          <mxGeometry height="44" width="90" x="235" y="193" as="geometry" />
+        </mxCell>
+        <mxCell id="router" parent="1" style="fontFamily=IPAPGothic;sketch=0;html=1;aspect=fixed;pointerEvents=1;shape=mxgraph.cisco19.rect;prIcon=router;fillColor=#FAFAFA;strokeColor=#005073;verticalLabelPosition=bottom;verticalAlign=top;align=center;fontSize=12;fontColor=#1F1F1F;" value="ルーター&#10;192.168.0.1/24&#10;NAT" vertex="1">
+          <mxGeometry height="50" width="50" x="352" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="l3switch" parent="1" style="fontFamily=IPAPGothic;sketch=0;html=1;aspect=fixed;pointerEvents=1;shape=mxgraph.cisco19.rect;prIcon=l3_switch;fillColor=#FAFAFA;strokeColor=#005073;verticalLabelPosition=top;verticalAlign=bottom;spacingBottom=6;align=center;fontSize=12;fontColor=#1F1F1F;" value="L3 スイッチ&#10;192.168.0.254&#10;ルーティング・DHCP" vertex="1">
+          <mxGeometry height="50" width="50" x="540" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="hypervisor" parent="1" style="fontFamily=IPAPGothic;sketch=0;html=1;aspect=fixed;pointerEvents=1;shape=mxgraph.cisco19.rect;prIcon=hypervisor;fillColor=#FAFAFA;strokeColor=#005073;verticalLabelPosition=bottom;verticalAlign=top;align=center;fontSize=12;fontColor=#1F1F1F;" value="仮想化ホスト" vertex="1">
+          <mxGeometry height="50" width="50" x="540" y="455" as="geometry" />
+        </mxCell>
+        <mxCell id="segment-client" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#005073;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=14;fontStyle=1;fontColor=#005073;" value="クライアント(VLAN 10、192.168.10.0/24、GW 192.168.10.254)" vertex="1">
+          <mxGeometry height="160" width="620" x="720" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="segment-server" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#005073;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=14;fontStyle=1;fontColor=#005073;" value="サーバ(VLAN 20、192.168.20.0/24、GW 192.168.20.254)" vertex="1">
+          <mxGeometry height="160" width="620" x="720" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="segment-edge" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#005073;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=14;fontStyle=1;fontColor=#005073;" value="外部接続(VLAN 30、192.168.30.0/24、GW 192.168.30.254)" vertex="1">
+          <mxGeometry height="160" width="620" x="720" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="client-pc" parent="1" style="fontFamily=IPAPGothic;sketch=0;html=1;aspect=fixed;pointerEvents=1;shape=mxgraph.cisco19.workstation2;fillColor=#FAFAFA;strokeColor=#005073;verticalLabelPosition=bottom;verticalAlign=top;align=center;fontSize=12;fontColor=#1F1F1F;" value="PC&#10;DHCP" vertex="1">
+          <mxGeometry height="40" width="50" x="775" y="196" as="geometry" />
+        </mxCell>
+        <mxCell id="client-ap" parent="1" style="fontFamily=IPAPGothic;sketch=0;html=1;aspect=fixed;pointerEvents=1;shape=mxgraph.cisco19.wireless_access_point2;fillColor=#FAFAFA;strokeColor=#005073;verticalLabelPosition=bottom;verticalAlign=top;align=center;fontSize=12;fontColor=#1F1F1F;" value="無線 AP&#10;192.168.10.2" vertex="1">
+          <mxGeometry height="46" width="46" x="957" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="client-wireless" parent="1" style="fontFamily=IPAPGothic;sketch=0;html=1;aspect=fixed;pointerEvents=1;shape=mxgraph.cisco19.tablet2;fillColor=#FAFAFA;strokeColor=#005073;verticalLabelPosition=bottom;verticalAlign=top;align=center;fontSize=12;fontColor=#1F1F1F;" value="無線の端末&#10;DHCP" vertex="1">
+          <mxGeometry height="40" width="50" x="1135" y="193" as="geometry" />
+        </mxCell>
+        <mxCell id="hypervisor-mgmt" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#666666;strokeWidth=1;fontSize=12;fontColor=#1F1F1F;align=center;verticalAlign=middle;" value="仮想化ホストの管理 IF&#10;192.168.20.2" vertex="1">
+          <mxGeometry height="40" width="130" x="745" y="372" as="geometry" />
+        </mxCell>
+        <mxCell id="vm-dns" parent="1" style="fontFamily=IPAPGothic;html=1;aspect=fixed;pointerEvents=1;shape=mxgraph.vvd.virtual_machine;fillColor=#434445;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;fontSize=12;fontColor=#1F1F1F;" value="dns&#10;192.168.20.11&#10;DNS" vertex="1">
+          <mxGeometry height="40" width="40" x="960" y="372" as="geometry" />
+        </mxCell>
+        <mxCell id="vm-files" parent="1" style="fontFamily=IPAPGothic;html=1;aspect=fixed;pointerEvents=1;shape=mxgraph.vvd.virtual_machine;fillColor=#434445;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;fontSize=12;fontColor=#1F1F1F;" value="files&#10;192.168.20.12&#10;ファイル共有" vertex="1">
+          <mxGeometry height="40" width="40" x="1140" y="372" as="geometry" />
+        </mxCell>
+        <mxCell id="vm-vpn" parent="1" style="fontFamily=IPAPGothic;html=1;aspect=fixed;pointerEvents=1;shape=mxgraph.vvd.virtual_machine;fillColor=#434445;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;fontSize=12;fontColor=#1F1F1F;" value="vpn&#10;192.168.30.10&#10;クライアントとサーバへ中継" vertex="1">
+          <mxGeometry height="40" width="40" x="830" y="552" as="geometry" />
+        </mxCell>
+        <mxCell id="wire-internet-onu" edge="1" parent="1" source="internet" target="onu" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#404040;strokeWidth=2;endArrow=none;startArrow=none;fontColor=#404040;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wire-onu-router" edge="1" parent="1" source="onu" target="router" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#404040;strokeWidth=2;endArrow=none;startArrow=none;fontColor=#404040;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wire-router-switch" edge="1" parent="1" source="router" target="l3switch" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#404040;strokeWidth=2;endArrow=none;startArrow=none;fontColor=#404040;verticalAlign=bottom;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="ポート 1 アクセス VLAN 1&#10;192.168.0.0/24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wire-switch-client" edge="1" parent="1" source="l3switch" target="segment-client" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#404040;strokeWidth=2;endArrow=none;startArrow=none;fontColor=#404040;verticalAlign=bottom;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.46875;entryDx=0;entryDy=0;" value="ポート 5〜8&#10;アクセス VLAN 10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wire-switch-hypervisor" edge="1" parent="1" source="l3switch" target="hypervisor" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#404040;strokeWidth=2;endArrow=none;startArrow=none;fontColor=#404040;align=right;labelPosition=left;spacingRight=6;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="ポート 2 トランク&#10;VLAN 10 / 20 / 30">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="vswitch-hypervisor-client" edge="1" parent="1" source="hypervisor" target="segment-client" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#666666;strokeWidth=1.5;dashed=1;dashPattern=4 3;endArrow=none;startArrow=none;fontColor=#666666;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.875;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="690" y="480" />
+              <mxPoint x="690" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vswitch-hypervisor-server" edge="1" parent="1" source="hypervisor" target="segment-server" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#666666;strokeWidth=1.5;dashed=1;dashPattern=4 3;endArrow=none;startArrow=none;fontColor=#666666;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="690" y="480" />
+              <mxPoint x="690" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vswitch-hypervisor-edge" edge="1" parent="1" source="hypervisor" target="segment-edge" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#666666;strokeWidth=1.5;dashed=1;dashPattern=4 3;endArrow=none;startArrow=none;fontColor=#666666;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.1875;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="690" y="480" />
+              <mxPoint x="690" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-portgroup" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#666666;" value="仮想スイッチ&#10;(VLAN ごと)" vertex="1">
+          <mxGeometry height="30" width="90" x="598" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="wifi-ap-wireless" edge="1" parent="1" source="client-ap" target="client-wireless" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#404040;strokeWidth=2;dashed=1;dashPattern=1 3;endArrow=none;startArrow=none;fontColor=#404040;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tunnel-vpn" edge="1" parent="1" source="remote-client" target="vm-vpn" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#1565C0;strokeWidth=2;dashed=1;dashPattern=8 4;endArrow=block;endFill=1;startArrow=none;fontColor=#1565C0;fontStyle=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="VPN のトンネル">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#AAAAAA;strokeWidth=1;verticalAlign=middle;align=left;spacingLeft=10;fontSize=12;fontStyle=1;fontColor=#1F1F1F;" value="凡例" vertex="1">
+          <mxGeometry height="46" width="1320" x="40" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-line-wire" parent="1" style="fontFamily=IPAPGothic;line;html=1;strokeWidth=2;strokeColor=#404040;" value="" vertex="1">
+          <mxGeometry height="8" width="40" x="100" y="729" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text-wire" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="有線" vertex="1">
+          <mxGeometry height="20" width="40" x="148" y="723" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-line-wifi" parent="1" style="fontFamily=IPAPGothic;line;html=1;strokeWidth=2;strokeColor=#404040;dashed=1;dashPattern=1 3;" value="" vertex="1">
+          <mxGeometry height="8" width="40" x="205" y="729" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text-wifi" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="無線" vertex="1">
+          <mxGeometry height="20" width="40" x="253" y="723" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-line-vswitch" parent="1" style="fontFamily=IPAPGothic;line;html=1;strokeWidth=1.5;strokeColor=#666666;dashed=1;dashPattern=4 3;" value="" vertex="1">
+          <mxGeometry height="8" width="40" x="310" y="729" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text-vswitch" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="仮想スイッチ経由の接続" vertex="1">
+          <mxGeometry height="20" width="140" x="358" y="723" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-line-tunnel" parent="1" style="fontFamily=IPAPGothic;line;html=1;strokeWidth=2;strokeColor=#1565C0;dashed=1;dashPattern=8 4;" value="" vertex="1">
+          <mxGeometry height="8" width="40" x="510" y="729" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text-tunnel" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="拠点外からのトンネル(矢印は利用者から到達先の向き)" vertex="1">
+          <mxGeometry height="20" width="300" x="558" y="723" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-icon-device" parent="1" style="fontFamily=IPAPGothic;sketch=0;html=1;aspect=fixed;pointerEvents=1;shape=mxgraph.cisco19.rect;prIcon=router;fillColor=#FAFAFA;strokeColor=#005073;verticalLabelPosition=bottom;verticalAlign=top;align=center;fontSize=12;fontColor=#1F1F1F;" value="" vertex="1">
+          <mxGeometry height="24" width="24" x="875" y="721" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text-device" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="物理機器" vertex="1">
+          <mxGeometry height="20" width="60" x="907" y="723" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-icon-vm" parent="1" style="fontFamily=IPAPGothic;html=1;aspect=fixed;pointerEvents=1;shape=mxgraph.vvd.virtual_machine;fillColor=#434445;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;fontSize=12;fontColor=#1F1F1F;" value="" vertex="1">
+          <mxGeometry height="24" width="24" x="980" y="721" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text-vm" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="仮想マシン" vertex="1">
+          <mxGeometry height="20" width="70" x="1012" y="723" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-box-segment" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;fillColor=none;strokeColor=#005073;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="18" width="30" x="1100" y="724" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text-segment" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="セグメント(VLAN とサブネット)" vertex="1">
+          <mxGeometry height="20" width="200" x="1138" y="723" as="geometry" />
+        </mxCell>
+        <mxCell id="note" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=12;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="注記: セグメント間の通信は L3 スイッチを経由" vertex="1">
+          <mxGeometry height="24" width="1320" x="40" y="764" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
