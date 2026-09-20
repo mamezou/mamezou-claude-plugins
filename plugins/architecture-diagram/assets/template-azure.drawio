@@ -10,9 +10,6 @@
         <mxCell id="title" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=22;fontStyle=1;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="App ServiceからStorage Accountへの閉域経路" vertex="1">
           <mxGeometry height="34" width="900" x="40" y="18" as="geometry" />
         </mxCell>
-        <mxCell id="subtitle" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;align=left;verticalAlign=middle;fontColor=#404040;" value="VNet統合とPrivate Endpoint経由の経路を確認し、パブリック経路の遮断を判断する" vertex="1">
-          <mxGeometry height="26" width="1280" x="40" y="54" as="geometry" />
-        </mxCell>
         <mxCell id="subscription" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#0078D4;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=46;spacingTop=8;fontSize=16;fontStyle=1;fontColor=#0078D4;" value="サブスクリプション" vertex="1">
           <mxGeometry height="720" width="1320" x="40" y="100" as="geometry" />
         </mxCell>
