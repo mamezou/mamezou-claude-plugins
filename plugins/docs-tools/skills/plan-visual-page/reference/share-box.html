@@ -1,0 +1,90 @@
+<!-- plan-visual-page の「共有用の資料の欄」の部品。{{...}} を資料ごとに置き換える。
+     1. 印刷用の CSS: 共有用の版(PDF にする HTML)の <style> の末尾に足す。改ページで図や表が切れないようにする
+     2. 欄の CSS: 依頼者向けのページの <style> の末尾に足す。色は example.html のトークンを使う
+     3. 欄の HTML: 依頼者向けのページの </header> の直後に置く
+     4. スクリプト: 依頼者向けのページの末尾に置く。公開するときは capabilities: {"downloads": true} を付ける -->
+
+<!-- 1. 印刷用の CSS(共有用の版に足す) -->
+<style>
+  @page { size: A4; margin: 10mm; }
+  @media print {
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .wrap { padding-block: 0; }
+    .panel, .route, .chart, .step, .day, .verdict .v, tr { break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
+</style>
+
+<!-- 2. 欄の CSS(依頼者向けのページに足す) -->
+<style>
+  .share { background: var(--surface); border: 2px solid var(--ok); border-radius: 8px; padding: 14px 16px; display: grid; gap: 12px; }
+  .share-row { display: grid; gap: 8px; }
+  .share-row .what { font-size: 14px; }
+  .share-row .what small { display: block; color: var(--muted); font-size: 12px; }
+  .share pre { margin: 0; white-space: pre-wrap; word-break: break-word; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; font-family: inherit; font-size: 14px; line-height: 1.7; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .btn { font: inherit; font-size: 14px; font-weight: 700; border-radius: 6px; padding: 6px 14px; border: 1.5px solid var(--ok); background: var(--ok); color: var(--surface); cursor: pointer; }
+  .btn.sub { background: var(--surface); color: var(--ok); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<!-- 3. 欄の HTML(依頼者向けのページの </header> の直後) -->
+<div class="share">
+  <h3>スレッドに投稿する資料</h3>
+  <div class="share-row">
+    <div class="what"><b>PDF</b><small>{{PDF の中身を1行で。載せた節と、外した節}}</small></div>
+    <div class="actions"><button class="btn" id="dl" type="button" disabled>準備中</button><span id="dl-msg" class="muted small" aria-live="polite"></span></div>
+  </div>
+  <div class="share-row">
+    <div class="what"><b>本文</b><small>PDF に添えて貼る文</small></div>
+    <pre id="post-text">{{投稿の本文。HTML エスケープする}}</pre>
+    <div class="actions"><button class="btn sub" id="cp" type="button">本文をコピー</button><span id="cp-msg" class="muted small" aria-live="polite"></span></div>
+  </div>
+</div>
+
+<!-- 4. スクリプト(依頼者向けのページの末尾) -->
+<script id="pdf-b64" type="application/octet-stream">{{PDF の base64}}</script>
+<script>
+(function () {
+  var dl = document.getElementById('dl'), dlMsg = document.getElementById('dl-msg');
+  var cp = document.getElementById('cp'), cpMsg = document.getElementById('cp-msg');
+  var text = document.getElementById('post-text');
+
+  cp.addEventListener('click', function () {
+    var fallback = function () {
+      var r = document.createRange(); r.selectNodeContents(text);
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      cpMsg.textContent = '本文を選択しました。コピーしてください';
+    };
+    try {
+      navigator.clipboard.writeText(text.textContent).then(function () { cpMsg.textContent = 'コピーしました'; }, fallback);
+    } catch (e) { fallback(); }
+  });
+
+  var use = window.claude && window.claude.use;
+  var ready = use ? Promise.resolve(window.claude.use('downloads')).catch(function () { return null; }) : Promise.resolve(null);
+  ready.then(function (downloads) {
+    if (!downloads) {
+      dl.hidden = true;
+      dlMsg.textContent = 'この画面ではPDFを保存できません';
+      return;
+    }
+    dl.disabled = false;
+    dl.textContent = 'PDFを保存';
+    dl.addEventListener('click', function () {
+      var bin = atob(document.getElementById('pdf-b64').textContent.trim());
+      var bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      dlMsg.textContent = '';
+      downloads.save({ filename: '{{保存するファイル名}}.pdf', data: new Blob([bytes]) }).then(function () {
+        dlMsg.textContent = '保存しました';
+      }, function (e) {
+        var code = e && e.code;
+        dlMsg.textContent = code === 'declined' ? '保存を取り消しました'
+          : (code === 'rate_limited' ? '確認の画面が開いています。少し待ってからもう一度押してください' : '保存できませんでした');
+      });
+    });
+  });
+})();
+</script>

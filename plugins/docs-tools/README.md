@@ -1,6 +1,6 @@
 # docs-tools
 
-日本語で文書を作る作業を分担するためのエージェント 2 本と Skill 4 本。
+日本語で文書を作る作業を分担するためのエージェント 2 本と Skill 5 本。
 調査とレビューを読み取り専用のサブエージェントへ渡し、本体は判断と統合に専念する。送付文面は
 型どおりに作り、送る前に grep、`docs-tools:doc-review` による主語と述語の確認、通し読みの
 3つを組み合わせて検査する。
@@ -32,9 +32,13 @@ Skill は `/docs-tools:send-draft` のように名前空間つきで呼ぶ。エ
 | `skills/draft-precheck/scripts/precheck.sh` | 上記 grep の本体。`precheck.sh <ファイル>` で単体でも実行できる |
 | `skills/work-log/SKILL.md` | 当日の作業ログ `work-log-YYYYMMDD.md` の作成・追記。書式と定型の記録 |
 | `skills/codex-review/SKILL.md` | 成果物のクロスレビューを Codex CLI へ依頼する手順。ハングを避ける実行形 |
+| `skills/plan-visual-page/SKILL.md` | 計画書・手順書・方針の説明を、読み手がファイルを開かずに判断できる図のページ (claude.ai の Artifact) にする手順。共有用の PDF と投稿の本文をページに置く欄も作る |
+| `skills/plan-visual-page/reference/*` | 例のページ (`example.html`)、保存とコピーの欄の部品 (`share-box.html`)、PDF の書き出し (`export_pdf.py`) |
 
 `skills/codex-review` は Codex CLI (`codex`) を別途インストールした環境で使う。対象ファイルの内容を
 OpenAI のサービスへ送るため、利用者が明示して呼んだときだけ使い、機密を含む成果物には使わない。
+`skills/plan-visual-page` は、claude.ai の Artifact ツールが使える Claude Code で使う。共有用の PDF を書き出すときは、
+Python の playwright と Google Chrome が要る。
 ほかの Skill とエージェントは追加のコマンドを必要としない。
 
 harness-ja プラグインは任意の併用先。併用すると、送付文面の禁止語と内部表現は hook が編集時にも
