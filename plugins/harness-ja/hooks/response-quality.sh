@@ -352,7 +352,7 @@ if pat_on 7; then
     | grep -oE 'これにより|こうした|こういった|これら|それら|この|これ|それ|その' \
     | wc -l || true)
   if [[ ${demonstrative_count:-0} -ge 3 ]]; then
-    violations+=("指示語の多用: これ/それ/この/その等が ${demonstrative_count} 回。対象の名詞へ置き換える (Output Style「Concise JA」「指示語の置換確認」目安 2 回以下)")
+    violations+=("指示語の多用: これ/それ/この/その等が ${demonstrative_count} 回。指す対象を1件ずつ確かめ、意味と範囲が変わらないものだけ名詞へ置き換える (Output Style「Concise JA」「指示語の置換確認」目安 2 回以下)")
   fi
 fi
 
