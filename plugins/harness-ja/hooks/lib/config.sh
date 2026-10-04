@@ -133,28 +133,39 @@ harness_has_token() {
     END { exit(found ? 0 : 1) }'
 }
 
-# transcript の末尾から、依頼者の最後のテキスト入力を {uuid, text} の 1 行 JSON で返す
-# harness_last_user_entry <transcript> [末尾行数 (既定 2000)]
+# 依頼者のテキスト入力の判定 (jq の定義)。harness_last_user_entry と
+# harness_tool_uses_since_user が同じ定義を使う。
+#   user_text:     user 行の本文 (content が文字列ならそのまま、配列なら text を改行で連結)
+#   is_user_input: 依頼者が書いたテキスト入力の行なら true
 # 除外するもの:
 #   - ツール結果の行 (content 配列に tool_result を含む)
 #   - isMeta の行 (hook のフィードバック等、依頼者が書いていない user 行)
 #   - ローカルコマンドの記録 (<command-name> / <local-command-stdout> / <local-command-caveat>)
-# uuid は「同じ入力への差し戻し回数」の集計キーに使う。取れなければ空文字。
 # 行の判定は jq で行う。grep の文字列一致 ('"type":"user"') では、空白入りの JSON
 # ('"type": "user"') を user 行と認識できない。
+HARNESS_JQ_USER_INPUT='
+  def user_text:
+    if (.message.content|type)=="string" then .message.content
+    else ([.message.content[]? | select(.type=="text") | .text] | join("\n")) end;
+  def is_user_input:
+    .type=="user" and ((.isMeta // false) | not)
+    and ((.message.content|type)=="string"
+         or ((.message.content|type)=="array"
+             and ([.message.content[]? | select(.type=="tool_result")] | length)==0))
+    and (user_text | test("^\\s*<(command-name|local-command-stdout|local-command-caveat)") | not);
+'
+
+# transcript の末尾から、依頼者の最後のテキスト入力を {uuid, text} の 1 行 JSON で返す
+# harness_last_user_entry <transcript> [末尾行数 (既定 2000)]
+# 依頼者のテキスト入力の判定は HARNESS_JQ_USER_INPUT を参照。
+# uuid は「同じ入力への差し戻し回数」の集計キーに使う。取れなければ空文字。
 harness_last_user_entry() {
   local transcript="$1" tail_lines="${2:-2000}"
   [[ -f "$transcript" ]] || return 0
-  tail -n "$tail_lines" "$transcript" | jq -cR -n '
+  tail -n "$tail_lines" "$transcript" | jq -cR -n "$HARNESS_JQ_USER_INPUT"'
     [inputs | fromjson? // empty
-     | select(.type=="user" and ((.isMeta // false) | not))
-     | select((.message.content|type)=="string"
-              or ((.message.content|type)=="array"
-                  and ([.message.content[]? | select(.type=="tool_result")] | length)==0))
-     | {uuid: (.uuid // ""),
-        text: (if (.message.content|type)=="string" then .message.content
-               else ([.message.content[]? | select(.type=="text") | .text] | join("\n")) end)}
-     | select(.text | test("^\\s*<(command-name|local-command-stdout|local-command-caveat)") | not)]
+     | select(is_user_input)
+     | {uuid: (.uuid // ""), text: user_text}]
     | last // empty' 2>/dev/null || true
 }
 
@@ -162,4 +173,24 @@ harness_last_user_entry() {
 # 依頼者の最後のテキスト入力の本文だけを返す (harness_last_user_entry の薄い包み)
 harness_last_user_message() {
   harness_last_user_entry "$1" "${2:-2000}" | jq -r '.text // empty' 2>/dev/null || true
+}
+
+# harness_tool_uses_since_user <transcript> [末尾行数 (既定 2000)]
+# 依頼者の最後のテキスト入力より後ろにあるツール呼び出しを、{name, input, done} の
+# 1 行 JSON で順に返す。done は、エラーでない結果 (tool_result) が返っているとき true。
+# 同じ応答の中で並べて呼んだだけのツールは、結果が返るまで done が false になる。
+# 依頼者のテキスト入力の判定は HARNESS_JQ_USER_INPUT を参照 (harness_last_user_entry と
+# 同じ定義)。末尾行数の中に依頼者の入力が無ければ、末尾行数の全体を対象にする。
+harness_tool_uses_since_user() {
+  local transcript="$1" tail_lines="${2:-2000}"
+  [[ -f "$transcript" ]] || return 0
+  tail -n "$tail_lines" "$transcript" | jq -cR -n "$HARNESS_JQ_USER_INPUT"'
+    [inputs | fromjson? // empty] as $all
+    | ($all | map(is_user_input) | rindex(true)) as $i
+    | $all[(($i // -1)+1):] as $seg
+    | [$seg[] | select(.type=="user") | .message.content | select(type=="array") | .[]
+       | select(.type=="tool_result" and ((.is_error // false) | not)) | .tool_use_id] as $ok
+    | $seg[] | select(.type=="assistant") | .message.content[]? | select(.type=="tool_use")
+    | {name: (.name // ""), input: (.input // {}), done: (.id as $id | ($ok | index($id)) != null)}' \
+    2>/dev/null || true
 }

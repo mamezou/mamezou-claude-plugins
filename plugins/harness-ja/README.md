@@ -11,7 +11,7 @@
 2. `.claude/` 配下(設定・hook・rules・skills)の書き換えの停止。利用者の承認の文字列が必要
 3. 応答の文体検査。既定は4種類のみで、設定で増やせる
 
-送付文面の検査、必読資料の先読みの強制、インライン PowerShell の検査(任意)も行います。
+送付文面の検査、必読資料の先読みの強制、ツールの結果の検査、インライン PowerShell の検査(任意)も行います。
 条件は「hook の一覧」を参照してください。
 
 `.claude/harness.json` が無い間、hook は何もしません。まず `/harness-ja:harness-init` を
@@ -21,11 +21,11 @@
 
 | 種別 | 内容 |
 |---|---|
-| hooks(6本) | クラウド変更コマンドの停止、設定・規則ファイルの保護、応答の文体検査、送付文面の事前検査、必読資料の先読みの強制、インライン PowerShell の禁止 |
+| hooks(7本) | クラウド変更コマンドの停止、設定・規則ファイルの保護、応答の文体検査、送付文面の事前検査、必読資料の先読みの強制、ツールの結果の検査、インライン PowerShell の禁止 |
 | Output Style | `Concise JA`。簡潔な日本語応答と、返信文体の規則 |
 | rules テンプレート(2本) | 着手と承認、文章の書き方 |
 | Skills(2本) | `/harness-ja:harness-init`(初期設定)、`/harness-ja:harness-review`(検知ログのレビュー) |
-| tests | hook 6本の合成入力テスト。`bash tests/run.sh` |
+| tests | hook 7本の合成入力テスト。`bash tests/run.sh` |
 
 ## 用語
 
@@ -75,12 +75,13 @@
 | `harness-change-check.sh` | PreToolUse(Bash / Write / Edit / MultiEdit) | `.claude/` 配下(hooks / rules / skills / settings 等)の書き換えで、`[harness-go]` が無い。例外として、プラグイン配下からの `cp`、`mkdir`、`.claude/harness.json` の新規作成は初期設定のため通す | なし(承認の文字列がバイパスを兼ねる) |
 | `response-quality.sh` | Stop | 応答本文に文体違反(既定は4種類。下の表を参照) | `[hook-bypass: response-quality]` |
 | `draft-precheck.sh` | PreToolUse(Write / Edit / MultiEdit) | 送付文面に内部パス・ローカル拡張子・組版記号・外部 AI 言及・禁止語・長い識別子の繰り返し | `[hook-bypass: draft-precheck]` |
-| `require-reading.sh` | PreToolUse(Write / Edit / MultiEdit) | 必読資料を直近で Read せずに対象ファイルを編集 | `[hook-bypass: resource-reading]` |
+| `require-reading.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 必読資料を直近で Read せずに対象ファイルを編集。対応する読み取りのツールを呼ばずに、外部へ書き込むツールを呼び出し | `[hook-bypass: resource-reading]` |
+| `tool-result-check.sh` | PostToolUse(MCP のツール) | 止めない。ツールの結果に成立の印が無いとき、作成・更新が成立していないことを Claude へ知らせる | なし |
 | `no-inline-powershell.sh` | Stop | 5行以上の PowerShell をファイル化せずにコードブロックで提示(既定は無効) | なし |
 
-設定ファイルが見つからない場合、6本とも何もしません。設定ファイルはあるが JSON として
+設定ファイルが見つからない場合、7本とも何もしません。設定ファイルはあるが JSON として
 読めない場合、PreToolUse の4本は「設定ファイルが読めません: <パス>」を出してツールを止めます。
-Stop の2本は同じ文を出しますが、応答は止めません。
+Stop の2本と PostToolUse の1本は同じ文を出しますが、応答とツールは止めません。
 
 ## 応答の文体検査
 
@@ -133,11 +134,53 @@ Stop の2本は同じ文を出しますが、応答は止めません。
 | `draftPrecheck.targets[]` | 送付文面の置き場(bash の case パターン)。`excludePatterns[]`、`bannedTerms[]`、`honorific` |
 | `draftPrecheck.checks` | 検査項目ごとの on / off。`bannedTerms` / `internalPaths` / `extensions` / `typography` / `externalAi` / `honorific` / `longIdentifiers`(既定すべて true) |
 | `requireReading.rules[]` | 編集対象(`target`)と必読資料(`requiredReadPattern`)の対応表。`mode: "logs"` で作業ログの特例 |
+| `requireReading.toolRules[]` | 外部へ書き込むツール(`tool`)と、先に呼んでおく読み取りのツール(`requiredTool`)の対応表。`sameInput` に、値が等しいことを求める引数の組を書く。既定は空 |
+| `toolResultCheck.rules[]` | ツール(`tool`)と、結果にあるはずの成立の印(`successPattern`)の対応表。既定は空 |
 | `noInlinePowershell.enabled` | 既定は `false`。使う場合だけ `true` にする |
 | `noInlinePowershell.cwdMatch` | 指定すると、cwd がそのディレクトリ名を含むときだけ検査する(案件を限る用途) |
 
 hook は設定ファイルを `HARNESS_CONFIG` 環境変数、`$CLAUDE_PROJECT_DIR/.claude/harness.json`、
 hook 実行時の cwd から上へ辿った `.claude/harness.json` の順で探します。
+
+### MCP のツールの規則
+
+`requireReading.toolRules[]` と `toolResultCheck.rules[]` は、MCP のツール(名前が `mcp__` で
+始まるツール)に効きます。ツール名と引数名は利用側の設定に書き、プラグインは特定のサービスの
+名前を持ちません。`tool`、`requiredTool`、`successPattern` は正規表現です。
+
+次は、チャットの下書きを作るツールに使う例です。ツール名、引数名、結果の項目名は架空の
+ものです。接続している MCP サーバーのツールに合わせて書き換えてください。
+
+```json
+"requireReading": {
+  "toolRules": [
+    {
+      "tool": "__create_draft$",
+      "requiredTool": "__read_thread$",
+      "sameInput": { "room_id": "room_id", "reply_to": "thread_id" },
+      "hint": "送付先のスレッド"
+    }
+  ]
+},
+"toolResultCheck": {
+  "rules": [
+    {
+      "tool": "__create_draft$",
+      "successPattern": "\"created_id\":\\s*\"[0-9A-Za-z]+\"",
+      "hint": "下書きの ID"
+    }
+  ]
+}
+```
+
+- `toolRules` は、下書きを作る前に、同じスレッドを読んで結果を受け取っていることを求めます。
+  `sameInput` の左が書き込むツールの引数名、右が読み取りのツールの引数名です。左の引数が
+  呼び出しに無いとき(スレッドの指定が無い下書き)は、その規則を使いません
+- 読み取りは、利用者の入力ごとに要ります。前の入力のときに読んだ内容は数えません
+- `toolResultCheck` は、結果に下書きの ID が無いとき、作成が成立していないことを Claude へ
+  知らせます。ツールは実行済みのため、止めることはしません
+- `successPattern` の `\\s*` は、結果の JSON がコロンの後に空白を入れる場合に備えたものです
+- `requiredTool` や `successPattern` の無い規則は使わず、次の規則を見ます
 
 ## rules テンプレートについて
 
@@ -180,7 +223,7 @@ Skill は集計を読んだ上で、`harness.json` の変更前後と規則の�
 bash tests/run.sh
 ```
 
-hook 6本に合成の会話履歴 JSONL と入力 JSON を与え、差し戻し(終了コード2)と通過
+hook 7本に合成の会話履歴 JSONL と入力 JSON を与え、差し戻し(終了コード2)と通過
 (終了コード0)、承認の文字列、バイパスの文字列、設定なし、設定の壊れ、差し戻し回数の
 上限、検知ログの UTF-8 を確認します。hook や辞書を変えたら実行してください。
 

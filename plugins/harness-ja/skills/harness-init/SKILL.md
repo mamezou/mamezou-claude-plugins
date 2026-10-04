@@ -38,6 +38,8 @@ cp -n "${CLAUDE_PLUGIN_ROOT}"/rules-templates/*.md .claude/rules/
    - `responseQuality.patterns`: 応答の文体検査で実行するパターン番号(既定 `[3, 4, 8, 19]`)
    - `draftPrecheck.targets[]`: 送付文面の置き場(bash の case パターン)。`bannedTerms[]` に案件の禁止語
    - `requireReading.rules[]`: 編集前に必読とする資料の対応表
+   - `requireReading.toolRules[]`: 外部へ書き込む MCP のツールの前に呼んでおく、読み取りのツールの対応表(既定は空)
+   - `toolResultCheck.rules[]`: MCP のツールの結果にあるはずの成立の印の対応表(既定は空)
    - 使わない機能は `"enabled": false` で止める
 6. Output Style を使う場合は `/config` から「Concise JA」を選ぶよう案内する。
 7. 週次のレビューは `/harness-ja:harness-review` で行うことを案内する。

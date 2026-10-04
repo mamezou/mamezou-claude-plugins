@@ -1,25 +1,41 @@
 #!/bin/bash
 # クリティカルファイルの編集前に関連資料の Read を強制する hook
 # (PreToolUse, matcher=Write|Edit|MultiEdit)
+# 外部へ書き込むツールの前に、対応する読み取りのツールを強制する hook
+# (PreToolUse, matcher=mcp__.*)
 #
-# 発火条件:
+# 発火条件 (ファイルの編集):
 #   - 編集対象のパスが requireReading.rules[] の target (bash の case パターン) に一致
 #     配列順に照合し、最初に一致した要素を使う
 #   - cwd には依存しない (リポジトリルート起動のセッションでも発火する)
 #
-# 通過条件:
+# 通過条件 (ファイルの編集):
 #   - 通常: requiredReadPattern に一致する資料を直近 200 行の transcript で Read
 #   - mode="logs" の既存ファイル編集: そのファイル自身の Read。判定は cwd 基準で
 #     正規化した絶対パスの一致で行う (同名の別ファイルの Read では通さない)
 #   - mode="logs" の新規作成: requiredReadPattern に一致する任意のファイルの Read
 #
+# 発火条件 (ツール):
+#   - ツール名が requireReading.toolRules[] の tool (正規表現) に一致し、sameInput の
+#     左側の引数がすべて呼び出しにある。配列順に照合し、最初に当てはまった要素を使う
+#     (例: スレッドの指定が無い呼び出しは、スレッドを読ませる規則の対象にならない)。
+#     requiredTool の無い要素は飛ばす
+#
+# 通過条件 (ツール):
+#   - 依頼者の最後のテキスト入力より後に、名前が requiredTool (正規表現) に一致する
+#     ツールを呼び、エラーでない結果を受け取っている
+#   - sameInput の各組で、呼び出しの引数 (左) と、読み取りの引数 (右) の値が等しい
+#   - 読み取りは依頼者の入力ごとに要る。前の入力のときに読んだ内容は、その後に
+#     書き換わっていることがあるため数えない
+#
 # バイパス:
 #   - 依頼者の最後のテキスト入力に [hook-bypass: resource-reading] がそれだけの行としてある
 #
 # 設定 (.claude/harness.json):
-#   requireReading.enabled  false で無効化
-#   requireReading.rules[]  target / requiredReadPattern / hint / mode
-#   設定ファイルが無い、または rules が空なら何もしない
+#   requireReading.enabled      false で無効化
+#   requireReading.rules[]      target / requiredReadPattern / hint / mode
+#   requireReading.toolRules[]  tool / requiredTool / sameInput / hint
+#   設定ファイルが無い、または rules と toolRules がどちらも空なら何もしない
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/config.sh"
@@ -33,6 +49,101 @@ if ! cfg_enabled '.requireReading'; then
 fi
 
 rule_count=$(cfg '.requireReading.rules | length' '0')
+tool_rule_count=$(cfg '.requireReading.toolRules | length' '0')
+if [[ "${rule_count:-0}" -eq 0 && "${tool_rule_count:-0}" -eq 0 ]]; then
+  exit 0
+fi
+
+# 0) ツールの規則 (ファイルの編集以外のツール)
+#    当てはまる規則が無ければ通す。当てはまれば、対応する読み取りの有無で通すか止める。
+check_tool_rules() {
+  local rule pat want="" required_re="" hint="" transcript last_user_msg hit want_text re_rc
+
+  while IFS= read -r rule; do
+    [[ -z "$rule" ]] && continue
+    pat=$(printf '%s' "$rule" | jq -r '.tool // empty')
+    [[ -z "$pat" ]] && continue
+    jq -en --arg n "$tool_name" --arg re "$pat" '$n | test($re)' >/dev/null 2>&1 || continue
+    # 読み取りの側で一致を求める引数 {読み取りの引数名: 値}。
+    # sameInput の左側の引数が呼び出しに 1 つでも無ければ、この規則は使わない
+    want=$(printf '%s' "$input" | jq -c --argjson rule "$rule" '
+      (.tool_input // {}) as $in
+      | [($rule.sameInput // {}) | to_entries[]
+         | {key: .value, value: (($in[.key] // "") | tostring)}]
+      | if any(.[]; .value == "") then empty else from_entries end' 2>/dev/null || true)
+    [[ -z "$want" ]] && continue
+    # requiredTool の無い規則は使わず、次の規則を見る
+    required_re=$(printf '%s' "$rule" | jq -r '.requiredTool // empty')
+    [[ -z "$required_re" ]] && continue
+    hint=$(printf '%s' "$rule" | jq -r '.hint // empty')
+    break
+  done < <(cfg_list '.requireReading.toolRules[]? | @json')
+
+  [[ -n "$required_re" ]] || return 0
+  [[ -n "$hint" ]] || hint="対象"
+
+  # requiredTool が正規表現として読めないと、どの読み取りにも一致せず、常に止まる。
+  # 原因が分かるように、設定の誤りとして知らせて止める (jq の終了コード 0 / 1 は式として有効)
+  re_rc=0
+  jq -en --arg re "$required_re" '"" | test($re)' >/dev/null 2>&1 || re_rc=$?
+  if [[ "$re_rc" -gt 1 ]]; then
+    cat >&2 <<MSG
+[必読資料の未読]
+設定 requireReading.toolRules の requiredTool が正規表現として読めません: ${required_re}
+設定を直すまで、${tool_name} の前に ${hint} を読んだかを確かめられません。
+MSG
+    exit 2
+  fi
+
+  transcript=$(printf '%s' "$input" | jq -r '.transcript_path // empty')
+  if [[ -z "$transcript" || ! -f "$transcript" ]]; then
+    cat >&2 <<MSG
+[必読資料の未読]
+transcript が取得できないため、${hint} を読んだかを確認できません。
+${hint} を読んでから ${tool_name} を呼び出してください。
+MSG
+    exit 2
+  fi
+
+  last_user_msg=$(harness_last_user_message "$transcript")
+  if harness_has_token "$last_user_msg" '[hook-bypass: resource-reading]'; then
+    return 0
+  fi
+
+  hit=$(harness_tool_uses_since_user "$transcript" \
+    | jq -c --arg re "$required_re" --argjson want "$want" '
+        select(.done and (.name | test($re)))
+        | . as $u
+        | select([$want | to_entries[] | (($u.input[.key] // "") | tostring) == .value] | all)' \
+        2>/dev/null | head -1 || true)
+  if [[ -n "$hit" ]]; then
+    return 0
+  fi
+
+  want_text=$(printf '%s' "$want" | jq -r 'to_entries | map("\(.key)=\(.value)") | join(", ")' 2>/dev/null || true)
+  cat >&2 <<MSG
+[必読資料の未読]
+${tool_name} を呼ぼうとしていますが、依頼者の最後の入力より後に ${hint} を読んでいません。
+
+通す条件: 名前が ${required_re} に一致するツールを先に呼び、結果を受け取っていること
+読み取りの引数: ${want_text:-指定なし}
+
+対象を読み、内容を踏まえてから再度呼び出してください。
+緊急時のみ [hook-bypass: resource-reading] だけの行で回避できます。
+MSG
+  exit 2
+}
+
+tool_name=$(printf '%s' "$input" | jq -r '.tool_name // empty')
+case "$tool_name" in
+  ""|Write|Edit|MultiEdit) : ;;
+  *)
+    if [[ "${tool_rule_count:-0}" -gt 0 ]]; then
+      check_tool_rules
+    fi
+    exit 0
+    ;;
+esac
 if [[ "${rule_count:-0}" -eq 0 ]]; then
   exit 0
 fi

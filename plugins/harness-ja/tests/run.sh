@@ -1,6 +1,6 @@
 #!/bin/bash
 # harness-ja の hook 合成テスト。
-# 一時ディレクトリへ合成の会話履歴 JSONL / hook 入力 / 設定ファイルを作り、6 本の hook を
+# 一時ディレクトリへ合成の会話履歴 JSONL / hook 入力 / 設定ファイルを作り、7 本の hook を
 # 期待値つきで実行する。末尾に PASS / FAIL 件数を出し、FAIL が 1 件でもあれば exit 1。
 #
 # 使い方: bash tests/run.sh   (リポジトリ内のどのディレクトリからでも実行できる)
@@ -20,7 +20,7 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 1
 fi
 for f in cloud-change-check.sh draft-precheck.sh harness-change-check.sh no-inline-powershell.sh \
-         require-reading.sh response-quality.sh; do
+         require-reading.sh response-quality.sh tool-result-check.sh; do
   if [[ ! -f "$H/$f" ]]; then
     echo "hook が見つかりません: $H/$f" >&2
     exit 1
@@ -123,6 +123,24 @@ cat > "$CFG" <<'JSON'
         "requiredReadPattern": "(^|/)docs/logs/.*\\.md$",
         "hint": "docs/logs/"
       }
+    ],
+    "toolRules": [
+      {
+        "tool": "__create_draft$",
+        "requiredTool": "__read_thread$",
+        "sameInput": { "room_id": "room_id", "reply_to": "thread_id" },
+        "hint": "送付先のスレッド"
+      }
+    ]
+  },
+  "toolResultCheck": {
+    "enabled": true,
+    "rules": [
+      {
+        "tool": "__create_draft$",
+        "successPattern": "\"created_id\":\\s*\"X[0-9A-Z]+\"",
+        "hint": "下書きの ID"
+      }
     ]
   },
   "noInlinePowershell": {
@@ -141,6 +159,20 @@ jq '.noInlinePowershell.cwdMatch="project-a"' "$CFG" > "$PROJ/.claude/harness-ps
 jq '.harnessChange.enabled=false'      "$CFG" > "$PROJ/.claude/harness-hgoff.json"
 jq '.responseQuality.patterns=[5,18]'  "$CFG" > "$PROJ/.claude/harness-p518.json"
 jq '.draftPrecheck.checks={"internalPaths":false}' "$CFG" > "$PROJ/.claude/harness-dpoff.json"
+jq '.toolResultCheck.enabled=false'    "$CFG" > "$PROJ/.claude/harness-tcoff.json"
+jq '.requireReading.enabled=false'     "$CFG" > "$PROJ/.claude/harness-rroff.json"
+# 2 つ目の規則: スレッドの指定が無い下書きには、部屋の読み取りを求める
+jq '.requireReading.toolRules += [{"tool":"__create_draft$","requiredTool":"__read_room$","sameInput":{"room_id":"room_id"},"hint":"送付先の部屋"}]' \
+  "$CFG" > "$PROJ/.claude/harness-tl2.json"
+# 先頭に、requiredTool / successPattern の無い規則を置く (飛ばして次の規則を使う)
+jq '.requireReading.toolRules = [{"tool":"__create_draft$","hint":"書きかけの規則"}] + .requireReading.toolRules
+    | .toolResultCheck.rules = [{"tool":"__create_draft$","hint":"書きかけの規則"}] + .toolResultCheck.rules' \
+  "$CFG" > "$PROJ/.claude/harness-tlskip.json"
+jq '.requireReading.toolRules[0].requiredTool="("' "$CFG" > "$PROJ/.claude/harness-tlbadre.json"
+RROFF="$PROJ/.claude/harness-rroff.json"
+TL2="$PROJ/.claude/harness-tl2.json"
+TLSKIP="$PROJ/.claude/harness-tlskip.json"
+TLBADRE="$PROJ/.claude/harness-tlbadre.json"
 P518="$PROJ/.claude/harness-p518.json"
 DPOFF="$PROJ/.claude/harness-dpoff.json"
 touch "$PROJ/TODO.md" "$RUNBOOK"
@@ -154,6 +186,11 @@ mk_asst()    { jq -cn --arg t "$1" '{type:"assistant",message:{role:"assistant",
 mk_read()    { jq -cn --arg p "$1" '{type:"assistant",message:{role:"assistant",content:[{type:"tool_use",name:"Read",input:{file_path:$p}}]}}'; }
 mk_write()   { jq -cn --arg p "$1" '{type:"assistant",message:{role:"assistant",content:[{type:"tool_use",name:"Write",input:{file_path:$p}}]}}'; }
 mk_toolres() { jq -cn '{type:"user",message:{role:"user",content:[{type:"tool_result",tool_use_id:"t1",content:"ok"}]}}'; }
+# ツール呼び出しと、呼び出しの ID に対応する結果 (第 2 引数 true でエラーの結果)
+mk_tool()    { jq -cn --arg id "$1" --arg n "$2" --argjson in "$3" '{type:"assistant",message:{role:"assistant",content:[{type:"tool_use",id:$id,name:$n,input:$in}]}}'; }
+mk_toolres_id() { jq -cn --arg id "$1" --argjson err "${2:-false}" '{type:"user",message:{role:"user",content:[{type:"tool_result",tool_use_id:$id,is_error:$err,content:"ok"}]}}'; }
+# hook のフィードバック等、依頼者が書いていない user 行
+mk_user_meta() { jq -cn --arg t "$1" '{type:"user",isMeta:true,message:{role:"user",content:$t}}'; }
 # キーの後ろに空白のある JSON (jq -c では作れないため直接組み立てる)
 mk_user_spaced() { printf '{"type": "user", "uuid": "%s", "message": {"role": "user", "content": "%s"}}\n' "$2" "$1"; }
 mk_asst_spaced() {
@@ -215,6 +252,21 @@ mk_asst_spaced() {
 { mk_user "ログを追記して";  mk_read "$WORKLOG"; }      > "$TR/rr-logread.jsonl"
 { mk_user "ログを追記して";  mk_read "$ALT_WORKLOG"; }  > "$TR/rr-logalt.jsonl"
 
+# require-reading のツールの規則用 (下書きのツールの前に、同じスレッドの読み取りを求める)
+TL_READ='{"room_id":"R1","thread_id":"111.222"}'
+TL_OTHER='{"room_id":"R1","thread_id":"999.000"}'
+{ mk_user "下書きを作って"; mk_toolres; } > "$TR/tl-noread.jsonl"
+{ mk_user "下書きを作って"; mk_tool r1 mcp__chat__read_thread "$TL_READ";  mk_toolres_id r1; }      > "$TR/tl-read.jsonl"
+{ mk_user "下書きを作って"; mk_tool r1 mcp__chat__read_thread "$TL_OTHER"; mk_toolres_id r1; }      > "$TR/tl-other.jsonl"
+{ mk_user "下書きを作って"; mk_tool r1 mcp__chat__read_thread "$TL_READ"; }                         > "$TR/tl-noresult.jsonl"
+{ mk_user "下書きを作って"; mk_tool r1 mcp__chat__read_thread "$TL_READ";  mk_toolres_id r1 true; } > "$TR/tl-error.jsonl"
+{ mk_user "スレッドを読んで"; mk_tool r1 mcp__chat__read_thread "$TL_READ"; mk_toolres_id r1
+  mk_asst "スレッドを読んだ。"; mk_user "下書きを作って"; } > "$TR/tl-stale.jsonl"
+{ mk_user "$(printf '下書きを作って\n[hook-bypass: resource-reading]')"; mk_toolres; } > "$TR/tl-bypass.jsonl"
+# 読み取りの後に hook のフィードバック行 (isMeta) が入っても、読み取りは数える
+{ mk_user "下書きを作って"; mk_tool r1 mcp__chat__read_thread "$TL_READ"; mk_toolres_id r1
+  mk_user_meta "Stop hook feedback: 応答を作り直してください"; } > "$TR/tl-meta.jsonl"
+
 # no-inline-powershell 用 (6 行の powershell ブロック)
 ps_text=$(printf '確認スクリプトです。\n```powershell\n$a = 1\n$b = 2\n$c = 3\n$d = 4\n$e = 5\n$f = 6\n```\n')
 { mk_user "確認方法を教えて"; mk_asst "$ps_text"; } > "$TR/ps-block.jsonl"
@@ -239,6 +291,15 @@ write_input() { # write_input <transcript> <cwd> <file_path> <content>
 edit_input() { # edit_input <transcript> <cwd> <file_path> <new_string>
   jq -cn --arg tr "$1" --arg cwd "$2" --arg p "$3" --arg n "$4" \
     '{tool_name:"Edit",tool_input:{file_path:$p,old_string:"a",new_string:$n},transcript_path:$tr,cwd:$cwd}'
+}
+
+mcp_input() { # mcp_input <transcript> <cwd> <tool_name> <tool_input の JSON>
+  jq -cn --arg tr "$1" --arg cwd "$2" --arg n "$3" --argjson in "$4" \
+    '{tool_name:$n,tool_input:$in,transcript_path:$tr,cwd:$cwd}'
+}
+post_input() { # post_input <cwd> <tool_name> <tool_response の JSON>
+  jq -cn --arg cwd "$1" --arg n "$2" --argjson res "$3" \
+    '{hook_event_name:"PostToolUse",tool_name:$n,tool_input:{},tool_response:$res,cwd:$cwd}'
 }
 
 # response-quality
@@ -312,6 +373,33 @@ write_input "$TR/rr-noread.jsonl"  "$PROJ"   "$WORKLOG"        "# ログ" > "$IN
 edit_input  "$TR/rr-noread.jsonl"  "$PROJ"   "$WORKLOG"        "b"      > "$IN/rr-logedit.json"
 edit_input  "$TR/rr-logread.jsonl" "$PROJ"   "$WORKLOG"        "b"      > "$IN/rr-logedit2.json"
 edit_input  "$TR/rr-logalt.jsonl"  "$PROJ"   "$WORKLOG"        "b"      > "$IN/rr-logalt.json"
+
+# require-reading のツールの規則
+TL_DRAFT='{"room_id":"R1","reply_to":"111.222","message":"本文"}'
+TL_TOP='{"room_id":"R1","message":"本文"}'
+for n in noread read other noresult error stale bypass meta; do
+  mcp_input "$TR/tl-$n.jsonl" "$PROJ" mcp__chat__create_draft "$TL_DRAFT" > "$IN/tl-$n.json"
+done
+mcp_input "$TR/tl-noread.jsonl" "$PROJ"   mcp__chat__create_draft "$TL_TOP"   > "$IN/tl-top.json"
+mcp_input "$TR/tl-noread.jsonl" "$PROJ"   mcp__chat__read_thread  "$TL_READ"  > "$IN/tl-nontarget.json"
+mcp_input "$TR/tl-noread.jsonl" "$NOCONF" mcp__chat__create_draft "$TL_DRAFT" > "$IN/tl-noconf.json"
+mcp_input "$TR/none.jsonl"      "$PROJ"   mcp__chat__create_draft "$TL_DRAFT" > "$IN/tl-notr.json"
+
+# tool-result-check (結果がテキストの配列の場合と、オブジェクトの場合)
+tc_noid_text='{"link":"https://chat.example.com/R1","result":"created"}'
+tc_id_text='{"link":"https://chat.example.com/R1","created_id":"X0ABC123","result":"created"}'
+tc_id_spaced='{"link": "https://chat.example.com/R1", "created_id": "X0ABC123", "result": "created"}'
+tc_noid_blocks=$(jq -cn --arg t "$tc_noid_text" '[{type:"text",text:$t}]')
+tc_id_blocks=$(jq -cn --arg t "$tc_id_text" '[{type:"text",text:$t}]')
+tc_id_spaced_blocks=$(jq -cn --arg t "$tc_id_spaced" '[{type:"text",text:$t}]')
+post_input "$PROJ"   mcp__chat__create_draft "$tc_noid_blocks"      > "$IN/tc-noid.json"
+post_input "$PROJ"   mcp__chat__create_draft "$tc_id_blocks"        > "$IN/tc-id.json"
+post_input "$PROJ"   mcp__chat__create_draft "$tc_id_spaced_blocks" > "$IN/tc-spaced.json"
+post_input "$PROJ"   mcp__chat__create_draft "$tc_id_text"          > "$IN/tc-obj.json"
+post_input "$PROJ"   mcp__chat__create_draft "$tc_noid_text"        > "$IN/tc-objnoid.json"
+post_input "$PROJ"   mcp__chat__read_thread  "$tc_noid_blocks"      > "$IN/tc-nontarget.json"
+post_input "$NOCONF" mcp__chat__create_draft "$tc_noid_blocks"      > "$IN/tc-noconf.json"
+jq -c 'del(.tool_response)' "$IN/tc-id.json"                        > "$IN/tc-nores.json"
 
 # no-inline-powershell
 stop_input "$TR/ps-block.jsonl"  "$PROJ"   false > "$IN/ps-block.json"
@@ -478,6 +566,38 @@ run "RR-7 logs 既存編集 + 自ファイル Read あり -> pass" 0 require-rea
 run "RR-8 同名ログの別パスを Read しただけ -> block" 2 require-reading.sh "$CFG" "$IN/rr-logalt.json" "既存ログファイル"
 
 echo
+echo "== require-reading (ツールの規則) =="
+run "RT-1 スレッドを読まずに下書きのツール -> block" 2 require-reading.sh "$CFG" "$IN/tl-noread.json" "送付先のスレッド を読んでいません"
+run "RT-2 同じスレッドを読み、結果を受け取った -> pass" 0 require-reading.sh "$CFG" "$IN/tl-read.json"
+run "RT-3 別のスレッドを読んだだけ -> block" 2 require-reading.sh "$CFG" "$IN/tl-other.json" "thread_id=111.222"
+run "RT-4 読み取りの結果がまだ返っていない -> block" 2 require-reading.sh "$CFG" "$IN/tl-noresult.json" "送付先のスレッド"
+run "RT-5 読み取りがエラーで終わった -> block" 2 require-reading.sh "$CFG" "$IN/tl-error.json" "送付先のスレッド"
+run "RT-6 読んだのが依頼者の最後の入力より前 -> block" 2 require-reading.sh "$CFG" "$IN/tl-stale.json" "送付先のスレッド"
+run "RT-7 スレッドの指定が無い呼び出しは対象外 -> pass" 0 require-reading.sh "$CFG" "$IN/tl-top.json"
+run "RT-8 規則に無いツール -> pass" 0 require-reading.sh "$CFG" "$IN/tl-nontarget.json"
+run "RT-9 バイパスの文字列だけの行 -> pass" 0 require-reading.sh "$CFG" "$IN/tl-bypass.json"
+run "RT-10 toolRules が空の設定 (examples) -> pass" 0 require-reading.sh "$EX" "$IN/tl-noread.json"
+run "RT-11 読み取りの後に isMeta の行 -> pass" 0 require-reading.sh "$CFG" "$IN/tl-meta.json"
+run "RT-12 requireReading.enabled:false -> pass" 0 require-reading.sh "$RROFF" "$IN/tl-noread.json"
+run "RT-13 先頭の規則が対象外で、次の規則が当たる -> block" 2 require-reading.sh "$TL2" "$IN/tl-top.json" "送付先の部屋 を読んでいません"
+run "RT-14 requiredTool の無い規則を飛ばす -> block" 2 require-reading.sh "$TLSKIP" "$IN/tl-noread.json" "送付先のスレッド を読んでいません"
+run "RT-15 requiredTool が正規表現として読めない -> block" 2 require-reading.sh "$TLBADRE" "$IN/tl-read.json" "正規表現として読めません"
+run "RT-16 transcript が無い -> block" 2 require-reading.sh "$CFG" "$IN/tl-notr.json" "transcript が取得できない"
+
+echo
+echo "== tool-result-check =="
+run "TC-1 結果のテキストに下書きの ID がない -> 通知" 2 tool-result-check.sh "$CFG" "$IN/tc-noid.json" "下書きの ID がありません"
+run "TC-2 結果のテキストに下書きの ID がある -> pass" 0 tool-result-check.sh "$CFG" "$IN/tc-id.json"
+run "TC-3 結果がオブジェクトで ID がある -> pass" 0 tool-result-check.sh "$CFG" "$IN/tc-obj.json"
+run "TC-4 結果がオブジェクトで ID がない -> 通知" 2 tool-result-check.sh "$CFG" "$IN/tc-objnoid.json" "成立していないものとして"
+run "TC-5 規則に無いツール -> pass" 0 tool-result-check.sh "$CFG" "$IN/tc-nontarget.json"
+run "TC-6 enabled:false -> pass" 0 tool-result-check.sh "$PROJ/.claude/harness-tcoff.json" "$IN/tc-noid.json"
+run "TC-7 rules が空の設定 (examples) -> pass" 0 tool-result-check.sh "$EX" "$IN/tc-noid.json"
+run "TC-8 コロンの後に空白のある結果に ID がある -> pass" 0 tool-result-check.sh "$CFG" "$IN/tc-spaced.json"
+run "TC-9 successPattern の無い規則を飛ばす -> 通知" 2 tool-result-check.sh "$TLSKIP" "$IN/tc-noid.json" "下書きの ID がありません"
+run "TC-10 入力に tool_response が無い -> 通知" 2 tool-result-check.sh "$CFG" "$IN/tc-nores.json" "下書きの ID がありません"
+
+echo
 echo "== no-inline-powershell =="
 run "PS-1 6 行の powershell ブロック -> block" 2 no-inline-powershell.sh "$CFG" "$IN/ps-block.json" "scripts/{category}/*.ps1"
 run "PS-2 空白入り JSON でも検知 -> block" 2 no-inline-powershell.sh "$CFG" "$IN/ps-spaced.json" "scripts/{category}/*.ps1"
@@ -494,6 +614,8 @@ run "NC-3 cloud-change-check -> pass" 0 cloud-change-check.sh "$NOCFG" "$IN/cg-n
 run "NC-4 harness-change-check -> pass" 0 harness-change-check.sh "$NOCFG" "$IN/hg-noconf.json"
 run "NC-5 draft-precheck -> pass" 0 draft-precheck.sh "$NOCFG" "$IN/dp-noconf.json"
 run "NC-6 require-reading -> pass" 0 require-reading.sh "$NOCFG" "$IN/rr-noconf.json"
+run "NC-7 require-reading (ツールの規則) -> pass" 0 require-reading.sh "$NOCFG" "$IN/tl-noconf.json"
+run "NC-8 tool-result-check -> pass" 0 tool-result-check.sh "$NOCFG" "$IN/tc-noconf.json"
 
 echo
 echo "== 設定ファイルが JSON として読めない =="
@@ -503,6 +625,8 @@ run "BC-3 PreToolUse (draft-precheck) -> block" 2 draft-precheck.sh "$BROKEN" "$
 run "BC-4 PreToolUse (require-reading) -> block" 2 require-reading.sh "$BROKEN" "$IN/rr-noread.json" "設定ファイルが読めません"
 run "BC-5 Stop (response-quality) -> pass + 通知" 0 response-quality.sh "$BROKEN" "$IN/rq-p8.json" "設定ファイルが読めません"
 run "BC-6 Stop (no-inline-powershell) -> pass + 通知" 0 no-inline-powershell.sh "$BROKEN" "$IN/ps-block.json" "設定ファイルが読めません"
+run "BC-7 PreToolUse (require-reading のツールの規則) -> block" 2 require-reading.sh "$BROKEN" "$IN/tl-noread.json" "設定ファイルが読めません"
+run "BC-8 PostToolUse (tool-result-check) -> pass + 通知" 0 tool-result-check.sh "$BROKEN" "$IN/tc-noid.json" "設定ファイルが読めません"
 
 echo
 echo "PASS ${pass} / FAIL ${fail}"

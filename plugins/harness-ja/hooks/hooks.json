@@ -1,5 +1,5 @@
 {
-  "description": "harness-ja: 応答の文体検査 (Stop)、クラウド変更コマンドの停止と設定・規則ファイルの保護 (PreToolUse Bash)、送付文面の事前検査・必読資料の先読みの強制・設定・規則ファイルの保護 (PreToolUse Write|Edit|MultiEdit)",
+  "description": "harness-ja: 応答の文体検査 (Stop)、クラウド変更コマンドの停止と設定・規則ファイルの保護 (PreToolUse Bash)、送付文面の事前検査・必読資料の先読みの強制・設定・規則ファイルの保護 (PreToolUse Write|Edit|MultiEdit)、外部へ書き込むツールの前の読み取りの強制 (PreToolUse mcp__.*)、ツールの結果の検査 (PostToolUse mcp__.*)",
   "hooks": {
     "PreToolUse": [
       {
@@ -29,6 +29,26 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/harness-change-check.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/require-reading.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/tool-result-check.sh\""
           }
         ]
       }

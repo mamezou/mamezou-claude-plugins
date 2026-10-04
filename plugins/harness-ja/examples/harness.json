@@ -78,7 +78,12 @@
         "requiredReadPattern": "(^|/)project-a/docs/logs/.*\\.md$",
         "hint": "docs/logs/"
       }
-    ]
+    ],
+    "toolRules": []
+  },
+  "toolResultCheck": {
+    "enabled": true,
+    "rules": []
   },
   "noInlinePowershell": {
     "enabled": false,
