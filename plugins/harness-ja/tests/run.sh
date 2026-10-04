@@ -425,7 +425,9 @@ run() { # run <名前> <期待 exit> <hook> <config> <input> [期待メッセー
   err=$(env -u CLAUDE_PROJECT_DIR HARNESS_CONFIG="$cfg" bash "$H/$hook" < "$inp" 2>&1 >/dev/null) || rc=$?
   v=PASS
   [[ "$rc" == "$exp" ]] || v=FAIL
-  if [[ -n "$want" ]] && ! printf '%s' "$err" | grep -qF -- "$want"; then v=FAIL; fi
+  # パイプ (printf | grep -q) は使わない。pipefail の下では、grep が先に閉じると printf が
+  # 失敗し、文言が出ていても不一致と判定することがある
+  if [[ -n "$want" && "$err" != *"$want"* ]]; then v=FAIL; fi
   verdict "$name" "$exp" "$rc" "$v"
   if [[ "$v" == FAIL && -n "$err" ]]; then printf '%s\n' "$err" | head -6 | sed 's/^/      /'; fi
 }
