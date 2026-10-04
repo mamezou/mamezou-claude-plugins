@@ -75,7 +75,7 @@ done < <(cfg_list '.draftPrecheck.targets[]?')
 # 除外パターン (内部用・送信済み等) はここで抜ける
 while IFS= read -r ex; do
   [[ -z "$ex" ]] && continue
-  if printf '%s' "$file_path" | grep -qF -- "$ex"; then
+  if grep -qF -- "$ex" <<< "$file_path"; then
     exit 0
   fi
 done < <(cfg_list '.draftPrecheck.excludePatterns[]?')
@@ -112,7 +112,7 @@ url_re='https?://'
 if check_on bannedTerms; then
   while IFS= read -r term; do
     [[ -z "$term" ]] && continue
-    if printf '%s' "$content" | grep -qF -- "$term"; then
+    if grep -qF -- "$term" <<< "$content"; then
       matched=$(printf '%s' "$content" | grep -nF -- "$term" | head -3)
       hits="${hits}  - 禁止語「${term}」検出:"$'\n'"${matched}"$'\n'
     fi
@@ -137,7 +137,7 @@ fi
 # 3) ローカルファイル拡張子の素出し (.md / .ps1 / .drawio / .kql)
 if check_on extensions; then
   local_ext='\.(md|ps1|drawio|kql)([[:space:]]|$|[、。)）」])'
-  if printf '%s' "$content" | grep -qE "$local_ext"; then
+  if grep -qE "$local_ext" <<< "$content"; then
     matched=$(printf '%s' "$content" | grep -nE "$local_ext" | head -3)
     hits="${hits}  - ローカルファイル拡張子検出:"$'\n'"${matched}"$'\n'
   fi
@@ -146,7 +146,7 @@ fi
 # 4) 組版記号 § ¶ ‡ †
 if check_on typography; then
   typo_marks='(§|¶|‡|†)'
-  if printf '%s' "$content" | grep -qE "$typo_marks"; then
+  if grep -qE "$typo_marks" <<< "$content"; then
     matched=$(printf '%s' "$content" | grep -nE "$typo_marks" | head -3)
     hits="${hits}  - 組版記号検出:"$'\n'"${matched}"$'\n'
   fi
@@ -158,7 +158,7 @@ if check_on honorific; then
   hon_suffix=$(cfg '.draftPrecheck.honorific.suffix' '様')
   if [[ -n "$hon_name" && -n "$hon_suffix" ]]; then
     hon_re="^#.*${hon_name}([^${hon_suffix}]|$)"
-    if printf '%s' "$content" | grep -qE -- "$hon_re"; then
+    if grep -qE -- "$hon_re" <<< "$content"; then
       matched=$(printf '%s' "$content" | grep -nE -- "$hon_re" | head -3)
       hits="${hits}  - 見出しに「${hon_name}${hon_suffix}」未付与の可能性:"$'\n'"${matched}"$'\n'
     fi
@@ -168,7 +168,7 @@ fi
 # 6) 外部 AI ツール言及
 if check_on externalAi; then
   external_ai='(Codex|ChatGPT|Gemini|Copilot)'
-  if printf '%s' "$content" | grep -qE "$external_ai"; then
+  if grep -qE "$external_ai" <<< "$content"; then
     matched=$(printf '%s' "$content" | grep -nE "$external_ai" | head -3)
     hits="${hits}  - 外部 AI ツール言及検出:"$'\n'"${matched}"$'\n'
   fi

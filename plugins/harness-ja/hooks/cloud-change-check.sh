@@ -67,11 +67,11 @@ fi
 
 # 2.5) 単独の az config / az account set は除外 (ローカル CLI 設定のみ)
 # 制御演算子 (;, &, |) を含む複合コマンドは除外対象外。
-if ! printf '%s' "$command" | grep -qE '[;&|]'; then
-  if printf '%s' "$command" | grep -qE '^[[:space:]]*az[[:space:]]+config[[:space:]]+'; then
+if ! grep -qE '[;&|]' <<< "$command"; then
+  if grep -qE '^[[:space:]]*az[[:space:]]+config[[:space:]]+' <<< "$command"; then
     exit 0
   fi
-  if printf '%s' "$command" | grep -qE '^[[:space:]]*az[[:space:]]+account[[:space:]]+set([[:space:]]|$)'; then
+  if grep -qE '^[[:space:]]*az[[:space:]]+account[[:space:]]+set([[:space:]]|$)' <<< "$command"; then
     exit 0
   fi
 fi
@@ -131,11 +131,11 @@ while IFS= read -r seg; do
     az)
       # 最初の `--` オプションより前の部分だけを変更系の語の判定に使う
       az_prefix=$(printf '%s' "$rest" | awk '{for (i=1; i<=NF; i++) { if ($i ~ /^--/) break; printf "%s ", $i }}')
-      if printf ' %s ' "$az_prefix" | grep -qE "[[:space:]](${az_change_verbs})[[:space:]]"; then
+      if grep -qE "[[:space:]](${az_change_verbs})[[:space:]]" <<< " $az_prefix "; then
         az_change=1
       fi
       # az rest --method put/post/patch/delete (大文字小文字・= 区切り両対応)
-      if printf '%s' "$rest" | grep -qiE '^rest([[:space:]]|$).*(--method|-m)([[:space:]]+|=)(put|post|patch|delete)([[:space:]]|$)'; then
+      if grep -qiE '^rest([[:space:]]|$).*(--method|-m)([[:space:]]+|=)(put|post|patch|delete)([[:space:]]|$)' <<< "$rest"; then
         az_change=1
       fi
       ;;

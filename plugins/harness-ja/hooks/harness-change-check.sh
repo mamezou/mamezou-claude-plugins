@@ -62,7 +62,7 @@ fi
 is_excluded() { # is_excluded <パス>
   local p="$1" ex
   for ex in "${exclude_patterns[@]}"; do
-    if printf '%s' "$p" | grep -qF -- "$ex"; then
+    if grep -qF -- "$ex" <<< "$p"; then
       return 0
     fi
   done
@@ -92,8 +92,8 @@ is_plugin_copy() { # is_plugin_copy <コマンド全文>
     # 最後の引数はコピー先。それ以外 (コピー元) にプラグイン配下があれば例外
     (( ${#args[@]} >= 2 )) || continue
     for (( i = 0; i < ${#args[@]} - 1; i++ )); do
-      if printf '%s' "${args[$i]}" | grep -qF -- 'CLAUDE_PLUGIN_ROOT' \
-        || printf '%s' "${args[$i]}" | grep -qF -- "$PLUGIN_ROOT"; then
+      if grep -qF -- 'CLAUDE_PLUGIN_ROOT' <<< "${args[$i]}" \
+        || grep -qF -- "$PLUGIN_ROOT" <<< "${args[$i]}"; then
         src_found=1
       fi
     done
@@ -118,7 +118,7 @@ case "$tool_name" in
     if [[ "$tool_name" == "Write" && "$abs" == */.claude/harness.json && ! -f "$abs" ]]; then
       exit 0
     fi
-    if printf '%s' "$abs" | grep -qE '(^|/)\.claude/' && ! is_excluded "$abs"; then
+    if grep -qE '(^|/)\.claude/' <<< "$abs" && ! is_excluded "$abs"; then
       target="$file_path"
       detail="${tool_name} で書き換え"
     fi
@@ -148,10 +148,10 @@ case "$tool_name" in
     dest_re="(^|[[:space:]|;&(])(cp|rsync|install|ln)[[:space:]][^|;&]*[^[:space:]|;&]*\.claude/[^[:space:]|;&]*[[:space:]]*($|[|;&)])"
     # インタプリタの実行と `.claude/` 配下の同居 (heredoc 内の書き込みを判別できないため一律)
     interp_re="(^|[[:space:]|;&(])(python[0-9.]*|node|perl|ruby|php)[[:space:]].*\.claude/"
-    if printf '%s' "$flat" | grep -qE "$redirect_re" \
-      || printf '%s' "$flat" | grep -qE "$anyarg_re" \
-      || printf '%s' "$flat" | grep -qE "$dest_re" \
-      || printf '%s' "$flat" | grep -qE "$interp_re"; then
+    if grep -qE "$redirect_re" <<< "$flat" \
+      || grep -qE "$anyarg_re" <<< "$flat" \
+      || grep -qE "$dest_re" <<< "$flat" \
+      || grep -qE "$interp_re" <<< "$flat"; then
       target=$(printf '%s\n' "$paths" | grep -v '^$' | head -1)
       detail="Bash で書き換え ($(printf '%s' "$flat" | sed -E 's/^[[:space:]]*//' | LC_ALL=C.UTF-8 grep -oE '^.{1,60}')...)"
     fi

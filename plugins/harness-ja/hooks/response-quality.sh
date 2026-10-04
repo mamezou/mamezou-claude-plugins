@@ -232,7 +232,7 @@ if pat_on 1; then
   option_count=$(printf '%s\n' "$text" | grep -cE '(解釈[[:space:]]*[A-D][:.：]|\*\*(解釈[[:space:]]*)?[A-D][.:：]|^[[:space:]]*[-*][[:space:]]+[A-D][.:：][[:space:]])' || true)
   if [[ ${option_count:-0} -ge 2 ]]; then
     last_lines=$(printf '%s\n' "$text" | tail -5)
-    if printf '%s\n' "$last_lines" | grep -qE '[??]|どっち|どれですか|どちら|進めて良い|お願いします|OK[[:space:]]?ですか|よろしい|いずれ|どうですか|何を選びますか'; then
+    if grep -qE '[??]|どっち|どれですか|どちら|進めて良い|お願いします|OK[[:space:]]?ですか|よろしい|いずれ|どうですか|何を選びますか' <<< "$last_lines"; then
       violations+=("選択肢羅列 + 末尾確認質問 (Output Style「Concise JA」「相手に解釈作業を委ねる」違反)")
     fi
   fi
@@ -268,13 +268,13 @@ fi
 # 「報告」は二段判定にする。「報告」を含み「報告書」を含まない場合だけ完了系とみなす
 # (grep -E は否定先読み (?!) を解釈しないため、1 つの正規表現では書けない)。
 if pat_on 3; then
-  if printf '%s' "$filtered_text" | grep -qE '叩き[[:space:]]*v[0-9]+|ひな形|△[[:space:]]|要確認'; then
+  if grep -qE '叩き[[:space:]]*v[0-9]+|ひな形|△[[:space:]]|要確認' <<< "$filtered_text"; then
     done_word=0
-    if printf '%s' "$filtered_text" | grep -qE '完了|起票済|終わり|まとめました'; then
+    if grep -qE '完了|起票済|終わり|まとめました' <<< "$filtered_text"; then
       done_word=1
     fi
-    if printf '%s' "$filtered_text" | grep -qF '報告' \
-      && ! printf '%s' "$filtered_text" | grep -qF '報告書'; then
+    if grep -qF '報告' <<< "$filtered_text" \
+      && ! grep -qF '報告書' <<< "$filtered_text"; then
       done_word=1
     fi
     if [[ "$done_word" -eq 1 ]]; then
@@ -288,7 +288,7 @@ if pat_on 4; then
   typographic_marks=("§" "¶" "‡" "†")
   typo_hits=()
   for mark in "${typographic_marks[@]}"; do
-    if printf '%s' "$filtered_text" | grep -qF "$mark"; then
+    if grep -qF "$mark" <<< "$filtered_text"; then
       typo_hits+=("$mark")
     fi
   done
@@ -333,7 +333,7 @@ if pat_on 6; then
   )
   paraphrase_hits=()
   for w in "${paraphrase[@]}"; do
-    if printf '%s' "$filtered_text" | grep -qF "$w"; then
+    if grep -qF "$w" <<< "$filtered_text"; then
       paraphrase_hits+=("$w")
     fi
   done
@@ -366,7 +366,7 @@ if pat_on 8; then
   )
   promise_hits=()
   for w in "${empty_promises[@]}"; do
-    if printf '%s' "$filtered_text" | grep -qF "$w"; then
+    if grep -qF "$w" <<< "$filtered_text"; then
       promise_hits+=("$w")
     fi
   done
@@ -384,15 +384,15 @@ if pat_on 9; then
   interrog_re='[??]|でしょうね|でしょうか|ですか|ますか|ませんか|っけ|のかな'
   imper_re='してください|して下さい|しなさい|してね|しといて|しとけ|お願いします|お願いね|頼む|やって|直して|直せ|作って|作れ|書いて|書け|追記して|反映して|進めて|講じて|消して|削除して|戻して|更新して|修正して|実行して'
   if [[ -n "${user_text:-}" ]] \
-    && printf '%s' "$user_text" | grep -qE "$interrog_re" \
-    && ! printf '%s' "$user_text" | grep -qE "$imper_re"; then
+    && grep -qE "$interrog_re" <<< "$user_text" \
+    && ! grep -qE "$imper_re" <<< "$user_text"; then
     declare -a work_decls=(
       "書き直します" "作り直します" "書き換えます" "作成します" "新規作成します"
       "追記します" "反映します" "編集します" "修正します" "更新します" "適用します"
     )
     decl_hits=()
     for w in "${work_decls[@]}"; do
-      if printf '%s' "$filtered_text" | grep -qF -- "$w"; then
+      if grep -qF -- "$w" <<< "$filtered_text"; then
         decl_hits+=("$w")
       fi
     done
@@ -443,7 +443,7 @@ fi
 # ユーザー入力が文面の依頼のときだけ動かす (資料からの引用に反応させない)。
 if pat_on 13; then
   draft_req_re='文面|ドラフト|送付|送って|返信案|依頼文|※|Slack|Teams'
-  if [[ -n "${user_text:-}" ]] && printf '%s' "$user_text" | grep -qE "$draft_req_re"; then
+  if [[ -n "${user_text:-}" ]] && grep -qE "$draft_req_re" <<< "$user_text"; then
     long_sents=$(printf '%s\n' "$text" \
       | awk '/^```/ {in_code = !in_code; next} !in_code {print}' \
       | grep -E '^[[:space:]]*(>|※|■|・)' \
@@ -486,7 +486,7 @@ if pat_on 16; then
   dup_cells=""
   while IFS= read -r cell; do
     [[ -z "$cell" ]] && continue
-    if printf '%s' "$body_text" | grep -qF -- "$cell"; then
+    if grep -qF -- "$cell" <<< "$body_text"; then
       dup_cells+="$cell"$'\n'
     fi
   done <<< "$cell_text"
@@ -520,14 +520,14 @@ if pat_on 19; then
   doc_evidence_re='[0-9０-９]+章|見出し|目次|冒頭|本文[0-9０-９]*章|本文の|節に|[0-9０-９]+\.[0-9０-９]+節?'
   disagree_re='ズレ|食い違|認識が違|認識と違|誤りです|間違いです|正しくありません|合っていません|そうではありません'
   cite_re='出典|[0-9０-９]+行|[0-9０-９]+章|見出し|\.(md|txt|json|sh):[0-9]+'
-  if [[ -n "${user_text:-}" ]] && printf '%s' "$user_text" | grep -qE "$confirm_re"; then
+  if [[ -n "${user_text:-}" ]] && grep -qE "$confirm_re" <<< "$user_text"; then
     neg_hits=$(printf '%s' "$filtered_text" | grep -oE "$doc_negate_re" || true)
-    if [[ -n "$neg_hits" ]] && ! printf '%s' "$prose_text" | grep -qE "$doc_evidence_re"; then
+    if [[ -n "$neg_hits" ]] && ! grep -qE "$doc_evidence_re" <<< "$prose_text"; then
       joined=$(printf '%s\n' "$neg_hits" | sort -u | head -2 | tr '\n' ',' | sed 's/,$//')
       violations+=("資料本文を引かずに資料の不在を断定: [$joined] (rules「start-approval」着手前。資料の見出し・章を開いてから書く。TODO・作業ログの要約は根拠にしない)")
     fi
     dis_hits=$(printf '%s' "$filtered_text" | grep -oE "$disagree_re" || true)
-    if [[ -n "$dis_hits" ]] && ! printf '%s' "$prose_text" | grep -qE "$cite_re"; then
+    if [[ -n "$dis_hits" ]] && ! grep -qE "$cite_re" <<< "$prose_text"; then
       joined=$(printf '%s\n' "$dis_hits" | sort -u | head -2 | tr '\n' ',' | sed 's/,$//')
       violations+=("出典を引かずに${principal}の認識を否定: [$joined] (rules「start-approval」着手前。両方の出典を引用して提示する。記録と発言が食い違えば既定は記録が古い)")
     fi
