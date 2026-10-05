@@ -257,6 +257,7 @@ grep では検知できないため、エージェント `docs-tools:doc-review`
 ## 関連
 
 - 送付文面の作成は `/docs-tools:send-draft`
+- 長い資料 (設計書・手順書・共有ページ) の新規作成と全面的な書き直しは `/docs-tools:doc-draft`
 - harness-ja プラグインを併用している場合、`.claude/harness.json` の `draftPrecheck.targets[]` に置いた
   文面は、hook が書き込み時に禁止語・内部パスなど一部の機械検査をする。主語と述語の確認と
   通し読みは `/docs-tools:draft-precheck` で行う
