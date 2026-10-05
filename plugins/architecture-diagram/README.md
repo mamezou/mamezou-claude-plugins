@@ -33,22 +33,24 @@ cp -r mamezou-claude-plugins/plugins/architecture-diagram ~/.claude/skills/archi
 |---|---|
 | `SKILL.md` | 手順、原則、AI っぽい図の癖と直し方、AI に描かせる指示の型、確認項目 |
 | `references/principles.md` | 図全般の原則、デザイン、フォント、SVG 埋め込み、公開前チェック |
-| `references/aws-guide.md` | AWS 公式の色、グループ、アイコン、レイアウト |
+| `references/aws-guide.md` | AWS 公式の色、グループ、アイコン、サービスごとの描き方、アイコン名の表、レイアウト |
 | `references/aws-checklist.md` | AWS 図の確認チェックリスト |
 | `references/azure-guide.md` | Azure の境界、色、内蔵アイコン、レイアウト |
 | `references/azure-checklist.md` | Azure 図の確認チェックリスト |
 | `references/onprem-guide.md` | オンプレミス・自宅ネットワークの枠の決め方、内蔵アイコン、線種、レイアウト、公開範囲 |
 | `references/onprem-checklist.md` | オンプレミス・自宅ネットワーク図の確認チェックリスト |
-| `references/drawio.md` | フォント、PNG 書き出し |
-| `scripts/export-png.sh` | draw.io → PNG。フォント指定の漏れと出力寸法を検証する |
+| `references/drawio.md` | XML の書き方、線の接続点と経路、フォント、PNG 書き出し、アイコン名の検索、既存の図を直す手順 |
+| `scripts/export-png.sh` | draw.io → PNG。XML の破損、フォント指定の漏れ、出力寸法を検証する |
+| `scripts/find-icon.sh` | 手元の draw.io に入っているアイコンの名前を検索する(AWS、Azure) |
 | `assets/template-aws.drawio` | AWS 図のテンプレート。style 文字列を写す元 |
 | `assets/template-azure.drawio` | Azure 図のテンプレート。style 文字列を写す元 |
 | `assets/template-onprem.drawio` | オンプレミス図のテンプレート。style 文字列を写す元 |
 
 ## PNG 書き出しに必要なもの
 
-`drawio`(Draw.io Desktop)、`ffmpeg`、`ffprobe`、`fontconfig`、図で指定したフォント
+`drawio`(Draw.io Desktop)、`ffmpeg`、`ffprobe`、`fontconfig`、`python3`、図で指定したフォント
 (既定 `IPAPGothic`。環境変数 `DIAGRAM_FONT` で変更)。画面のない環境では `xvfb-run`。
+アイコン名の検索(`scripts/find-icon.sh`)に必要なものは `drawio` と `python3`。
 
 Claude Code から使うときは Skill が `${CLAUDE_SKILL_DIR}` で場所を解決します。手で実行するときは
 clone したリポジトリのパスで実行します。

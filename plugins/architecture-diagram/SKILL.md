@@ -20,14 +20,17 @@ description: クラウドとオンプレミス(事務所・自宅)の構成図�
    draw.io内蔵のアイコンセットを決めて使う。構成にない要素を足さない
 5. 接続線をすべて引く。線種と動作ラベルで経路を区別し、複数の線種を使うなら凡例を置く
 6. 装飾を引く。白背景、直角、細線。説明文は本文側へ移す。色は意味を決めた線と枠だけに使う
-7. `.drawio` を保存し、`bash "${CLAUDE_SKILL_DIR}/scripts/export-png.sh" <図>` でPNGを書き出し、画像を自分で開いて「確認」の項目を見る。
+7. `.drawio` を保存する。XMLの書き方、線の接続点、線の経路とラベルは `${CLAUDE_SKILL_DIR}/references/drawio.md` に従う。
+   `bash "${CLAUDE_SKILL_DIR}/scripts/export-png.sh" <図>` でPNGを書き出し、画像を自分で開いて「確認」の項目を見る。
    最後に、図だけを見て判断事項に答えられるか確かめる
+8. 完了時にユーザーへ伝える。PNGを書き出して目で確認したか、構成にあるが描かなかった要素、ガイドの表になかったアイコン、判断に迷った箇所
 
 ## ルール
 
 構造
 
-- タイトルで主題と判断事項を示す。サブタイトルは置かない。一部の構成を描いた図では、描いた範囲をタイトルに書く
+- タイトルで主題と判断事項を示す。サブタイトルは置かない。一部の構成を描いた図では、描いた範囲をタイトルに書く。
+  依頼で対象外とされた範囲は、タイトルではなく注記に書く
 - 構成の全体像と通信経路を1枚に入れる。サービス一覧だけ、経路だけの図にしない
 - 境界は構成上存在する範囲だけ描く。リージョンサービスをVPCやサブネットの中に置かない。
   外部サービスはクラウド境界の外に置く
@@ -49,7 +52,7 @@ description: クラウドとオンプレミス(事務所・自宅)の構成図�
   対応するアイコンがないオンプレミスの機器は、別の機器のアイコンで代用せず箱で描く
 - 図中の文章は最小限。構造 + 番号付きの流れ + 短い注記。説明文は本文側へ
 - ラベルは読者に合わせる。非専門の読者にはAPI名でなく動作(「差分確認」「反映」)で書く
-- 接続線は直線と直角。矢印ラベルには動作を書く(「呼び出す」「ログを配送」)。線の交差を減らす。
+- 接続線は直線と直角。矢印ラベルには動作を名詞句で書く(「呼び出し」「ログの配送」)。線の交差を減らす。
   オンプレミスの配線(有線・無線)には矢印を付けず、ラベルにポートとVLANを書く
 - 全テキストに同じフォントを明示する。未指定だと書き出し環境の代替フォントで字形と改行が変わる
 - `.drawio` を編集元(正本)にし、PNGは派生物。編集元を変えたら書き出し直す
@@ -75,6 +78,7 @@ AI生成の判定基準ではない。目的を決めずに描くと人の図に
 <主題>の構成図を作ってください。
 
 読者: <誰が見るか>
+見た後の行動: <読者が図を見て次にすること>
 
 この図で判断できるようにすること:
 - <判断事項。例: 通常経路とFirewall経由の経路を区別できる>
@@ -114,8 +118,9 @@ AI生成の判定基準ではない。目的を決めずに描くと人の図に
 | AWS図を描く | `${CLAUDE_SKILL_DIR}/references/aws-guide.md`。style文字列は `${CLAUDE_SKILL_DIR}/assets/template-aws.drawio` を開いて写す |
 | Azure図を描く | `${CLAUDE_SKILL_DIR}/references/azure-guide.md`。style文字列は `${CLAUDE_SKILL_DIR}/assets/template-azure.drawio` を開いて写す |
 | オンプレミス・自宅のネットワーク図を描く | `${CLAUDE_SKILL_DIR}/references/onprem-guide.md`。style文字列は `${CLAUDE_SKILL_DIR}/assets/template-onprem.drawio` を開いて写す |
-| AWS図をレビューする | `${CLAUDE_SKILL_DIR}/references/aws-checklist.md` |
-| Azure図をレビューする | `${CLAUDE_SKILL_DIR}/references/azure-checklist.md` |
-| オンプレミス・自宅のネットワーク図をレビューする | `${CLAUDE_SKILL_DIR}/references/onprem-checklist.md` |
-| フォント、PNG書き出し | `${CLAUDE_SKILL_DIR}/references/drawio.md` |
+| AWS図を描いた後に確認する、AWS図をレビューする | `${CLAUDE_SKILL_DIR}/references/aws-checklist.md` |
+| Azure図を描いた後に確認する、Azure図をレビューする | `${CLAUDE_SKILL_DIR}/references/azure-checklist.md` |
+| オンプレミス・自宅のネットワーク図を描いた後に確認する、レビューする | `${CLAUDE_SKILL_DIR}/references/onprem-checklist.md` |
+| フォント、PNG書き出し、XMLの書き方、線の接続点と経路、既存の図を直す | `${CLAUDE_SKILL_DIR}/references/drawio.md` |
+| ガイドの表にないアイコンの名前を探す | `bash "${CLAUDE_SKILL_DIR}/scripts/find-icon.sh" <aws または azure> <語>` |
 | PNGを書き出す | `bash "${CLAUDE_SKILL_DIR}/scripts/export-png.sh" <input.drawio> [output.png]` |

@@ -17,7 +17,7 @@ left_margin=${LEFT_MARGIN:-40}
 top_margin=${TOP_MARGIN:-18}
 diagram_font=${DIAGRAM_FONT:-IPAPGothic}
 
-for cmd in drawio fc-match ffmpeg ffprobe; do
+for cmd in drawio fc-match ffmpeg ffprobe python3; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     echo "$cmd was not found." >&2
     exit 1
@@ -26,6 +26,16 @@ done
 
 if [ ! -f "$input_path" ]; then
   echo "Input file was not found: $input_path" >&2
+  exit 1
+fi
+
+if ! python3 -c 'import sys, xml.dom.minidom; xml.dom.minidom.parse(sys.argv[1])' "$input_path" 2>/dev/null; then
+  echo "XML is not well-formed: $input_path" >&2
+  exit 1
+fi
+
+if ! grep -q '<mxCell' "$input_path"; then
+  echo "No mxCell found (compressed diagram?). Expand first: drawio -x -f xml -o <out.drawio> $input_path" >&2
   exit 1
 fi
 
