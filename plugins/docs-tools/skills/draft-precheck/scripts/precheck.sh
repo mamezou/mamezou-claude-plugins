@@ -97,6 +97,29 @@ same_form() {
   return "$found"
 }
 
+# 読点が2つ以上ある文を「元の行番号:読点の数: 文」で印字する。括弧の中の読点は数えない。
+# 「。」で終わる文だけを見る (名詞を並べた箇条書きの項目を外すため)
+many_commas() {
+  local s t rest only found=1
+  local paren_re='[（(][^（()）]*[）)]'
+  while IFS= read -r s; do
+    t="${s#*:}"
+    if [[ "$t" != *。 ]]; then
+      continue
+    fi
+    rest="$t"
+    while [[ "$rest" =~ $paren_re ]]; do
+      rest="${rest/"${BASH_REMATCH[0]}"/}"
+    done
+    only="${rest//[^、]/}"
+    if (( ${#only} >= 2 )); then
+      printf '%s:読点%d: %s\n' "${s%%:*}" "${#only}" "$t"
+      found=0
+    fi
+  done <<< "$sents"
+  return "$found"
+}
+
 sents="$(sentences)"
 
 section "内部パス断片"
@@ -115,10 +138,15 @@ section "指示語の出現行"
 grep -nE '(これ|それ|その|この|こうした)' -- "$f" || none
 section "括弧の中身"
 grep -noE '[（(][^（()）]{2,}[）)]' -- "$f" || none
+section "同じ括弧の中身が3回以上 (回数 中身)"
+# 括弧を外した中身で数える (全角と半角の括弧を同じものとして数えるため)。表の行も数える
+grep -oE '[（(][^（()）]{2,}[）)]' -- "$f" | sed -E 's/^(（|\()//; s/(）|\))$//' | sort | uniq -c | sort -rn | grep -E '^ *([3-9]|[1-9][0-9]+) ' || none
 section "3回以上の長い識別子"
 grep -oE '[A-Za-z][A-Za-z0-9_./-]{19,}' -- "$f" | sort | uniq -c | sort -rn | grep -E '^ *([3-9]|[1-9][0-9]+) ' || none
 section "60字超の文"
 grep -E '^[0-9]+:.{61,}' <<< "$sents" || none
+section "読点が2つ以上の文 (括弧の中の読点は数えない)"
+many_commas || none
 section "予告の文 (次のとおり / 次の〜がある / 以下に示す)"
 grep -E '((次|以下|下記)の((とおり|通り)(です|である|とする)?|[^、。]*が(ある|あります))[。:：]|(次|以下|下記)に示す。)$' <<< "$sents" || none
 section "同じ文末が3文以上続く箇所"
