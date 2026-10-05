@@ -96,15 +96,15 @@ Slack (内部向け):
   趣旨と理由に絞る
 - 長い英字の識別子は初出のみフル表記し、以後は呼び名で書く (同一識別子 3 回以上は
   harness-ja の hook が差し戻す)
-- 書き終えたら、送付相手の目で頭から通し読みする。機械チェックの通過を品質確認と
-  しない。通し読みの判定は `/docs-tools:draft-precheck` の必須項目として応答に書く
+- 書き終えたら、送付相手の目で頭から読む通し読みを `docs-tools:doc-review` へ依頼する。
+  機械チェックの通過を品質確認としない。依頼は `/docs-tools:draft-precheck` の必須項目として行う
 
 ## 送付前チェック (必須)
 
 Write 後に `/docs-tools:draft-precheck` を対象ファイルへ実行する。hook(プラグイン harness-ja の
 `draft-precheck.sh`)が検査するのは編集差分の禁止語・内部表現のみで、指示語の件別判定と主語述語の確認は
-`/docs-tools:draft-precheck` にしかない。省略しない。ヒットゼロと指示語の判定を確認してから
-依頼者へ提示する。送付は依頼者が行う。`/docs-tools:codex-review` は依頼者が指示した
+`/docs-tools:draft-precheck` にしかない。省略しない。全てのヒットを判定し、直す対象が残って
+いないことを確かめてから依頼者へ提示する。送付は依頼者が行う。`/docs-tools:codex-review` は依頼者が指示した
 ときだけ行う。
 
 ## 指摘を受けた 2 回目以降
