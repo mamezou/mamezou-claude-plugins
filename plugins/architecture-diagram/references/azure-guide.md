@@ -40,7 +40,7 @@ Draw.io Desktopは内蔵のAzureアイコンセット(azure2)を同梱し、CLI�
 
 ### 枠と注記
 
-- サービス説明枠は、白背景、直角、グレーの細線を既定値とする。
+- サービス説明枠(境界ではなく、複数のサービスや説明をまとめる箱)は、白背景、直角、グレーの細線を既定値とする。
 - 色付きの角丸枠と同系色の薄い背景を組み合わせたカードを、図全体へ反復する表現は使用しない。
 - 注意事項と設計上の前提は、`注記：`などの見出しを付けた通常の本文、または説明と対応する番号付きコールアウトとして配置する。
 - 注記の左側に縦線や色帯を置かない。
@@ -72,8 +72,10 @@ image;aspect=fixed;html=1;image=img/lib/azure2/<カテゴリ>/<ファイル名>.
 | 監視と管理 | Monitor `management_governance/Monitor.svg`、Log Analytics Workspace `analytics/Log_Analytics_Workspaces.svg`、Application Insights `management_governance/Application_Insights.svg`、Azure Policy `management_governance/Policy.svg`、Automation Account `management_governance/Automation_Accounts.svg`、Azure Arc `management_governance/Azure_Arc.svg`、Azure Migrate `migrate/Azure_Migrate.svg` |
 | AI | Azure OpenAI `ai_machine_learning/Azure_OpenAI.svg`、Microsoft Foundry `ai_machine_learning/AI_Foundry.svg`、Azure Machine Learning `ai_machine_learning/Azure_Machine_Learning.svg`、Azure AI Search `app_services/Search_Services.svg` |
 | 開発 | Azure DevOps `devops/Azure_DevOps.svg` |
+| Azure以外の要素 | 利用者 `identity/Users.svg` |
 
 - 内蔵セットのファイル名には旧サービス名のものがある。ファイル名を図中のラベルへ流用せず、ラベルは正式名称で書く。上の表ではMicrosoft Entra ID、Microsoft Sentinel、Microsoft Defender for Cloud、Azure Virtual Desktop、Container Apps、Azure AI Searchが該当する。
+- Azure以外の要素のうち、利用者は`identity/Users.svg`、オンプレミスの機器は`onprem-guide.md`の図形で描く。利用者でもオンプレミスの機器でもない要素は、白背景、直角、グレーの細線の箱で描く。
 - ファイル名は単数と複数が不規則である(`Virtual_Machine.svg`、`Load_Balancers.svg`)。パスが違うと、アイコンの代わりに壊れた画像の印が描かれる。
 - 表にないサービスは、`bash "${CLAUDE_SKILL_DIR}/scripts/find-icon.sh" azure <語>`でパスを検索する。検索で出たパスを使い、PNGでアイコンが描画されたことを確認する。`no match`と出てパスが見つからないときは、公式ページのSVGを埋め込む。表にないパスを使ったサービスと、SVGを埋め込んだサービスは、完了時に伝える。
 - Azureサービスを示す箱を文字だけで構成しない。サービス名、公式アイコン、役割を組み合わせる。
@@ -138,7 +140,7 @@ fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor
 5. 閉域アクセスを示す場合は、サブネット内にPrivate Endpointを配置し、対象のリージョンサービスへ線で結ぶ。
 6. 実線と破線で接続関係を記載する。
 7. 構造と線で表せず、判断を変える前提や対象外があるときだけ、装飾線のない通常テキストまたは番号付きコールアウトで追記する。なければ書かない。
-8. draw.io元データを保存し、PNGを書き出す。XMLの書き方と線の接続点は`drawio.md`に従う。
+8. draw.io元データを保存し、PNGを書き出す。XMLの書き方、線の接続点、線の経路とラベルは`drawio.md`に従う。
 9. `azure-checklist.md`に沿ってPNGを目視確認する。
 
 ## 保存と書き出し

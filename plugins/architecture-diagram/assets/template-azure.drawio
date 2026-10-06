@@ -49,16 +49,16 @@
         <mxCell id="storage-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1F1F1F;" value="Storage Account" vertex="1">
           <mxGeometry height="30" width="180" x="1062" y="498" as="geometry" />
         </mxCell>
-        <mxCell id="edge-vnet-integration" edge="1" parent="1" source="app-service" target="integration-subnet" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#0078D4;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#0078D4;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="VNet統合で送信">
+        <mxCell id="edge-vnet-integration" edge="1" parent="1" source="app-service" target="integration-subnet" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#0078D4;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#0078D4;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="VNet統合での送信">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="edge-subnet-pe" edge="1" parent="1" source="integration-subnet" target="private-endpoint" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#0078D4;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#0078D4;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="プライベートIP&#xa;へ接続">
+        <mxCell id="edge-subnet-pe" edge="1" parent="1" source="integration-subnet" target="private-endpoint" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#0078D4;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#0078D4;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="プライベートIP&#xa;への接続">
           <mxGeometry x="0.3" y="18" relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="edge-pe-storage" edge="1" parent="1" source="private-endpoint" target="storage" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#0078D4;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#0078D4;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="Private Linkで接続">
+        <mxCell id="edge-pe-storage" edge="1" parent="1" source="private-endpoint" target="storage" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#0078D4;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#0078D4;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="Private Linkでの接続">
           <mxGeometry x="0.43" relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="edge-public-blocked" edge="1" parent="1" source="app-service" target="storage" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#CC0000;strokeWidth=2;dashed=1;dashPattern=8 4;endArrow=cross;endFill=0;fontSize=12;fontStyle=1;fontColor=#CC0000;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="パブリック経路は遮断">
+        <mxCell id="edge-public-blocked" edge="1" parent="1" source="app-service" target="storage" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#CC0000;strokeWidth=2;dashed=1;dashPattern=8 4;endArrow=cross;endFill=0;fontSize=12;fontStyle=1;fontColor=#CC0000;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="パブリック経路の遮断">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="172" y="165" />

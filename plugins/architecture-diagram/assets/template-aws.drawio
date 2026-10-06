@@ -64,7 +64,7 @@
         <mxCell id="phase1to3-a" edge="1" parent="1" source="client" target="firewall" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#147EBA;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#147EBA;labelBackgroundColor=#FFFFFF;" value="Phase 1〜3&#xa;Firewall経由">
           <mxGeometry x="-0.66" relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="phase1to3-b" edge="1" parent="1" source="firewall" target="server" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#147EBA;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=11;fontColor=#147EBA;labelBackgroundColor=#FFFFFF;" value="検査後に転送">
+        <mxCell id="phase1to3-b" edge="1" parent="1" source="firewall" target="server" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#147EBA;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=11;fontColor=#147EBA;labelBackgroundColor=#FFFFFF;" value="検査後の転送">
           <mxGeometry x="-0.58" relative="1" as="geometry" />
         </mxCell>
       </root>
