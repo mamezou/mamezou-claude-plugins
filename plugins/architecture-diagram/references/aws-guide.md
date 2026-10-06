@@ -28,7 +28,7 @@ AWS公式アイコンのSVGは、上のページからツールキットをダ�
 - AWS公式ツールキットのグループ色は使用できる。独自の色へ変更しない。
 - Draw.ioでは、公式の`shape`、`resIcon`、`grIcon`を選んだだけで色も正しいとは判断しない。要素ごとに`fillColor`、`strokeColor`、`fontColor`をAWS公式ツールキットと照合する。
 - AWS公式アイコンはサービスカテゴリごとの公式色、AWS公式グループはグループごとの公式色を維持する。例として、AWS Cloudは`#232F3E`、VPCは`#8C4FFF`を使用する。
-- AWS公式グループの線は、AWSアカウントが`#E7157B`、リージョンが`#00A4A6`の点線、Availability Zoneが`#00A4A6`の破線、パブリックサブネットが`#7AA116`、プライベートサブネットが`#00A4A6`で、いずれも塗りなしである(AWS公式のPowerPointツールキット2026年7月31日版)。枠のstyleはテンプレートから写す。テンプレートのサブネットはプライベート用で、パブリックサブネットは`strokeColor`を`#7AA116`に替える。AWSアカウントの枠はテンプレートにないため、VPCの枠のstyleの`grIcon`を`mxgraph.aws4.group_account`に、`strokeColor`と`fontColor`を`#E7157B`に、`fontSize`を16に替える。
+- AWS公式グループの線は、AWSアカウントが`#E7157B`、リージョンが`#00A4A6`の点線、Availability Zoneが`#00A4A6`の破線、パブリックサブネットが`#7AA116`、プライベートサブネットが`#00A4A6`で、いずれも塗りなしである(AWS公式のPowerPointツールキット2026年7月31日版)。枠のstyleはテンプレートから写す。テンプレートのサブネットはプライベート用で、パブリックサブネットは`strokeColor`を`#7AA116`に替える(枠のアイコンは同じ)。AWSアカウントの枠はテンプレートにないため、VPCの枠のstyleの`grIcon`を`mxgraph.aws4.group_account`に、`strokeColor`と`fontColor`を`#E7157B`に、`fontSize`を16に替える。
 - 既存・新設などの状態を表す目的でAWS公式アイコンやAWS公式グループの色を変更しない。状態は名称、状態名、線種または凡例で示す。
 - 色でサービス区分、状態、経路を補助する場合は、名称、状態名、線種または凡例を併記する。
 - 次の色を基本とし、図の目的に応じてAWS公式色または意味を定義した色を追加できる。
@@ -63,7 +63,7 @@ AWS公式アイコンのSVGは、上のページからツールキットをダ�
 - 矢印ラベルには動作を名詞句で記載する。例: `呼び出し`、`ログの配送`、`暗号化`。
 - 線の交差を減らし、矢印の始点と終点が要素の中央付近に接続するよう配置する。
 - 複数の線種を使用する場合は凡例を置く。
-- 濃いグレーの実線はテンプレートに例がないため、次のstyleにする。グレーの破線は、このstyleの`strokeColor`と`fontColor`を`#687078`に替え、`dashed=1;dashPattern=7 5;`を足す。判断事項に関わる経路を強調する線は、テンプレートの`phase1to3-a`のstyleを写す。接続点は`drawio.md`に従って書き足す。
+- 濃いグレーの実線はテンプレートに例がないため、次のstyleにする。グレーの破線は、このstyleの`strokeColor`と`fontColor`を`#687078`に、`strokeWidth`を2に替え、`dashed=1;dashPattern=7 5;`を足す(テンプレートの`phase0`と同じ線)。判断事項に関わる経路を強調する線は、テンプレートの`phase1to3-a`のstyleを写す。接続点は`drawio.md`に従って書き足す。
 
 ```text
 fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#414D5C;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=11;fontColor=#414D5C;labelBackgroundColor=#FFFFFF;
@@ -103,8 +103,13 @@ AWS公式の2026年4月版Microsoft PowerPointツールキットは、テーマ�
 draw.io内蔵の`mxgraph.aws4`図形の名前と塗り色を示す。名前はDraw.io Desktop 30.4.1のパレット定義から取り、色はAWS Architecture Iconsの2026年7月31日版と照合した。全件をPNGへ書き出し、絵が出ることを確認している。
 
 - 名前は、サービス名を小文字と下線にしただけでは当たらないものがある。CloudWatchは`cloudwatch_2`、OpenSearch Serviceは`elasticsearch_service`、IAM Identity Centerは`single_sign_on`である。
-- 名前が違うと絵が出ず、塗り色の四角だけになる。表にないサービスは、`bash "${CLAUDE_SKILL_DIR}/scripts/find-icon.sh" aws <語>`で名前を検索する。出力が`resIcon=`で始まる行はサービスアイコン、`shape=`で始まる行はリソースアイコンのstyleに使用し、色は出力のカテゴリと同じ行の値を使用する。同じ名前が複数のカテゴリで出たときは、選んだカテゴリを完了時に伝える。PNGで絵が出たことを確認する。`no match`と出て名前が見つからないときは、公式アイコンのSVGを埋め込む(方式は`drawio.md`)。表にない名前を使用したサービスと、SVGを埋め込んだサービスは、完了時に伝える。
-- 色は表の値を使用する。表にないサービスは、同じカテゴリの行の色を使用する。表にないカテゴリの色は、Media Services、Blockchain、Quantum Technologiesが`#ED7100`、Gamesが`#8C4FFF`、Satellite、Customer Enablementが`#C925D1`である。
+- 名前が違うと絵が出ず、塗り色の四角だけになる。表にないサービスは、次の順で名前を決める。
+  1. `bash "${CLAUDE_SKILL_DIR}/scripts/find-icon.sh" aws <語>`で検索する。
+  2. 出力が`resIcon=`で始まる行はサービスアイコン、`shape=`で始まる行はリソースアイコンのstyleに使用する。色は、出力のカテゴリと同じ行の値を使用する。
+  3. PNGで絵が出たことを確認する。
+  4. `no match`と出たときは、公式アイコンのSVGを埋め込む(方式は`drawio.md`)。
+  5. 表にない名前を使用したサービス、SVGを埋め込んだサービス、同じ名前が複数のカテゴリで出て選んだカテゴリを、完了時に伝える。
+- 色は表の値を使用する。表にないサービスは、同じカテゴリの行の色を使用する。表にないカテゴリの色は、Media Services、Blockchain、Quantum Technologiesが`#ED7100`、Gamesが`#8C4FFF`、Satellite、Customer Enablementが`#C925D1`、Generalが`#232F3D`である。
 - Draw.ioのパレットには、公式パッケージと違うカテゴリの色で載っている図形がある(Elastic Load Balancing、API Gateway、Redshift、Organizations等)。パレットの色ではなく表の色を使用する。
 
 ### サービスアイコン
@@ -151,7 +156,7 @@ fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=
 
 ### AWS以外の要素
 
-AWS図の中に描くAWS以外の要素に使用する。styleはリソースアイコンと同じ形にする。オンプレミスのネットワーク図では`onprem-guide.md`の図形を使用する。
+AWS図の中に描くAWS以外の要素に使用する。styleはリソースアイコンと同じ形にする。`#242F3E`と`#232F3D`が混ざっているのは、公式パッケージのファイルの値どおりである。オンプレミスのネットワーク図では`onprem-guide.md`の図形を使用する。
 
 | 要素 | `fillColor` | 名前 |
 |---|---|---|

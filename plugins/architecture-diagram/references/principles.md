@@ -61,7 +61,7 @@ VMware(`mxgraph.vvd.*`)を使う。図形の名前は `onprem-guide.md` を参�
 
 ## 公開前チェックリスト
 
-図を公開資料に載せる前に確認する。AWS構成図は `aws-checklist.md` も使う。
+図を公開資料に載せる前に確認する。AWS構成図は `aws-checklist.md`、Azure構成図は `azure-checklist.md`、オンプレミスのネットワーク図は `onprem-checklist.md` も使う。
 
 - [ ] タイトルと説明だけで「何の図か」が伝わる(主題を誤読させない)
 - [ ] リソース名や構成が、記事本文の記述と一致している

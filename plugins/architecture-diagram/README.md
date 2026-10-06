@@ -40,7 +40,7 @@ cp -r mamezou-claude-plugins/plugins/architecture-diagram ~/.claude/skills/archi
 | `references/onprem-guide.md` | オンプレミス・自宅ネットワークの枠の決め方、内蔵アイコン、線種、レイアウト、公開範囲 |
 | `references/onprem-checklist.md` | オンプレミス・自宅ネットワーク図の確認チェックリスト |
 | `references/drawio.md` | XML の書き方、線の接続点と経路、フォント、PNG 書き出し、アイコン名の検索、既存の図を直す手順 |
-| `scripts/export-png.sh` | draw.io → PNG。XML の破損、フォント指定の漏れ、出力寸法を検証する |
+| `scripts/export-png.sh` | draw.io → PNG。XML の破損、圧縮保存、フォント指定の漏れ、出力寸法を検証する |
 | `scripts/find-icon.sh` | 手元の draw.io に入っているアイコンの名前を検索する(AWS、Azure) |
 | `assets/template-aws.drawio` | AWS 図のテンプレート。style 文字列を写す元 |
 | `assets/template-azure.drawio` | Azure 図のテンプレート。style 文字列を写す元 |
@@ -50,7 +50,7 @@ cp -r mamezou-claude-plugins/plugins/architecture-diagram ~/.claude/skills/archi
 
 `drawio`(Draw.io Desktop)、`ffmpeg`、`ffprobe`、`fontconfig`、`python3`、図で指定したフォント
 (既定 `IPAPGothic`。環境変数 `DIAGRAM_FONT` で変更)。画面のない環境では `xvfb-run`。
-アイコン名の検索(`scripts/find-icon.sh`)に必要なものは `drawio` と `python3`。
+アイコン名の検索(`scripts/find-icon.sh`)に必要なものは `python3` と、Draw.io Desktop 本体の `app.asar`。
 
 Claude Code から使うときは Skill が `${CLAUDE_SKILL_DIR}` で場所を解決します。手で実行するときは
 clone したリポジトリのパスで実行します。

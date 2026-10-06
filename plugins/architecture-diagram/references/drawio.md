@@ -85,12 +85,14 @@ scripts/find-icon.sh <aws|azure> <語>
   見つからなければ `no match` と出る
 - AWSは `resIcon=mxgraph.aws4.<名前>`(サービスアイコン)か `shape=mxgraph.aws4.<名前>`(リソースアイコン)に続けて、
   パレットでの表示名とカテゴリを出す。Azureは、styleの `image=img/lib/azure2/` に続けて書くパスを出す
-- 必要なもの: `drawio`、`python3`。Draw.io本体の `resources/app.asar` を読む。見つからないときは、環境変数 `DRAWIO_ASAR` に
-  そのファイルのパスを指定する
+- 必要なもの: `python3` と、Draw.io本体の `app.asar`。`drawio` コマンドの実体の場所から `app.asar` を探す。見つからないときや、
+  `drawio` がPATHにないときは、環境変数 `DRAWIO_ASAR` に `app.asar` のパスを指定する
+- 定義を1件も読めないときは、`no match` ではなくエラーで止まる
 
 ## 既存の図を直す
 
 1. `<diagram>` の中身が英数字の塊なら圧縮保存された図。`drawio -x -f xml -o <展開後.drawio> <元.drawio>` で展開してから読む
+   (画面のない環境では `xvfb-run -a drawio --no-sandbox -x -f xml -o <展開後.drawio> <元.drawio>`)
 2. `<mxfile>` と `<diagram>` の外枠は残し、`<mxGraphModel>` の中だけを直す。`<diagram>` が複数あれば依頼されたページだけを直す。
    どのページか分からなければページ名を挙げて聞く
 3. 依頼された箇所だけを変える。既存のid・座標・styleは残し、足す要素はこのSkillのルールに従って描く。

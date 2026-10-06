@@ -3,8 +3,9 @@
 # 使い方: find-icon.sh <aws|azure> <語>
 # 出力: aws は「resIcon=... または shape=...」「パレットでの表示名」「カテゴリ」のタブ区切り、
 #       azure は img/lib/azure2/ に続けて書くパス。見つからなければ no match
-# 環境変数: DRAWIO_ASAR (既定は drawio コマンドの実体と同じ場所の resources/app.asar)
-# aws の検索は Draw.io の Sidebar-AWS4.js の書式を読む。Draw.io の版が変わって何も出なくなったら、ここの正規表現を見直す
+# 環境変数: DRAWIO_ASAR (Draw.io 本体の app.asar のパス。指定すると drawio コマンドは不要)
+#           未指定のときは、drawio コマンドの実体の場所から app.asar を探す
+# aws の検索は Draw.io の Sidebar-AWS4.js の書式を読む。Draw.io の版が変わって定義を読めなくなったら、ここの正規表現を見直す
 set -euo pipefail
 
 if [ "$#" -ne 2 ]; then
@@ -12,24 +13,46 @@ if [ "$#" -ne 2 ]; then
   exit 2
 fi
 
-for cmd in drawio python3; do
-  if ! command -v "$cmd" >/dev/null 2>&1; then
-    echo "$cmd was not found." >&2
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "python3 was not found." >&2
+  exit 1
+fi
+
+asar_path=${DRAWIO_ASAR:-}
+if [ -z "$asar_path" ]; then
+  if ! command -v drawio >/dev/null 2>&1; then
+    echo "drawio was not found. Set DRAWIO_ASAR to the path of app.asar." >&2
     exit 1
   fi
-done
-
-asar_path=${DRAWIO_ASAR:-$(dirname "$(readlink -f "$(command -v drawio)")")/resources/app.asar}
-if [ ! -f "$asar_path" ]; then
-  echo "app.asar was not found: $asar_path (set DRAWIO_ASAR)" >&2
+  drawio_dir=$(python3 -c 'import os, sys; print(os.path.dirname(os.path.realpath(sys.argv[1])))' "$(command -v drawio)")
+  for candidate in \
+    "$drawio_dir/resources/app.asar" \
+    "$drawio_dir/../Resources/app.asar" \
+    "/Applications/draw.io.app/Contents/Resources/app.asar"; do
+    if [ -f "$candidate" ]; then
+      asar_path=$candidate
+      break
+    fi
+  done
+  if [ -z "$asar_path" ]; then
+    echo "app.asar was not found near $drawio_dir. Set DRAWIO_ASAR to the path of app.asar." >&2
+    exit 1
+  fi
+elif [ ! -f "$asar_path" ]; then
+  echo "app.asar was not found: $asar_path (check DRAWIO_ASAR)" >&2
   exit 1
 fi
 
 python3 - "$asar_path" "$1" "$2" <<'PY'
 import json
 import re
+import signal
 import struct
 import sys
+
+# 出力を head などへ渡して途中で閉じられても、エラーを出さずに終わる
+if hasattr(signal, 'SIGPIPE'):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 asar_path, kind, keyword = sys.argv[1], sys.argv[2], sys.argv[3].lower().replace(' ', '_')
 
@@ -52,25 +75,31 @@ def walk(node, path=''):
 
 
 def read(entry):
+    # app.asar の外に置かれたファイル(unpacked、link)は読めない
+    if 'offset' not in entry or entry.get('unpacked'):
+        return ''
     archive.seek(base + int(entry['offset']))
     return archive.read(entry['size']).decode('utf-8', 'replace')
 
 
 hits = []
+definitions = 0
 if kind == 'azure':
     # 出力: style の image=img/lib/azure2/ に続けて書くパス
     for path, entry in walk(header):
         if '/img/lib/azure2/' in path and path.endswith('.svg'):
+            definitions += 1
             relative = path.split('/img/lib/azure2/')[1]
             if keyword in relative.lower():
                 hits.append(relative)
 elif kind == 'aws':
     # 出力: style に書く指定、Draw.io のパレットでの表示名、カテゴリ
     categories = {
-        'Analytics': 'Analytics', 'ApplicationIntegration': 'Application Integration',
+        'ARVR': 'AR & VR', 'Analytics': 'Analytics', 'ApplicationIntegration': 'Application Integration',
         'ArtificialIntelligence': 'Artificial Intelligence', 'Blockchain': 'Blockchain',
         'BusinessApplications': 'Business Applications', 'CloudFinancialManagement': 'Cloud Financial Management',
-        'Compute': 'Compute', 'Containers': 'Containers', 'CustomerEnablement': 'Customer Enablement',
+        'Compute': 'Compute', 'ContactCenter': 'Contact Center', 'Containers': 'Containers',
+        'CustomerEnablement': 'Customer Enablement', 'CustomerEngagement': 'Customer Engagement',
         'Database': 'Databases', 'DeveloperTools': 'Developer Tools', 'EndUserComputing': 'End User Computing',
         'FrontEndWebMobile': 'Front-End Web & Mobile', 'Games': 'Games', 'GeneralResources': 'General',
         'InternetOfThings': 'Internet of Things', 'ManagementGovernance': 'Management & Governance',
@@ -97,11 +126,18 @@ elif kind == 'aws':
                         shape_kind, name = 'shape', prefix.split(';')[0]
                     if shape_kind not in ('resourceIcon', 'shape'):
                         continue
+                    # 図形名として使えない形(= を含むなど)は出さない
+                    if not re.fullmatch(r'[a-z0-9_]+', name):
+                        continue
+                    definitions += 1
                     if keyword in name.lower() or keyword in title.lower().replace(' ', '_'):
                         key = 'resIcon' if shape_kind == 'resourceIcon' else 'shape'
                         hits.append(f'{key}=mxgraph.aws4.{name}\t{title.strip()}\t{category}')
 else:
     sys.exit('The first argument must be aws or azure.')
+
+if definitions == 0:
+    sys.exit(f'No {kind} icon definitions were found in {asar_path}. The Draw.io version may use a different layout.')
 
 print('\n'.join(sorted(set(hits))) if hits else 'no match')
 PY

@@ -32,6 +32,7 @@ Draw.io Desktopは内蔵のAzureアイコンセット(azure2)を同梱し、CLI�
   - Azure境界(サブスクリプション・仮想ネットワーク・サブネット): `#0078D4`
   - 汎用の枠・主要な矢印: `#404040`
   - 補助線・点線: `#666666`
+  - 判断事項に関わる経路を強調する線: `#0078D4`
   - 薄い境界線: `#AAAAAA`
   - 遮断・ブロック: `#CC0000`
   - 背景: `#FFFFFF`
@@ -74,7 +75,7 @@ image;aspect=fixed;html=1;image=img/lib/azure2/<カテゴリ>/<ファイル名>.
 | 開発 | Azure DevOps `devops/Azure_DevOps.svg` |
 | Azure以外の要素 | 利用者 `identity/Users.svg` |
 
-- 内蔵セットのファイル名には旧サービス名のものがある。ファイル名を図中のラベルへ流用せず、ラベルは正式名称で書く。上の表ではMicrosoft Entra ID、Microsoft Sentinel、Microsoft Defender for Cloud、Azure Virtual Desktop、Container Apps、Azure AI Searchが該当する。
+- 内蔵セットのファイル名には旧サービス名のものがある。ファイル名を図中のラベルへ流用せず、ラベルは正式名称で書く。上の表ではMicrosoft Entra ID、Microsoft Sentinel、Microsoft Defender for Cloud、Azure Virtual Desktop、Container Apps、Azure AI Searchなどが該当する。
 - Azure以外の要素のうち、利用者は`identity/Users.svg`、オンプレミスの機器は`onprem-guide.md`の図形で描く。利用者でもオンプレミスの機器でもない要素は、白背景、直角、グレーの細線の箱で描く。
 - ファイル名は単数と複数が不規則である(`Virtual_Machine.svg`、`Load_Balancers.svg`)。パスが違うと、アイコンの代わりに壊れた画像の印が描かれる。
 - 表にないサービスは、`bash "${CLAUDE_SKILL_DIR}/scripts/find-icon.sh" azure <語>`でパスを検索する。検索で出たパスを使い、PNGでアイコンが描画されたことを確認する。`no match`と出てパスが見つからないときは、公式ページのSVGを埋め込む。表にないパスを使ったサービスと、SVGを埋め込んだサービスは、完了時に伝える。
@@ -90,7 +91,7 @@ image;aspect=fixed;html=1;image=img/lib/azure2/<カテゴリ>/<ファイル名>.
 - 矢印ラベルには動作を名詞句で記載する。例: `呼び出し`、`ログの配送`、`暗号化`。
 - 線の交差を減らし、矢印の始点と終点が要素の中央付近に接続するよう配置する。
 - 複数の線種を使用する場合は凡例を置く。
-- 濃いグレーの実線はテンプレートに例がないため、次のstyleにする。グレーの破線は、このstyleの`strokeColor`と`fontColor`を`#666666`に替え、`dashed=1;dashPattern=7 5;`を足す。接続点は`drawio.md`に従って書き足す。
+- 濃いグレーの実線はテンプレートに例がないため、次のstyleにする。グレーの破線は、このstyleの`strokeColor`と`fontColor`を`#666666`に替え、`dashed=1;dashPattern=7 5;`を足す。判断事項に関わる経路を強調する線は、テンプレートの`edge-vnet-integration`のstyleを写す。接続点は`drawio.md`に従って書き足す。
 
 ```text
 fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#404040;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=11;fontColor=#404040;labelBackgroundColor=#FFFFFF;
