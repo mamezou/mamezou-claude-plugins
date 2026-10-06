@@ -201,8 +201,8 @@ AWS図の中に描くAWS以外の要素に使用する。styleはリソースア
 - draw.io元データとPNGは同じ基底名にする。
 - draw.io元データを正とし、PNGは掲載用の派生成果物として扱う。
 - Draw.io Desktopの`drawio`コマンドをPATHに通して使用する。AppImageの一時パスを通常手順に使用しない。
-- PNGは`${CLAUDE_SKILL_DIR}/scripts/export-png.sh`で書き出す。デスクトップ環境では`drawio`、画面のない環境では`xvfb-run -a drawio --no-sandbox`をスクリプトが選択する。
+- PNGは`${CLAUDE_SKILL_DIR}/scripts/export-png.sh`で書き出す。デスクトップ環境では`drawio`、画面のないLinuxでは`xvfb-run -a drawio --no-sandbox`をスクリプトが選択する。
 - スクリプトはDraw.ioの出力を、左40ピクセル・上18ピクセルの余白で1400×900ピクセルの白背景へ配置し、出力寸法を検証する(いずれも環境変数で変更可。`drawio.md` 参照)。
-- 書き出しには`drawio`、`ffmpeg`、`ffprobe`、`fontconfig`、`python3`、IPA Pゴシックが必要であり、画面のない環境では`xvfb-run`も必要とする。
+- 書き出しには`drawio`、`ffmpeg`、`ffprobe`、`fontconfig`、`python3`、IPA Pゴシックが必要であり、画面のないLinuxでは`xvfb-run`も必要とする。
 - スクリプトを使用できない場合は、Draw.io Desktopからページ単位、余白0、拡大率100%でPNGを書き出し、1400×900ピクセルであることを確認する。
 - PNGを書き出した後、解像度、文字切れ、線、アイコン、重なりを目視確認する。

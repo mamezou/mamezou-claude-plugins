@@ -69,7 +69,7 @@ scripts/export-png.sh <input.drawio> [output.png]
 - 環境変数: `DIAGRAM_FONT`(既定 IPAPGothic)、`PAGE_WIDTH` / `PAGE_HEIGHT`(既定 1400 / 900)、
   `LEFT_MARGIN` / `TOP_MARGIN`(既定 40 / 18)
 - 必要なもの: `drawio`(Draw.io Desktop、PATHに通す)、`ffmpeg`、`ffprobe`、`fontconfig`、`python3`、指定フォント。
-  画面のない環境では `xvfb-run`
+  画面のないLinuxでは `xvfb-run`
 - スクリプトは、XMLが壊れているとき、圧縮保存された図のとき、フォント指定のないstyleがあるときに止まる。
   スクリプトは、出力をページサイズの白背景へ配置し、寸法を検証する
 - スクリプトが使えない場合、またはページに収まらない図は、Draw.io Desktopからページ単位・余白0・拡大率100%で
@@ -92,7 +92,7 @@ scripts/find-icon.sh <aws|azure> <語>
 ## 既存の図を直す
 
 1. `<diagram>` の中身が英数字の塊なら圧縮保存された図。`drawio -x -f xml -o <展開後.drawio> <元.drawio>` で展開してから読む
-   (画面のない環境では `xvfb-run -a drawio --no-sandbox -x -f xml -o <展開後.drawio> <元.drawio>`)
+   (画面のないLinuxでは `xvfb-run -a drawio --no-sandbox -x -f xml -o <展開後.drawio> <元.drawio>`)
 2. `<mxfile>` と `<diagram>` の外枠は残し、`<mxGraphModel>` の中だけを直す。`<diagram>` が複数あれば依頼されたページだけを直す。
    どのページか分からなければページ名を挙げて聞く
 3. 依頼された箇所だけを変える。既存のid・座標・styleは残し、足す要素はこのSkillのルールに従って描く。
@@ -100,4 +100,4 @@ scripts/find-icon.sh <aws|azure> <語>
 4. 足す要素が収まらず周りを動かしたときは、動かしたものを伝える
 5. 保存先の指定がなければ、直した内容を元のファイルのパスへ上書きする。圧縮保存だった図は展開した形のまま保存し、そのことを伝える
 6. 作るときと同じくPNGを書き出して確認する。元の図にフォント指定や `page-background` がなく、スクリプトが止まるか図の位置がずれるときは、
-   図を直さず `drawio -x -f png -o <出力.png> <図>` で書き出す(画面のない環境では `xvfb-run -a drawio --no-sandbox -x -f png -o <出力.png> <図>`)
+   図を直さず `drawio -x -f png -o <出力.png> <図>` で書き出す(画面のないLinuxでは `xvfb-run -a drawio --no-sandbox -x -f png -o <出力.png> <図>`)

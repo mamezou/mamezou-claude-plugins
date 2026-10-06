@@ -55,7 +55,8 @@ if [ "$missing_font_styles" -ne 0 ]; then
 fi
 
 drawio_command=(drawio)
-if [ -z "${DISPLAY:-}" ]; then
+# DISPLAY で画面の有無を判断できるのは Linux だけ。macOS と Windows は DISPLAY がなくても画面がある
+if [ "$(uname -s)" = Linux ] && [ -z "${DISPLAY:-}" ]; then
   if ! command -v xvfb-run >/dev/null 2>&1; then
     echo "xvfb-run is required when DISPLAY is not available." >&2
     exit 1

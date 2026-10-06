@@ -42,6 +42,7 @@ cp -r mamezou-claude-plugins/plugins/architecture-diagram ~/.claude/skills/archi
 | `references/drawio.md` | XML の書き方、線の接続点と経路、フォント、PNG 書き出し、アイコン名の検索、既存の図を直す手順 |
 | `scripts/export-png.sh` | draw.io → PNG。XML の破損、圧縮保存、フォント指定の漏れ、出力寸法を検証する |
 | `scripts/find-icon.sh` | 手元の draw.io に入っているアイコンの名前を検索する(AWS、Azure) |
+| `tests/run.sh` | `export-png.sh` の検査。OS と `DISPLAY` の組み合わせごとに、drawio を直接呼ぶか `xvfb-run` 経由で呼ぶかを確かめる。リポジトリの直下から `bash plugins/architecture-diagram/tests/run.sh` で実行する |
 | `assets/template-aws.drawio` | AWS 図のテンプレート。style 文字列を写す元 |
 | `assets/template-azure.drawio` | Azure 図のテンプレート。style 文字列を写す元 |
 | `assets/template-onprem.drawio` | オンプレミス図のテンプレート。style 文字列を写す元 |
@@ -49,7 +50,7 @@ cp -r mamezou-claude-plugins/plugins/architecture-diagram ~/.claude/skills/archi
 ## PNG 書き出しに必要なもの
 
 `drawio`(Draw.io Desktop)、`ffmpeg`、`ffprobe`、`fontconfig`、`python3`、図で指定したフォント
-(既定 `IPAPGothic`。環境変数 `DIAGRAM_FONT` で変更)。画面のない環境では `xvfb-run`。
+(既定 `IPAPGothic`。環境変数 `DIAGRAM_FONT` で変更)。画面のない Linux では `xvfb-run`。
 アイコン名の検索(`scripts/find-icon.sh`)に必要なものは `python3` と、Draw.io Desktop 本体の `app.asar`。
 
 Claude Code から使うときは Skill が `${CLAUDE_SKILL_DIR}` で場所を解決します。手で実行するときは
