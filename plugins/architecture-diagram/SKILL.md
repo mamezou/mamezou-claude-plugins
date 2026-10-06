@@ -119,9 +119,9 @@ AI生成の判定基準ではない。目的を決めずに描くと人の図に
 | AWS図を描く | `${CLAUDE_SKILL_DIR}/references/aws-guide.md`。style文字列は `${CLAUDE_SKILL_DIR}/assets/template-aws.drawio` を開いて写す |
 | Azure図を描く | `${CLAUDE_SKILL_DIR}/references/azure-guide.md`。style文字列は `${CLAUDE_SKILL_DIR}/assets/template-azure.drawio` を開いて写す |
 | オンプレミス・自宅のネットワーク図を描く | `${CLAUDE_SKILL_DIR}/references/onprem-guide.md`。style文字列は `${CLAUDE_SKILL_DIR}/assets/template-onprem.drawio` を開いて写す |
-| AWS図を描いた後に確認する、AWS図をレビューする | `${CLAUDE_SKILL_DIR}/references/aws-checklist.md` |
-| Azure図を描いた後に確認する、Azure図をレビューする | `${CLAUDE_SKILL_DIR}/references/azure-checklist.md` |
-| オンプレミス・自宅のネットワーク図を描いた後に確認する、レビューする | `${CLAUDE_SKILL_DIR}/references/onprem-checklist.md` |
+| AWS図を描く前に読み、描いた後に確認する。AWS図をレビューする | `${CLAUDE_SKILL_DIR}/references/aws-checklist.md` |
+| Azure図を描く前に読み、描いた後に確認する。Azure図をレビューする | `${CLAUDE_SKILL_DIR}/references/azure-checklist.md` |
+| オンプレミス・自宅のネットワーク図を描く前に読み、描いた後に確認する。レビューする | `${CLAUDE_SKILL_DIR}/references/onprem-checklist.md` |
 | フォント、PNG書き出し、XMLの書き方、線の接続点と経路、既存の図を直す | `${CLAUDE_SKILL_DIR}/references/drawio.md` |
 | AWS・Azureで、ガイドの表にないアイコンの名前を探す | `bash "${CLAUDE_SKILL_DIR}/scripts/find-icon.sh" <aws または azure> <語>` |
 | PNGを書き出す | `bash "${CLAUDE_SKILL_DIR}/scripts/export-png.sh" <input.drawio> [output.png]` |

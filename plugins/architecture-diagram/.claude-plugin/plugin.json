@@ -1,6 +1,6 @@
 {
   "name": "architecture-diagram",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "判断に使える構成図を draw.io で描くための Skill。AI 生成にありがちな装飾を排し、目的と実在する境界から描く。AWS / Azure / オンプレミス(事務所・自宅のネットワーク)対応",
   "author": {
     "name": "mamezou"
