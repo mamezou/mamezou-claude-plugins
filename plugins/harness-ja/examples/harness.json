@@ -57,7 +57,8 @@
     "honorific": {
       "name": "",
       "suffix": "様"
-    }
+    },
+    "toolRules": []
   },
   "requireReading": {
     "enabled": true,
