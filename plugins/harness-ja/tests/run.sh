@@ -107,7 +107,11 @@ cat > "$CFG" <<'JSON'
     "targets": ["*/docs/drafts/*-draft.md", "*/docs/drafts/*-draft.txt"],
     "excludePatterns": ["-internal-", "_internal", "/archive/"],
     "bannedTerms": ["横串"],
-    "honorific": { "name": "取引先", "suffix": "様" }
+    "honorific": { "name": "取引先", "suffix": "様" },
+    "toolRules": [
+      { "tool": "__create_draft$", "hint": "下書きの本文" },
+      { "tool": "__send_message$", "fields": ["subject", "body"], "requiredFields": ["body"] }
+    ]
   },
   "requireReading": {
     "enabled": true,
@@ -364,6 +368,73 @@ edit_input  "$TR/rr-noread.jsonl" "$PROJ"   "$DRAFT"      "$dp_hon_body"        
 write_input "$TR/rr-noread.jsonl" "$PROJ"   "$DRAFT_OUT"  "資料は /var/data にあります。" > "$IN/dp-nontarget.json"
 write_input "$TR/rr-noread.jsonl" "$NOCONF" "$DRAFT"      "資料は /var/data にあります。" > "$IN/dp-noconf.json"
 
+# draft-precheck (MCP ツールの本文)
+{ mk_user "$(printf '下書きを作って\n[hook-bypass: draft-precheck]')"; mk_toolres; } > "$TR/dp-bypass.jsonl"
+jq '.draftPrecheck.targets=[]' "$CFG" > "$PROJ/.claude/harness-dptoolonly.json"
+jq '.draftPrecheck.toolRules[0].tool="("' "$CFG" > "$PROJ/.claude/harness-dpbadre.json"
+DPTOOLONLY="$PROJ/.claude/harness-dptoolonly.json"
+DPBADRE="$PROJ/.claude/harness-dpbadre.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__create_draft \
+  '{"subject":"ご連絡","body":"資料は /var/data/report にあります。"}'    > "$IN/dm-abs.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__create_draft \
+  '{"subject":"横串の件","body":"ご確認ください。"}'                      > "$IN/dm-term.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__create_draft \
+  '{"subject":"ご連絡","body":"本日の打ち合わせの件、承知しました。"}'    > "$IN/dm-clean.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__create_draft \
+  '{"subject":"ご連絡","body":"ご確認ください。","htmlBody":"<p>/var/data/report</p>"}' > "$IN/dm-html.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__read_thread \
+  '{"subject":"ご連絡","body":"資料は /var/data/report にあります。"}'    > "$IN/dm-nontarget.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__create_draft \
+  '{"draftId":"D1"}'                                                       > "$IN/dm-nocontent-opt.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__send_message \
+  '{"draftId":"D1"}'                                                       > "$IN/dm-nocontent-req.json"
+mcp_input "$TR/dp-bypass.jsonl" "$PROJ" mcp__chat__create_draft \
+  '{"subject":"ご連絡","body":"資料は /var/data/report にあります。"}'    > "$IN/dm-bypass.json"
+mcp_input "$TR/rr-noread.jsonl" "$NOCONF" mcp__chat__create_draft \
+  '{"subject":"ご連絡","body":"資料は /var/data/report にあります。"}'    > "$IN/dm-noconf.json"
+# 異常な入力と設定 (どれも、検査を保証できない形なので 2 で止める)
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__create_draft '["a"]'   > "$IN/dm-arr.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__create_draft '"a"'     > "$IN/dm-str.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__create_draft 'null'    > "$IN/dm-null.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__create_draft \
+  '{"to":["a@example.com"],"htmlBody":"<p>資料は /var/data にあります。</p>"}' > "$IN/dm-htmlonly.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__post_message \
+  '{"subject":"ご連絡","message":"資料は /var/data/report にあります。"}'  > "$IN/dm-custom-hit.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__post_message \
+  '{"subject":"/var/data/report の件"}'                                    > "$IN/dm-custom-miss.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__create_draft_1 \
+  '{"subject":"ご連絡","body":"資料は /var/data/report にあります。"}'    > "$IN/dm-digit.json"
+jq '.draftPrecheck.toolRules[0].fields="body"'        "$CFG" > "$PROJ/.claude/harness-dpfstr.json"
+jq '.draftPrecheck.toolRules[0].fields=[]'            "$CFG" > "$PROJ/.claude/harness-dpfempty.json"
+jq '.draftPrecheck.toolRules[0].fields=["body",1]'    "$CFG" > "$PROJ/.claude/harness-dpfnum.json"
+jq '.draftPrecheck.toolRules=[{"tool":"__post_message$","fields":["message"]}]' \
+  "$CFG" > "$PROJ/.claude/harness-dpcustom.json"
+jq '.draftPrecheck.toolRules[0].tool="create_draft_\\d$"' "$CFG" > "$PROJ/.claude/harness-dpdigit.json"
+jq 'del(.draftPrecheck.toolRules)'                    "$CFG" > "$PROJ/.claude/harness-dpnokey.json"
+jq '.draftPrecheck.toolRules[0].requiredFields=["body"]' "$CFG" > "$PROJ/.claude/harness-dpreq.json"
+jq '.draftPrecheck.toolRules="oops"'                  "$CFG" > "$PROJ/.claude/harness-dpshape1.json"
+jq '.draftPrecheck.toolRules=[1]'                     "$CFG" > "$PROJ/.claude/harness-dpshape2.json"
+jq '.draftPrecheck.toolRules=[{"fields":["body"]}]'   "$CFG" > "$PROJ/.claude/harness-dpshape3.json"
+jq '.draftPrecheck.toolRules[0].requiredFields="body"' "$CFG" > "$PROJ/.claude/harness-dpshape4.json"
+DPSHAPE1="$PROJ/.claude/harness-dpshape1.json"
+DPSHAPE2="$PROJ/.claude/harness-dpshape2.json"
+DPSHAPE3="$PROJ/.claude/harness-dpshape3.json"
+DPSHAPE4="$PROJ/.claude/harness-dpshape4.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__create_draft \
+  '{"subject":"ご連絡","htmlBody":"<p>資料は /var/data にあります。</p>"}' > "$IN/dm-subj-html.json"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" mcp__chat__create_draft \
+  '{"subject":"ご連絡","body":"   "}'                                      > "$IN/dm-blank-body.json"
+DPFSTR="$PROJ/.claude/harness-dpfstr.json"
+DPFEMPTY="$PROJ/.claude/harness-dpfempty.json"
+DPFNUM="$PROJ/.claude/harness-dpfnum.json"
+DPCUSTOM="$PROJ/.claude/harness-dpcustom.json"
+DPDIGIT="$PROJ/.claude/harness-dpdigit.json"
+DPNOKEY="$PROJ/.claude/harness-dpnokey.json"
+DPREQ="$PROJ/.claude/harness-dpreq.json"
+jq -cn --arg tr "$TR/rr-noread.jsonl" --arg cwd "$PROJ" --arg p "$DRAFT" --arg n "資料は /var/data にあります。" \
+  '{tool_name:"MultiEdit",tool_input:{file_path:$p,edits:[{old_string:"a",new_string:$n}]},transcript_path:$tr,cwd:$cwd}' \
+  > "$IN/dm-multiedit.json"
+
 # require-reading
 edit_input  "$TR/rr-noread.jsonl"  "$PROJ"   "$PROJ/TODO.md"   "b"      > "$IN/rr-noread.json"
 edit_input  "$TR/rr-read.jsonl"    "$PROJ"   "$PROJ/TODO.md"   "b"      > "$IN/rr-read.json"
@@ -553,6 +624,45 @@ run "DP-6 checks.internalPaths=false -> pass" 0 draft-precheck.sh "$DPOFF" "$IN/
 run "DP-7 対象外パス -> pass" 0 draft-precheck.sh "$CFG" "$IN/dp-nontarget.json"
 run "DP-8 設定ファイルなし -> pass" 0 draft-precheck.sh "$NOCFG" "$IN/dp-noconf.json"
 run "DP-9 examples 設定 (honorific 空) -> pass" 0 draft-precheck.sh "$EX" "$IN/dp-hon.json"
+
+echo
+echo "== draft-precheck (MCP ツールの本文) =="
+run "DM-1 下書きのツール + 本文に絶対パス -> block" 2 draft-precheck.sh "$CFG" "$IN/dm-abs.json" "絶対パス検出"
+run "DM-2 下書きのツール + 件名に禁止語 -> block" 2 draft-precheck.sh "$CFG" "$IN/dm-term.json" "禁止語"
+run "DM-3 下書きのツール + 問題なし -> pass" 0 draft-precheck.sh "$CFG" "$IN/dm-clean.json"
+run "DM-4 htmlBody だけにある絶対パスは対象外 -> pass" 0 draft-precheck.sh "$CFG" "$IN/dm-html.json"
+run "DM-5 toolRules に無いツール -> pass" 0 draft-precheck.sh "$CFG" "$IN/dm-nontarget.json"
+run "DM-6 本文が無い呼び出し (requiredFields なし) -> pass" 0 draft-precheck.sh "$CFG" "$IN/dm-nocontent-opt.json"
+run "DM-7 必須の引数 (requiredFields) が無い呼び出し -> block" 2 draft-precheck.sh "$CFG" "$IN/dm-nocontent-req.json" "必須の項目"
+run "DM-8 バイパスの文字列だけの行 -> pass" 0 draft-precheck.sh "$CFG" "$IN/dm-bypass.json"
+run "DM-9 examples 設定 (toolRules なし) -> pass" 0 draft-precheck.sh "$EX" "$IN/dm-abs.json"
+run "DM-10 targets が空で toolRules だけある -> block" 2 draft-precheck.sh "$DPTOOLONLY" "$IN/dm-abs.json" "絶対パス検出"
+run "DM-11 tool が正規表現として読めない -> block" 2 draft-precheck.sh "$DPBADRE" "$IN/dm-abs.json" "正規表現として読めません"
+run "DM-12 設定ファイルなし -> pass" 0 draft-precheck.sh "$NOCFG" "$IN/dm-noconf.json"
+run "DM-13 Write の既存の検査は変わらない (toolRules あり) -> block" 2 draft-precheck.sh "$CFG" "$IN/dp-abs.json" "絶対パス検出"
+run "DM-14 tool_input が配列 -> block" 2 draft-precheck.sh "$CFG" "$IN/dm-arr.json" "オブジェクトではない"
+run "DM-15 tool_input が文字列 -> block" 2 draft-precheck.sh "$CFG" "$IN/dm-str.json" "オブジェクトではない"
+run "DM-16 tool_input が null (requiredFields なし) -> pass" 0 draft-precheck.sh "$CFG" "$IN/dm-null.json"
+run "DM-17 fields が文字列 -> block" 2 draft-precheck.sh "$DPFSTR" "$IN/dm-abs.json" "形が正しくありません"
+run "DM-18 fields が空配列 -> block" 2 draft-precheck.sh "$DPFEMPTY" "$IN/dm-abs.json" "形が正しくありません"
+run "DM-19 fields に文字列以外 -> block" 2 draft-precheck.sh "$DPFNUM" "$IN/dm-abs.json" "形が正しくありません"
+run "DM-20 fields で引数名を指定 + 該当の引数に絶対パス -> block" 2 draft-precheck.sh "$DPCUSTOM" "$IN/dm-custom-hit.json" "絶対パス検出"
+run "DM-21 fields で引数名を指定 + 別の引数だけに絶対パス -> pass" 0 draft-precheck.sh "$DPCUSTOM" "$IN/dm-custom-miss.json"
+run "DM-22 tool の正規表現は jq の test() (\\d) -> block" 2 draft-precheck.sh "$DPDIGIT" "$IN/dm-digit.json" "絶対パス検出"
+run "DM-23 toolRules キーが無い設定 + MCP -> pass" 0 draft-precheck.sh "$DPNOKEY" "$IN/dm-abs.json"
+run "DM-24 toolRules キーが無い設定 + Write -> block" 2 draft-precheck.sh "$DPNOKEY" "$IN/dp-abs.json" "絶対パス検出"
+run "DM-25 MultiEdit の検査は変わらない -> block" 2 draft-precheck.sh "$CFG" "$IN/dm-multiedit.json" "絶対パス検出"
+run "DM-26 htmlBody だけの呼び出し (requiredFields なし) は検査されない -> pass" 0 draft-precheck.sh "$CFG" "$IN/dm-htmlonly.json"
+run "DM-27 htmlBody だけの呼び出し (requiredFields:[body]) -> block" 2 draft-precheck.sh "$DPREQ" "$IN/dm-htmlonly.json" "必須の項目 body"
+run "DM-28 subject があり body が無く htmlBody だけ (requiredFields なし) -> pass" 0 draft-precheck.sh "$CFG" "$IN/dm-subj-html.json"
+run "DM-29 subject があり body が無く htmlBody だけ (requiredFields:[body]) -> block" 2 draft-precheck.sh "$DPREQ" "$IN/dm-subj-html.json" "必須の項目 body"
+run "DM-30 body が空白だけ (requiredFields:[body]) -> block" 2 draft-precheck.sh "$DPREQ" "$IN/dm-blank-body.json" "必須の項目 body"
+run "DM-31 body があり問題なし (requiredFields:[body]) -> pass" 0 draft-precheck.sh "$DPREQ" "$IN/dm-clean.json"
+run "DM-32 toolRules が文字列 + MCP -> block" 2 draft-precheck.sh "$DPSHAPE1" "$IN/dm-abs.json" "形が正しくありません"
+run "DM-33 toolRules の要素が数値 + MCP -> block" 2 draft-precheck.sh "$DPSHAPE2" "$IN/dm-abs.json" "形が正しくありません"
+run "DM-34 toolRules の要素に tool が無い + MCP -> block" 2 draft-precheck.sh "$DPSHAPE3" "$IN/dm-abs.json" "形が正しくありません"
+run "DM-35 requiredFields が文字列 + MCP -> block" 2 draft-precheck.sh "$DPSHAPE4" "$IN/dm-abs.json" "形が正しくありません"
+run "DM-36 toolRules が文字列でも Write の検査は動く -> block" 2 draft-precheck.sh "$DPSHAPE1" "$IN/dp-abs.json" "絶対パス検出"
 
 echo
 echo "== require-reading =="

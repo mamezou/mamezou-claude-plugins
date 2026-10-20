@@ -26,6 +26,11 @@ mkdir -p .claude/rules
 cp -n "${CLAUDE_PLUGIN_ROOT}"/rules-templates/*.md .claude/rules/
 ```
 
+   複製は初回だけで、プラグインを更新しても既存の `.claude/rules/` は変わらない。0.4.7 以前に
+   複製した `writing-style.md` は、先頭に `paths:` があり、メールやチャットの下書きでは読み込まれず、
+   「実例の確認」の節もない。`diff "${CLAUDE_PLUGIN_ROOT}/rules-templates/writing-style.md" .claude/rules/writing-style.md`
+   で差分を示し、`paths:` の削除と「実例の確認」の節の追加を、利用者の判断で反映してもらう。
+
 4. `.gitignore` に次の1行を追記する(既にあれば追記しない)。
 
 ```
@@ -37,6 +42,7 @@ cp -n "${CLAUDE_PLUGIN_ROOT}"/rules-templates/*.md .claude/rules/
    - `cloudChange.projects[]`: クラウド変更コマンドの停止の対象。`clis`、`cwdMatch`、`runbookPattern`、`runbookHint`、`guideRef`
    - `responseQuality.patterns`: 応答の文体検査で実行するパターン番号(既定 `[3, 4, 8, 19]`)
    - `draftPrecheck.targets[]`: 送付文面の置き場(bash の case パターン)。`bannedTerms[]` に案件の禁止語
+   - `draftPrecheck.toolRules[]`: メールやチャットの下書きを渡す MCP のツールの本文を、送付文面の事前検査に通す対応表(既定は空)
    - `requireReading.rules[]`: 編集前に必読とする資料の対応表
    - `requireReading.toolRules[]`: 外部へ書き込む MCP のツールの前に呼んでおく、読み取りのツールの対応表(既定は空)
    - `toolResultCheck.rules[]`: MCP のツールの結果にあるはずの成立の印の対応表(既定は空)

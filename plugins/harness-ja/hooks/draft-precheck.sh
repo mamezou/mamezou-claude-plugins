@@ -1,11 +1,26 @@
 #!/bin/bash
-# 送付文面の事前検査 hook (PreToolUse, matcher=Write|Edit|MultiEdit)
+# 送付文面の事前検査 hook (PreToolUse, matcher=Write|Edit|MultiEdit|mcp__.*)
 # 先方・内部へ送る文面へ、内部パスやローカル拡張子・造語・組版記号・外部 AI 言及が混入するのを止める。
 #
-# 発火条件:
+# 発火条件 (ファイルの編集):
 #   - 編集対象のパスが draftPrecheck.targets[] のいずれか (bash の case パターン) に一致
 #   - excludePatterns[] のいずれかをパスに含む場合は対象外
 #   - cwd には依存しない (リポジトリルート起動のセッションでも発火する)
+#
+# 発火条件 (MCP ツールの呼び出し。メールやチャットの下書きのようにファイルを書かない文面):
+#   - ツール名が draftPrecheck.toolRules[] の tool に一致する。tool は requireReading.toolRules と
+#     同じ jq の test() の正規表現。配列順に照合し、最初に一致した要素を使う。excludePatterns[] は使わない
+#   - 検査するのは、tool_input のうち fields[] に挙げた項目の文字列 (既定は subject と body)。
+#     fields は文字列を1件以上含む配列に限る。htmlBody のような HTML の項目は、タグが検査に
+#     混ざるため、既定に入れない
+#   - requiredFields[] に挙げた引数が、tool_input にない、空白だけ、文字列でないときは止める
+#     (既定は空で、何も求めない。下書きの ID だけで送る呼び出しを止めないため)。メールの
+#     下書きを作るツールには ["body"] を書く。subject があっても、body がなく htmlBody だけで
+#     本文を渡す呼び出しは、requiredFields を書かないと検査されずに通る
+#   - 止めるのは終了コード 2 のとき。toolRules の形の誤り、tool の正規表現の誤り、tool_input が
+#     配列や文字列の呼び出しは、検査できないため 2 で止める。toolRules の形は、tool_name が
+#     mcp__ で始まる呼び出しのときに検証する
+#   - toolRules に一致しない MCP ツールの呼び出しでは、何もしない
 #
 # 検査項目 (draftPrecheck.checks.<名前> を false にすると個別に止められる。既定はすべて true):
 #   bannedTerms      設定の禁止語
@@ -23,8 +38,9 @@
 #
 # 設定 (.claude/harness.json):
 #   draftPrecheck.enabled           false で無効化
-#   draftPrecheck.targets[]         対象パスの case パターン (空なら何もしない)
+#   draftPrecheck.targets[]         対象パスの case パターン (空なら、ファイルの編集では何もしない)
 #   draftPrecheck.excludePatterns[] パスに含めば対象外にする文字列
+#   draftPrecheck.toolRules[]       MCP ツールの規則 tool / fields / requiredFields
 #   draftPrecheck.checks            検査項目ごとの on / off
 #   draftPrecheck.bannedTerms[]     禁止語 (既定値は持たない)
 #   draftPrecheck.honorific.name    敬称の検査対象名 (空なら検査しない)
@@ -42,7 +58,8 @@ if ! cfg_enabled '.draftPrecheck'; then
 fi
 
 target_count=$(cfg '.draftPrecheck.targets | length' '0')
-if [[ "${target_count:-0}" -eq 0 ]]; then
+tool_rule_count=$(cfg '.draftPrecheck.toolRules | length' '0')
+if [[ "${target_count:-0}" -eq 0 && "${tool_rule_count:-0}" -eq 0 ]]; then
   exit 0
 fi
 
@@ -53,46 +70,114 @@ check_on() { # check_on <検査名>
 cwd=$(printf '%s' "$input" | jq -r '.cwd // empty')
 
 tool_name=$(printf '%s' "$input" | jq -r '.tool_name // empty')
-file_path=$(printf '%s' "$input" | jq -r '.tool_input.file_path // .tool_input.path // empty')
-[[ -z "$file_path" ]] && exit 0
+# tool_input が配列や文字列の入力でも、jq を異常終了させない (異常終了は 2 でないため、止まらない)
+file_path=$(printf '%s' "$input" | jq -r '.tool_input | if type == "object" then (.file_path // .path // empty) else empty end')
 
-# 対象判定 (絶対/相対両対応)
-if [[ "$file_path" = /* ]]; then
-  target_file_path="$file_path"
+# MCP ツールの呼び出し: toolRules に当たるものだけ、tool_input の文字列を検査する
+mcp_mode=0
+required_json='[]'
+fields_json='["subject","body"]'
+if [[ "$tool_name" == mcp__* ]]; then
+  [[ "${tool_rule_count:-0}" -gt 0 ]] || exit 0
+  # toolRules の形を先に検証する。形が壊れていると、jq が 2 以外で異常終了したり、規則なしとして
+  # 通ったりして、検査できないため
+  if ! printf '%s' "$HARNESS_CONFIG_JSON" | jq -e '
+        (.draftPrecheck.toolRules | type == "array")
+        and all(.draftPrecheck.toolRules[]?;
+          type == "object"
+          and ((.tool | type) == "string" and (.tool | length) > 0)
+          and ((.fields // ["subject","body"]) | type == "array" and length > 0 and all(.[]; type == "string"))
+          and ((.requiredFields // []) | type == "array" and all(.[]; type == "string")))' >/dev/null 2>&1; then
+    printf '設定 draftPrecheck.toolRules の形が正しくありません。toolRules は配列で、各要素は、tool (空でない文字列)、fields (文字列を1件以上含む配列)、requiredFields (文字列の配列) を持つオブジェクトにしてください。\n' >&2
+    exit 2
+  fi
+  while IFS= read -r rule; do
+    [[ -z "$rule" ]] && continue
+    tool_re=$(printf '%s' "$rule" | jq -r '.tool // empty')
+    [[ -z "$tool_re" ]] && continue
+    # 照合は requireReading.toolRules と同じ jq の test() にそろえる。
+    # 終了コード 0 は一致、1 は不一致、それ以外は正規表現の誤り
+    rc=0
+    jq -en --arg n "$tool_name" --arg re "$tool_re" '$n | test($re)' >/dev/null 2>&1 || rc=$?
+    if [[ "$rc" -gt 1 ]]; then
+      printf '設定 draftPrecheck.toolRules の tool が正規表現として読めません: %s\n' "$tool_re" >&2
+      exit 2
+    fi
+    if [[ "$rc" -eq 0 ]]; then
+      fields_json=$(printf '%s' "$rule" | jq -c '.fields // ["subject","body"]')
+      required_json=$(printf '%s' "$rule" | jq -c '.requiredFields // []')
+      mcp_mode=1
+      break
+    fi
+  done < <(cfg_list '.draftPrecheck.toolRules[]? | @json')
+  [[ "$mcp_mode" -eq 1 ]] || exit 0
 else
-  target_file_path="${cwd%/}/$file_path"
+  [[ -z "$file_path" ]] && exit 0
 fi
 
-is_target=0
-while IFS= read -r pat; do
-  [[ -z "$pat" ]] && continue
-  case "$target_file_path" in
-    $pat) is_target=1; break ;;
-  esac
-done < <(cfg_list '.draftPrecheck.targets[]?')
-[[ "$is_target" -eq 1 ]] || exit 0
-
-# 除外パターン (内部用・送信済み等) はここで抜ける
-while IFS= read -r ex; do
-  [[ -z "$ex" ]] && continue
-  if grep -qF -- "$ex" <<< "$file_path"; then
-    exit 0
+if [[ "$mcp_mode" -eq 0 ]]; then
+  # 対象判定 (絶対/相対両対応)
+  if [[ "$file_path" = /* ]]; then
+    target_file_path="$file_path"
+  else
+    target_file_path="${cwd%/}/$file_path"
   fi
-done < <(cfg_list '.draftPrecheck.excludePatterns[]?')
 
-# tool_input から編集内容を取得
-case "$tool_name" in
-  Write)
-    content=$(printf '%s' "$input" | jq -r '.tool_input.content // empty')
-    ;;
-  Edit)
-    content=$(printf '%s' "$input" | jq -r '.tool_input.new_string // empty')
-    ;;
-  MultiEdit)
-    content=$(printf '%s' "$input" | jq -r '[.tool_input.edits[]? | .new_string] | join("\n")')
-    ;;
-  *) exit 0 ;;
-esac
+  is_target=0
+  while IFS= read -r pat; do
+    [[ -z "$pat" ]] && continue
+    case "$target_file_path" in
+      $pat) is_target=1; break ;;
+    esac
+  done < <(cfg_list '.draftPrecheck.targets[]?')
+  [[ "$is_target" -eq 1 ]] || exit 0
+
+  # 除外パターン (内部用・送信済み等) はここで抜ける
+  while IFS= read -r ex; do
+    [[ -z "$ex" ]] && continue
+    if grep -qF -- "$ex" <<< "$file_path"; then
+      exit 0
+    fi
+  done < <(cfg_list '.draftPrecheck.excludePatterns[]?')
+
+  # tool_input から編集内容を取得
+  case "$tool_name" in
+    Write)
+      content=$(printf '%s' "$input" | jq -r '.tool_input.content // empty')
+      ;;
+    Edit)
+      content=$(printf '%s' "$input" | jq -r '.tool_input.new_string // empty')
+      ;;
+    MultiEdit)
+      content=$(printf '%s' "$input" | jq -r '[.tool_input.edits[]? | .new_string] | join("\n")')
+      ;;
+    *) exit 0 ;;
+  esac
+else
+  # tool_input がオブジェクトでない呼び出しは、中身を検査できないため止める (null は本文なしとして扱う)
+  if ! printf '%s' "$input" | jq -e '.tool_input | type == "object" or type == "null"' >/dev/null 2>&1; then
+    printf '%s の tool_input がオブジェクトではないため、本文を検査できません。\n' "$tool_name" >&2
+    exit 2
+  fi
+  # fields[] に挙げた項目の文字列を、改行でつなぐ
+  content=$(printf '%s' "$input" | jq -r --argjson f "$fields_json" \
+    '(.tool_input // {}) as $t | [ $f[] | $t[.]? | strings ] | join("\n")')
+  # requiredFields[] に挙げた引数が、ない・空白だけ・文字列でないときは止める
+  missing=$(printf '%s' "$input" | jq -r --argjson r "$required_json" \
+    '(.tool_input // {}) as $t
+     | [ $r[] as $k | $t[$k]? as $v | select(($v | type) != "string" or (($v | gsub("\\s"; "")) | length) == 0) | $k ]
+     | join(", ")')
+  if [[ -n "$missing" ]]; then
+    cat >&2 <<MSG
+[送付文面の事前検査: 必須の項目なし]
+${tool_name} の入力に、必須の項目 ${missing} がないか、空です。
+本文は body (プレーンテキスト) で渡してください。htmlBody だけでは検査できません。
+引数名が違うツールは、draftPrecheck.toolRules の requiredFields を、そのツールの引数名に合わせてください。
+MSG
+    exit 2
+  fi
+  file_path="$tool_name"
+fi
 [[ -z "$content" ]] && exit 0
 
 # バイパス判定 (それだけの行にある場合のみ有効)

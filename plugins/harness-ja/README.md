@@ -74,7 +74,7 @@
 | `cloud-change-check.sh` | PreToolUse(Bash) | az / aws / cdk の変更系コマンドで、手順書の Read と `[change-go: <案件>]` のいずれかが無い。変更系を検知したのに設定のどの案件にも一致しないときも止める | `[hook-bypass: cloud-change]` |
 | `harness-change-check.sh` | PreToolUse(Bash / Write / Edit / MultiEdit) | `.claude/` 配下(hooks / rules / skills / settings 等)の書き換えで、`[harness-go]` が無い。例外として、プラグイン配下からの `cp`、`mkdir`、`.claude/harness.json` の新規作成は初期設定のため通す | なし(承認の文字列がバイパスを兼ねる) |
 | `response-quality.sh` | Stop | 応答本文に文体違反(既定は4種類。下の表を参照) | `[hook-bypass: response-quality]` |
-| `draft-precheck.sh` | PreToolUse(Write / Edit / MultiEdit) | 送付文面に内部パス・ローカル拡張子・組版記号・外部 AI 言及・禁止語・長い識別子の繰り返し | `[hook-bypass: draft-precheck]` |
+| `draft-precheck.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 送付文面に内部パス・ローカル拡張子・組版記号・外部 AI 言及・禁止語・長い識別子の繰り返し。MCP のツールは `draftPrecheck.toolRules[]` に書いたものだけ、`subject` と `body` などの文字列を検査する | `[hook-bypass: draft-precheck]` |
 | `require-reading.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 必読資料を直近で Read せずに対象ファイルを編集。対応する読み取りのツールを呼ばずに、外部へ書き込むツールを呼び出し | `[hook-bypass: resource-reading]` |
 | `tool-result-check.sh` | PostToolUse(MCP のツール) | 止めない。ツールの結果に成立の印が無いとき、作成・更新が成立していないことを Claude へ知らせる | なし |
 | `no-inline-powershell.sh` | Stop | 5行以上の PowerShell をファイル化せずにコードブロックで提示(既定は無効) | なし |
@@ -132,6 +132,7 @@ Stop の2本と PostToolUse の1本は同じ文を出しますが、応答とツ
 | `cloudChange.projects[]` | クラウド変更コマンドの停止の対象。`clis`(az / aws / cdk)、`cwdMatch`、`runbookPattern`、`runbookHint`、`guideRef` |
 | `harnessChange.token` / `excludePatterns[]` | 設定・規則ファイルの保護で使う承認の文字列(既定 `[harness-go]`)と除外パス(既定 `.claude/projects/`) |
 | `draftPrecheck.targets[]` | 送付文面の置き場(bash の case パターン)。`excludePatterns[]`、`bannedTerms[]`、`honorific` |
+| `draftPrecheck.toolRules[]` | 本文を検査する MCP のツール(`tool`、`jq` の `test()` の正規表現)と、検査する引数(`fields`、既定は `subject` と `body`)。`requiredFields` に挙げた引数がない呼び出しは止める。既定は空 |
 | `draftPrecheck.checks` | 検査項目ごとの on / off。`bannedTerms` / `internalPaths` / `extensions` / `typography` / `externalAi` / `honorific` / `longIdentifiers`(既定すべて true) |
 | `requireReading.rules[]` | 編集対象(`target`)と必読資料(`requiredReadPattern`)の対応表。`mode: "logs"` で作業ログの特例 |
 | `requireReading.toolRules[]` | 外部へ書き込むツール(`tool`)と、先に呼んでおく読み取りのツール(`requiredTool`)の対応表。`sameInput` に、値が等しいことを求める引数の組を書く。既定は空 |
@@ -144,8 +145,8 @@ hook 実行時の cwd から上へ辿った `.claude/harness.json` の順で探�
 
 ### MCP のツールの規則
 
-`requireReading.toolRules[]` と `toolResultCheck.rules[]` は、MCP のツール(名前が `mcp__` で
-始まるツール)に効きます。ツール名と引数名は利用側の設定に書き、プラグインは特定のサービスの
+`requireReading.toolRules[]`、`toolResultCheck.rules[]`、`draftPrecheck.toolRules[]` は、MCP の
+ツール(名前が `mcp__` で始まるツール)に効きます。ツール名と引数名は利用側の設定に書き、プラグインは特定のサービスの
 名前を持ちません。`tool`、`requiredTool`、`successPattern` は正規表現です。
 
 次は、チャットの下書きを作るツールに使う例です。ツール名、引数名、結果の項目名は架空の
@@ -182,12 +183,47 @@ hook 実行時の cwd から上へ辿った `.claude/harness.json` の順で探�
 - `successPattern` の `\\s*` は、結果の JSON がコロンの後に空白を入れる場合に備えたものです
 - `requiredTool` や `successPattern` の無い規則は使わず、次の規則を見ます
 
+メールの下書きのように、本文をツールの引数で渡す呼び出しは、`draftPrecheck.toolRules[]` で
+本文を検査します。ツール名と引数名は、接続している MCP サーバーの定義に合わせて書きます。
+
+```json
+"draftPrecheck": {
+  "toolRules": [
+    { "tool": "__create_draft$", "requiredFields": ["body"] },
+    { "tool": "__update_draft$" }
+  ]
+}
+```
+
+- `tool` は、`requireReading.toolRules` と同じ、`jq` の `test()` の正規表現です
+- `fields` は、`tool_input` の中で検査する引数名で、文字列を1件以上含む配列に限ります。既定は
+  `["subject", "body"]` です。HTML の引数(`htmlBody` など)は、タグが検査に混ざるため、既定に
+  入れていません
+- `requiredFields` に挙げた引数が、`tool_input` にない、空白だけ、文字列でないときは、止めます。
+  既定は空で、何も求めません。メールの下書きを作るツールには `["body"]` を書いてください。
+  件名があっても、`body` がなく `htmlBody` だけで本文を渡す呼び出しは、`requiredFields` を
+  書かないと検査されずに通ります。更新のツールのように、本文を省いて宛先だけを変えられる
+  ツールや、下書きの ID だけで送るツールには、書きません
+- `toolRules` の形の誤り(配列でない、要素がオブジェクトでない、`tool` がない、`fields` や
+  `requiredFields` が文字列の配列でない)、`tool` の正規表現の誤り、`tool_input` が配列や文字列の
+  呼び出しは、検査できないため、終了コード 2 で止めます。形の誤りは、MCP のツールの呼び出しの
+  すべてを止めます
+- `tool` に一致しない MCP のツールの呼び出しでは、何もしません
+- 検査の項目は、ファイルの編集と同じです。`checks` で止める項目を選べます
+- 本文の意味(依頼にない内容の追加、依頼にある内容の欠落)は、この hook では判定できません。
+  `docs-tools` の `draft-precheck` と `doc-review` で照合します
+
 ## rules テンプレートについて
 
 プラグインは `.claude/rules/` 相当の常に読み込まれる指示を配布できないため、
 `rules-templates/` を `/harness-ja:harness-init` で利用側へ複製します。複製後は利用側で
 自由に編集してください。`start-approval.md` は作者の作業様式です。破壊的操作・クラウド
 変更・根拠確認の項目以外は削ってかまいません。
+
+複製は初回だけです。プラグインを更新しても、複製済みの `.claude/rules/` は変わりません。
+0.4.7 以前に複製した `writing-style.md` は、先頭に `paths:` があり、メールやチャットの下書きでは
+読み込まれません。0.4.8 のテンプレートは `paths:` を付けず、「実例の確認」の節を持ちます。
+`/harness-ja:harness-init` を再実行すると、差分を示します。
 
 文章の規則のうち、次の3つは grep や hook で検知できないため、`writing-style.md` の
 手順で読み取り専用のサブエージェント(model: sonnet)へ読者としての通し読みを委任して
