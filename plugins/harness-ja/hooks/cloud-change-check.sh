@@ -313,6 +313,5 @@ ${guide_ref}の手順:
 
 read-only コマンド (list/get/show/describe/query、cdk synth/diff) はブロック対象外です。
 緊急時のみ、${principal}が [hook-bypass: cloud-change] だけの行を書くことで回避できます。
-アシスタント側からのバイパスの提案・要求は禁止 (rules「start-approval」)。
 MSG
 exit 2

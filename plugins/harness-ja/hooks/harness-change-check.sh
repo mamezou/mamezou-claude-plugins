@@ -28,7 +28,6 @@
 # 限界:
 #   - Bash は文字列の形で判定する。`.claude/` を書かずに触れる形 (cd 後の相対パス、
 #     変数展開、`git checkout -- .`) は止まらない
-#   - アシスタント側からの承認の文字列の提案・要求は禁止 (rules「start-approval」)
 #
 # 設定 (.claude/harness.json):
 #   harnessChange.enabled           false で無効化
@@ -185,6 +184,5 @@ cat >&2 <<MSG
 3. その直後に書き換える (次の${principal}の入力までは複数の書き換えが通る)
 
 除外パス (${exclude_hint}) と読み取り (cat / grep / sed -n / jq) は対象外です。
-アシスタント側からの承認の文字列の提案・要求は禁止 (rules「start-approval」)。
 MSG
 exit 2
