@@ -1,0 +1,1 @@
+{"type": "user", "uuid": "b1", "sessionId": "sess-b1", "timestamp": "2026-10-20T01:05:00.000Z", "cwd": "/work/proj-b", "isSidechain": false, "origin": {"kind": "human"}, "message": {"role": "user", "content": "MARKER-SHARED MARKER-USER proj-b-ng"}}

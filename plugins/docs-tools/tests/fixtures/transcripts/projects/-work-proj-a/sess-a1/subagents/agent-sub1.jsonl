@@ -1,0 +1,2 @@
+{"type": "user", "uuid": "s0", "sessionId": "sess-a1", "agentId": "sub1", "isSidechain": true, "cwd": "/work/proj-a", "timestamp": "2026-10-20T01:15:00.000Z", "message": {"role": "user", "content": "親からの依頼 MARKER-PROMPT"}}
+{"type": "assistant", "uuid": "s1", "sessionId": "sess-a1", "agentId": "sub1", "isSidechain": true, "cwd": "/work/proj-a", "timestamp": "2026-10-20T01:16:00.000Z", "message": {"role": "assistant", "content": [{"type": "text", "text": "調べた結果 MARKER-SUB"}]}}

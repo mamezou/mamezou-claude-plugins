@@ -9,7 +9,7 @@
     {
       "name": "harness-ja",
       "source": "./plugins/harness-ja",
-      "description": "クラウド変更コマンドの停止と設定・規則ファイルの保護を hook で機械化する。応答の文体検査は任意",
+      "description": "クラウド変更コマンドの停止と設定・規則ファイルの保護を hook で機械化する。応答の文体検査は任意。hook の変更案を過去の会話の記録で試す道具を含む",
       "category": "productivity"
     },
     {
@@ -21,7 +21,7 @@
     {
       "name": "docs-tools",
       "source": "./plugins/docs-tools",
-      "description": "日本語の文書作業を分担するエージェントと Skill。レビュー、リポジトリ調査、送付文面の作成と送付前チェック、作業ログ、外部 CLI へのクロスレビュー依頼",
+      "description": "日本語の文書作業を分担するエージェントと Skill。レビュー、リポジトリ調査、送付文面の設計メモと作成と送付前チェック、作業ログ、前のセッションの会話の記録の検索、外部 CLI へのクロスレビュー依頼",
       "category": "productivity"
     }
   ]
