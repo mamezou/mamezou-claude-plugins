@@ -77,6 +77,8 @@
 #   responseQuality.fluffTerms[]        パターン 5 の辞書へ追加
 #   responseQuality.bannedLeads[]       パターン 18 の辞書へ追加
 #   responseQuality.regenLimitPerInput  同じ入力への差し戻しの上限回数 (既定 3)
+#   環境変数 HARNESS_DETECTIONS_LOG     検知ログの置き場。logPath より優先する
+#                                       (過去の記録で流す replay.sh が一時ディレクトリへ向ける)
 #
 # バイパス:
 #   - 依頼者の最後のテキスト入力に [hook-bypass: response-quality] がそれだけの行として
@@ -597,26 +599,11 @@ if [[ ${#violations[@]} -eq 0 ]]; then
   exit 0
 fi
 
-# 13) 検知ログの置き場を決める
-#     相対パスは CLAUDE_PROJECT_DIR、設定ファイルのあるディレクトリの親 (プロジェクト
-#     ルート)、hook 入力の cwd の順に解決する。
+# 13) 検知ログの置き場を決める (lib/config.sh の harness_detect_log_path)
+#     環境変数 HARNESS_DETECTIONS_LOG があれば優先する。相対パスは CLAUDE_PROJECT_DIR、
+#     設定ファイルのあるディレクトリの親 (プロジェクトルート)、hook 入力の cwd の順に解決する。
 hook_cwd=$(printf '%s' "$input" | jq -r '.cwd // empty')
-log_path=$(cfg '.responseQuality.logPath' '.claude/harness-detections.log')
-if [[ "$log_path" = /* ]]; then
-  detect_log="$log_path"
-else
-  log_base=""
-  if [[ -n "${CLAUDE_PROJECT_DIR:-}" ]]; then
-    log_base="$CLAUDE_PROJECT_DIR"
-  elif [[ -n "$HARNESS_CONFIG_PATH" ]]; then
-    log_base=$(dirname "$(dirname "$HARNESS_CONFIG_PATH")")
-  elif [[ -n "$hook_cwd" ]]; then
-    log_base="$hook_cwd"
-  else
-    log_base="$PWD"
-  fi
-  detect_log="${log_base%/}/${log_path}"
-fi
+detect_log=$(harness_detect_log_path "$hook_cwd")
 log_dir=$(dirname "$detect_log")
 [[ -d "$log_dir" ]] || mkdir -p "$log_dir" 2>/dev/null || true
 
