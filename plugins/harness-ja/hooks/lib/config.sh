@@ -9,6 +9,7 @@
 #   cfg_list '.draftPrecheck.bannedTerms[]?' # 配列を 1 行 1 要素で出す
 #   cfg_enabled '.cloudChange'               # 設定ファイルがあり .enabled が false でなければ 0
 #   cfg_enabled_optin '.noInlinePowershell'  # .enabled が true のときだけ 0 (既定は無効)
+#   harness_detect_log_path "$cwd"           # 検知ログの置き場 (HARNESS_DETECTIONS_LOG で上書き)
 #
 # 設定ファイルの探索順:
 #   1. 環境変数 HARNESS_CONFIG (テストや複数プロジェクト用の上書き)
@@ -19,6 +20,11 @@
 # 初期化前のプロジェクトでは全 hook が何もしない (初期化は Skill /harness-ja:harness-init)。
 # 設定ファイルはあるが JSON として読めない場合は HARNESS_CONFIG_BROKEN=1 になる。
 # 既定値で動かすと安全機能の一部だけが効くため、harness_config_guard で止める。
+#
+# hook がファイルへ書き込むのは検知ログ (response-quality.sh) だけ。置き場は
+# harness_detect_log_path で決め、環境変数 HARNESS_DETECTIONS_LOG があれば設定より優先する。
+# 過去の記録で hook を流す道具 (skills/harness-review/replay.sh) とテストが、利用者の
+# 本物の検知ログを汚さないために、一時ディレクトリへ向けて使う。
 
 HARNESS_CONFIG_PATH=""
 HARNESS_CONFIG_JSON="{}"
@@ -108,6 +114,35 @@ cfg_flag() {
   v=$(printf '%s' "$HARNESS_CONFIG_JSON" | jq -r "${path} | if . == null then \"\" else tostring end" 2>/dev/null || true)
   [[ -n "$v" ]] || v="$default"
   [[ "$v" == "true" ]]
+}
+
+# harness_detect_log_path <hook 入力の cwd>
+# 検知ログ (responseQuality.logPath) の置き場を返す。決める順:
+#   1. 環境変数 HARNESS_DETECTIONS_LOG
+#   2. logPath が絶対パスなら、その値
+#   3. logPath が相対パスなら、CLAUDE_PROJECT_DIR、設定ファイルのあるディレクトリの親
+#      (プロジェクトルート)、hook 入力の cwd、カレントディレクトリの順に基点を選ぶ
+harness_detect_log_path() {
+  local hook_cwd="${1:-}" log_path base=""
+  if [[ -n "${HARNESS_DETECTIONS_LOG:-}" ]]; then
+    printf '%s' "$HARNESS_DETECTIONS_LOG"
+    return 0
+  fi
+  log_path=$(cfg '.responseQuality.logPath' '.claude/harness-detections.log')
+  if [[ "$log_path" = /* ]]; then
+    printf '%s' "$log_path"
+    return 0
+  fi
+  if [[ -n "${CLAUDE_PROJECT_DIR:-}" ]]; then
+    base="$CLAUDE_PROJECT_DIR"
+  elif [[ -n "$HARNESS_CONFIG_PATH" ]]; then
+    base=$(dirname "$(dirname "$HARNESS_CONFIG_PATH")")
+  elif [[ -n "$hook_cwd" ]]; then
+    base="$hook_cwd"
+  else
+    base="$PWD"
+  fi
+  printf '%s' "${base%/}/${log_path}"
 }
 
 # 承認者の呼び名 (通知文で使う)。既定は「依頼者」

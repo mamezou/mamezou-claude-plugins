@@ -1,7 +1,8 @@
 #!/bin/bash
 # harness-ja の hook 合成テスト。
 # 一時ディレクトリへ合成の会話履歴 JSONL / hook 入力 / 設定ファイルを作り、7 本の hook を
-# 期待値つきで実行する。末尾に PASS / FAIL 件数を出し、FAIL が 1 件でもあれば exit 1。
+# 期待値つきで実行する。過去の記録で hook を流す skills/harness-review/replay.sh も、合成の
+# 記録で確かめる。末尾に PASS / FAIL 件数を出し、FAIL が 1 件でもあれば exit 1。
 #
 # 使い方: bash tests/run.sh   (リポジトリ内のどのディレクトリからでも実行できる)
 # 必要なコマンド:
@@ -28,6 +29,11 @@ for f in cloud-change-check.sh draft-precheck.sh harness-change-check.sh no-inli
 done
 if [[ ! -f "$EX" ]]; then
   echo "サンプル設定が見つかりません: $EX" >&2
+  exit 1
+fi
+RP="$ROOT/skills/harness-review/replay.sh"
+if [[ ! -f "$RP" ]]; then
+  echo "再生の道具が見つかりません: $RP" >&2
   exit 1
 fi
 
@@ -275,6 +281,75 @@ TL_OTHER='{"room_id":"R1","thread_id":"999.000"}'
 ps_text=$(printf '確認スクリプトです。\n```powershell\n$a = 1\n$b = 2\n$c = 3\n$d = 4\n$e = 5\n$f = 6\n```\n')
 { mk_user "確認方法を教えて"; mk_asst "$ps_text"; } > "$TR/ps-block.jsonl"
 { mk_user_spaced "確認方法を教えて" "u-ps"; mk_asst_spaced "$ps_text"; } > "$TR/ps-spaced.jsonl"
+
+# replay.sh 用 (セッション ID・時刻・cwd つきの記録。判定に行番号を使うため並びを変えない)
+#   1 依頼者の入力 / 2 TODO.md を読まずに Edit (止まる) / 3 結果 / 4 Read / 5 結果 /
+#   6 Read の後の Edit (通る) / 7 結果 / 8 空約束の応答 (Stop で止まる) /
+#   9 Stop hook の差し戻し (isMeta) / 10 作り直した応答 (stop_hook_active=true で通る) /
+#   11 依頼者の入力 / 12 az の変更系 (止まる) / 13 結果 / 14 応答 (通る)
+rp_user() { jq -cn --arg t "$1" --arg u "$2" --arg ts "$3" --arg cwd "$PROJ" \
+  '{type:"user",uuid:$u,timestamp:$ts,sessionId:"s-rp",cwd:$cwd,message:{role:"user",content:$t}}'; }
+rp_asst() { jq -cn --arg t "$1" --arg ts "$2" --arg cwd "$PROJ" \
+  '{type:"assistant",timestamp:$ts,sessionId:"s-rp",cwd:$cwd,message:{role:"assistant",content:[{type:"text",text:$t}]}}'; }
+rp_tool() { jq -cn --arg id "$1" --arg n "$2" --argjson in "$3" --arg ts "$4" --arg cwd "$PROJ" \
+  '{type:"assistant",timestamp:$ts,sessionId:"s-rp",cwd:$cwd,message:{role:"assistant",content:[{type:"tool_use",id:$id,name:$n,input:$in}]}}'; }
+rp_res() { jq -cn --arg id "$1" \
+  '{type:"user",sessionId:"s-rp",message:{role:"user",content:[{type:"tool_result",tool_use_id:$id,content:"ok"}]}}'; }
+rp_edit=$(jq -cn --arg p "$PROJ/TODO.md" '{file_path:$p,old_string:"a",new_string:"b"}')
+rp_read=$(jq -cn --arg p "$PROJ/TODO.md" '{file_path:$p}')
+{ rp_user "TODO を更新して" u-rp1 2026-01-01T00:00:01Z
+  rp_tool e1 Edit "$rp_edit" 2026-01-01T00:00:02Z
+  rp_res e1
+  rp_tool r1 Read "$rp_read" 2026-01-01T00:00:04Z
+  rp_res r1
+  rp_tool e2 Edit "$rp_edit" 2026-01-01T00:00:06Z
+  rp_res e2
+  rp_asst "以後注意します。" 2026-01-01T00:00:08Z
+  jq -cn '{type:"user",isMeta:true,sessionId:"s-rp",message:{role:"user",content:"Stop hook feedback:\n[応答の文体違反]"}}'
+  rp_asst "検知を追加し、テストを実行した。" 2026-01-01T00:00:10Z
+  rp_user "リソースグループを作って" u-rp2 2026-01-01T00:00:11Z
+  rp_tool b1 Bash '{"command":"az group create --name rg-test --location japaneast"}' 2026-01-01T00:00:12Z
+  rp_res b1
+  rp_asst "変更系のコマンドは止まった。" 2026-01-01T00:00:14Z
+} > "$TR/s-rp.jsonl"
+# サブエージェントの記録 (isSidechain:true)。TODO.md を読まずに 2 行目で Edit し、空約束で終わる
+{ jq -cn '{type:"user",isSidechain:true,sessionId:"s-rp",message:{role:"user",content:"TODO を直して"}}'
+  jq -cn --argjson in "$rp_edit" --arg cwd "$PROJ" \
+    '{type:"assistant",isSidechain:true,timestamp:"2026-01-01T00:01:02Z",sessionId:"s-rp",cwd:$cwd,message:{role:"assistant",content:[{type:"tool_use",id:"x1",name:"Edit",input:$in}]}}'
+  jq -cn '{type:"user",isSidechain:true,sessionId:"s-rp",message:{role:"user",content:[{type:"tool_result",tool_use_id:"x1",content:"ok"}]}}'
+  jq -cn --arg cwd "$PROJ" \
+    '{type:"assistant",isSidechain:true,timestamp:"2026-01-01T00:01:04Z",sessionId:"s-rp",cwd:$cwd,message:{role:"assistant",content:[{type:"text",text:"以後注意します。"}]}}'
+} > "$TR/agent-rp1.jsonl"
+# Stop の hook の実行の記録 (stop_hook_summary) がある記録。この行の直前だけを Stop の点にする
+#   1 入力 / 2 応答 / 3 実行の記録 / 4 他のセッションからのメッセージ (isMeta) /
+#   5 空約束の応答 (止まる) / 6 実行の記録 / 7 他のセッションからのメッセージ / 8 応答 /
+#   9 実行の記録 / 10 入力 / 11 空約束の応答 (実行の記録が無いため流さない) / 12 入力 /
+#   13 応答 / 14 実行の記録
+rp2_user() { jq -cn --arg t "$1" --arg u "$2" \
+  '{type:"user",uuid:$u,sessionId:"s-rp2",message:{role:"user",content:$t}}'; }
+rp2_meta() { jq -cn '{type:"user",isMeta:true,sessionId:"s-rp2",message:{role:"user",content:"Another Claude session sent a message: 引き継ぎ"}}'; }
+rp2_asst() { jq -cn --arg t "$1" --arg ts "$2" --arg cwd "$PROJ" \
+  '{type:"assistant",timestamp:$ts,sessionId:"s-rp2",cwd:$cwd,message:{role:"assistant",content:[{type:"text",text:$t}]}}'; }
+rp2_sum() { jq -cn '{type:"system",subtype:"stop_hook_summary",sessionId:"s-rp2"}'; }
+{ rp2_user "状況を教えて" u-s1; rp2_asst "確認した。" 2026-01-02T00:00:02Z; rp2_sum
+  rp2_meta; rp2_asst "以後注意します。" 2026-01-02T00:00:05Z; rp2_sum
+  rp2_meta; rp2_asst "確認した。" 2026-01-02T00:00:08Z; rp2_sum
+  rp2_user "続けて" u-s2; rp2_asst "以後注意します。" 2026-01-02T00:00:11Z
+  rp2_user "どうぞ" u-s3; rp2_asst "検知を追加した。" 2026-01-02T00:00:13Z; rp2_sum
+} > "$TR/s-rp2.jsonl"
+# 人が付けた正誤のラベル (session_id / 時刻か行 / expected / メモ)
+printf '%s\n' \
+  $'# session_id\t時刻か行\texpected\tメモ' \
+  $'s-rp\t2\tblock\t読まずに編集' \
+  $'s-rp\t6\tblock\t読んだ後の編集' \
+  $'s-rp\t2026-01-01T00:00:08Z\tpass\t空約束の応答' \
+  $'s-rp\t10\tpass\t作り直した応答' \
+  $'agent-rp1\t2\tblock\tサブエージェントの編集' \
+  $'s-rp\t99\tpass\t記録に無い行' > "$W/rp-labels.tsv"
+# 本物の検知ログを絶対パスで指す設定 (再生で書き込まれないことを確かめる)
+mkdir -p "$W/abs"
+printf '既存の行\n' > "$W/abs/real.log"
+jq --arg p "$W/abs/real.log" '.responseQuality.logPath=$p' "$CFG" > "$W/abs-harness.json"
 
 # ---------------------------------------------------------------------------
 # hook 入力 JSON
@@ -565,6 +640,13 @@ rm -f "$CPD_LOG"
 CLAUDE_PROJECT_DIR="$CPD" HARNESS_CONFIG="$CFG" bash "$H/response-quality.sh" < "$IN/rq-p8.json" >/dev/null 2>&1 || true
 check "RQ-21 CLAUDE_PROJECT_DIR が logPath の基点" yes "$(exists "$CPD_LOG")"
 
+# 環境変数 HARNESS_DETECTIONS_LOG が logPath より優先する (replay.sh の隔離に使う)
+rm -f "$LOG" "$W/rq-envlog.log"
+HARNESS_DETECTIONS_LOG="$W/rq-envlog.log" env -u CLAUDE_PROJECT_DIR HARNESS_CONFIG="$CFG" \
+  bash "$H/response-quality.sh" < "$IN/rq-p8.json" >/dev/null 2>&1 || true
+check "RQ-27 HARNESS_DETECTIONS_LOG へ書き、logPath へは書かない" "yes no" \
+  "$(exists "$W/rq-envlog.log") $(exists "$LOG")"
+
 # 同じ入力への差し戻しの上限 (regenLimitPerInput=3)
 rm -f "$REGEN_LOG"
 rq_run() { # rq_run <設定> <入力> -> 終了コードを出す
@@ -739,6 +821,62 @@ run "BC-5 Stop (response-quality) -> pass + 通知" 0 response-quality.sh "$BROK
 run "BC-6 Stop (no-inline-powershell) -> pass + 通知" 0 no-inline-powershell.sh "$BROKEN" "$IN/ps-block.json" "設定ファイルが読めません"
 run "BC-7 PreToolUse (require-reading のツールの規則) -> block" 2 require-reading.sh "$BROKEN" "$IN/tl-noread.json" "設定ファイルが読めません"
 run "BC-8 PostToolUse (tool-result-check) -> pass + 通知" 0 tool-result-check.sh "$BROKEN" "$IN/tc-noid.json" "設定ファイルが読めません"
+
+echo
+echo "== replay.sh (過去の記録での再生) =="
+# 出力の 1 行: 時刻 / session_id / 行 / hook / ツール / メッセージの 1 行目 (TSV)
+rp_count() { # rp_count <出力> <固定文字列>  一致する行数を出す
+  grep -cF -- "$2" <<< "$1" || true
+}
+rm -f "$LOG" "$CPD_LOG"
+rp_rc=0
+rp_out=$(CLAUDE_PROJECT_DIR="$CPD" bash "$RP" --config "$CFG" --labels "$W/rp-labels.tsv" \
+  "$TR/s-rp.jsonl" "$TR/agent-rp1.jsonl" 2>"$W/rp-err") || rp_rc=$?
+check "RP-1 再生の終了コード" 0 "$rp_rc"
+# 止めた点の節 (hook ごとの件数とラベルの照合表を除く)
+rp_blocks=$(sed '/^== hook ごとの件数 ==/,$d' <<< "$rp_out")
+check "RP-2 PreToolUse: Read の前の Edit -> block" 1 \
+  "$(rp_count "$rp_blocks" $'\ts-rp\t2\trequire-reading\tEdit\t[必読資料の未読]')"
+check "RP-3 PreToolUse: Read の後の Edit -> pass" 0 "$(rp_count "$rp_blocks" $'\ts-rp\t6\t')"
+check "RP-4 PreToolUse: az の変更系 -> block" 1 \
+  "$(rp_count "$rp_blocks" $'\ts-rp\t12\tcloud-change-check\tBash\t')"
+check "RP-5 Stop: 空約束の応答 -> block" 1 \
+  "$(rp_count "$rp_blocks" $'2026-01-01T00:00:08Z\ts-rp\t8\tresponse-quality\t(Stop)\t')"
+check "RP-6 Stop: 差し戻しの後に作り直した応答 -> pass" 0 "$(rp_count "$rp_blocks" $'\ts-rp\t10\t')"
+check "RP-7 Stop: 最後の応答 -> pass" 0 "$(rp_count "$rp_blocks" $'\ts-rp\t14\t')"
+check "RP-8 hook ごとの件数 (require-reading 3 回中 2 回止めた)" 1 \
+  "$(rp_count "$rp_out" $'require-reading\t3\t2\t0')"
+check "RP-9 サブエージェントの記録: PreToolUse を流す -> block" 1 \
+  "$(rp_count "$rp_blocks" $'\tagent-rp1\t2\trequire-reading\tEdit\t')"
+check "RP-10 サブエージェントの記録: Stop は流さない" 0 "$(rp_count "$rp_blocks" $'\tagent-rp1\t4\t')"
+check "RP-11 ラベルの照合の件数" 1 "$(rp_count "$rp_out" \
+  '件数: 止めるべきを止めた 2 / 止めるべきでないのに止めた 1 / 止めるべきを止めなかった 1 / 止めるべきでないのを通した 1 / 記録に無い 1')"
+check "RP-12 ラベル: 時刻で指した Stop を誤って止めた" 1 \
+  "$(rp_count "$rp_out" $'止めるべきでないのに止めた\ts-rp\t2026-01-01T00:00:08Z\tpass\tblock\tresponse-quality\t')"
+check "RP-13 ラベル: 止めるべきを止めなかった行" 1 \
+  "$(rp_count "$rp_out" $'止めるべきを止めなかった\ts-rp\t6\tblock\tpass\t')"
+check "RP-14 本物の検知ログ (logPath 相対) に書かない" no "$(exists "$LOG")"
+check "RP-15 CLAUDE_PROJECT_DIR の下の検知ログに書かない" no "$(exists "$CPD_LOG")"
+
+rp_rc=0
+rp_out=$(bash "$RP" --config "$W/abs-harness.json" --hook response-quality.sh \
+  "$TR/s-rp.jsonl" "$TR/s-rp2.jsonl" 2>/dev/null) || rp_rc=$?
+check "RP-16 --hook で絞った再生の終了コード" 0 "$rp_rc"
+rp_blocks=$(sed '/^== hook ごとの件数 ==/,$d' <<< "$rp_out")
+check "RP-17 --hook: 指定した hook だけを流す" "1 0" \
+  "$(rp_count "$rp_blocks" $'\ts-rp\t8\tresponse-quality\t(Stop)\t') $(rp_count "$rp_out" 'require-reading')"
+check "RP-18 本物の検知ログ (logPath 絶対) の行数が変わらない" 1 "$(lines "$W/abs/real.log")"
+check "RP-19 実行の記録あり: 他のセッションからのメッセージで始まった応答 -> block" 1 \
+  "$(rp_count "$rp_blocks" $'\ts-rp2\t5\tresponse-quality\t(Stop)\t')"
+check "RP-20 実行の記録あり: 実行の記録の無い応答は流さない" 0 "$(rp_count "$rp_blocks" $'\ts-rp2\t11\t')"
+check "RP-21 Stop を流した点 (s-rp 3 件 + s-rp2 4 件)" 1 "$(rp_count "$rp_out" 'Stop を流した点 7 件')"
+
+rp_rc=0
+bash "$RP" --config "$CFG" --hook tool-result-check "$TR/s-rp.jsonl" >/dev/null 2>&1 || rp_rc=$?
+check "RP-22 PostToolUse の hook の名前 -> 1" 1 "$rp_rc"
+rp_rc=0
+bash "$RP" --config "$CFG" "$TR/none.jsonl" >/dev/null 2>&1 || rp_rc=$?
+check "RP-23 記録のファイルが無い -> 1" 1 "$rp_rc"
 
 echo
 echo "PASS ${pass} / FAIL ${fail}"
