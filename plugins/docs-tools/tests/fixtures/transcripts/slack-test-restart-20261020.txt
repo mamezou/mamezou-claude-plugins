@@ -1,0 +1,15 @@
+<@U000>
+集計と再起動の確認です。
+
+■ 使ったコマンド
+```
+SELECT count(*) FROM orders WHERE status = 'paid'
+grep -c ERROR /var/log/app.log
+total_errors = 42
+kubectl rollout restart deploy/web
+rm -rf /tmp/cache-old
+echo verify-step-never-ran
+echo only-in-draft-write
+echo quoted-after
+}
+```
