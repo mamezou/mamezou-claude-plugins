@@ -76,7 +76,7 @@
 | `draft-precheck.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 送付文面に内部パス・ローカル拡張子・組版記号・外部 AI 言及・禁止語・長い識別子の繰り返し。MCP のツールは `draftPrecheck.toolRules[]` に書いたものだけ、`subject` と `body` などの文字列を検査する | `[hook-bypass: draft-precheck]` |
 | `require-reading.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 必読資料を直近で Read せずに対象ファイルを編集。対応する読み取りのツールを呼ばずに、外部へ書き込むツールを呼び出し | `[hook-bypass: resource-reading]` |
 | `tool-result-check.sh` | PostToolUse(MCP のツール) | 止めない。ツールの結果に成立の印が無いとき、作成・更新が成立していないことを Claude へ知らせる | なし |
-| `no-inline-powershell.sh` | Stop | 5行以上の PowerShell をファイル化せずにコードブロックで提示(既定は無効) | なし |
+| `no-inline-powershell.sh` | Stop | 5行以上の PowerShell をファイル化せずにコードブロックで提示(既定は無効)。`pasteRun` を有効にすると、貼り付けて実行する形に合わないスクリプトと、`-File` での実行を書いた文書・応答も止める | なし |
 
 設定ファイルが見つからない場合、7本とも何もしません。設定ファイルはあるが JSON として
 読めない場合、PreToolUse の4本は「設定ファイルが読めません: <パス>」を出してツールを止めます。
@@ -110,11 +110,16 @@ Stop の2本と PostToolUse の1本は同じ文を出しますが、応答とツ
 | 19 | 確認質問への根拠なしの否定断定 | 有効 |
 | 20 | 確認点の番号の飛び・重なり(【確認点N】の番号が1から1ずつ増えていない) | 無効 |
 | 21 | 確認点の数の宣言(「お聞きしたいことは1つ」「確認点は2件」等) | 無効 |
+| 22 | 作業ディレクトリから開けない相対パス(バッククォートの中のパスが cwd から開けず、リポジトリの中に同じパスで終わるファイル・ディレクトリがある) | 無効 |
 
 パターン20と21は、コードブロック(字下げしたものを含む)、行頭が「>」の引用行、
 バッククォート・「」・『』・() の中を数えません。前の応答の確認点や規則の文を引用した箇所では
 止めません。パターン20は行頭の【確認点N】だけを数え、文の途中の【確認点N】と、直後に助詞が
 続く【確認点N】(「【確認点1】の答えで」等)は参照として数えません。
+
+パターン22は、コードブロックと行頭が「>」の引用行の外で、バッククォートで囲んだ「/」を含むパスを
+見ます。リポジトリに無いパス(ブランチ名など)は止めません。止めたときは、リポジトリの中で
+見つけた絶対パスを示します。
 
 差し戻し後の再生成(`stop_hook_active=true`)も検査します。同じ利用者入力への差し戻しが
 3回に達したら、4回目の生成を `[regen-limit]` 付きで通します(無限ループ防止)。
@@ -144,7 +149,8 @@ Stop の2本と PostToolUse の1本は同じ文を出しますが、応答とツ
 | `requireReading.toolRules[]` | 外部へ書き込むツール(`tool`)と、先に呼んでおく読み取りのツール(`requiredTool`)の対応表。`sameInput` に、値が等しいことを求める引数の組を書く。既定は空 |
 | `toolResultCheck.rules[]` | ツール(`tool`)と、結果にあるはずの成立の印(`successPattern`)の対応表。既定は空 |
 | `noInlinePowershell.enabled` | 既定は `false`。使う場合だけ `true` にする |
-| `noInlinePowershell.cwdMatch` | 指定すると、cwd がそのディレクトリ名を含むときだけ検査する(案件を限る用途) |
+| `noInlinePowershell.cwdMatch` | 指定すると、cwd がそのディレクトリ名を含むときだけインライン提示を検査する(案件を限る用途) |
+| `noInlinePowershell.pasteRun` | 貼り付けて実行する形の検査。`enabled`(既定 `false`)、`scriptGlobs` と `docGlobs`(リポジトリ直下からの bash のパターン)、`hint`。cwdMatch によらず、依頼者の最後の入力より後に変えたファイルと、応答の本文を見る。スクリプトは、全体が `& { }` で包まれ、`param(`・`-ExecutionPolicy … -File`・ブロックの中の空行がないこと。文書と応答は `-ExecutionPolicy … -File` がないこと。差し戻し後の再生成ではファイルを見ない |
 
 hook は設定ファイルを `HARNESS_CONFIG` 環境変数、`$CLAUDE_PROJECT_DIR/.claude/harness.json`、
 hook 実行時の cwd から上へ辿った `.claude/harness.json` の順で探します。
@@ -231,6 +237,8 @@ hook 実行時の cwd から上へ辿った `.claude/harness.json` の順で探�
 読み込まれません。0.4.8 のテンプレートは `paths:` を付けず、「実例の確認」の節を持ちます。
 0.4.11 の `start-approval.md` は、「応答を確定する前」の節を持ち、完了と丸投げの決まりに、
 自分で続けられる作業を報告の前に済ませることと、検証用の環境で試す案を推奨することを足しています。
+「応答を確定する前」には、事実の出典を挙げること、主語の範囲を確かめた範囲に合わせること、
+取り消しに手間のかかる操作の前にできなくなることを書くことも入っています。
 `/harness-ja:harness-init` を再実行すると、差分を示します。
 
 文章の規則のうち、次の3つは grep や hook で検知できないため、`writing-style.md` の

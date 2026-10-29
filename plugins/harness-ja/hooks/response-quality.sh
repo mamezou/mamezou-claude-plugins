@@ -4,7 +4,7 @@
 # exit 2 で応答を作り直させる。
 #
 # 実行するパターンは responseQuality.patterns で選ぶ (既定 [3, 4, 8, 19])。
-# 配列に無い番号のパターンは実行しない。番号は 1〜21 (14 は欠番)。
+# 配列に無い番号のパターンは実行しない。番号は 1〜22 (14 は欠番)。
 #
 # 検知パターン (番号 / 検知ルール / 根拠となる文体規則)
 #   1  選択肢羅列 + 末尾確認質問
@@ -83,6 +83,13 @@
 #      20 と 21 は、コードブロック (字下げしたものを含む)、行頭が「>」の引用行、
 #      バッククォート・「」・『』・() の中を数えない (前の応答の確認点や規則の文を引用した
 #      箇所で止めないため)
+#  22  作業ディレクトリから開けない相対パス
+#      コードブロックと引用行の外で、バッククォートで囲んだ「/」を含むパスのうち、hook 入力の
+#      cwd から開けず、cwd のリポジトリの中に同じパスで終わるファイル・ディレクトリがあるもの。
+#      「/」「~」「http」「$」で始まるもの、空白・{ } < > * \ を含むものは見ない。
+#      末尾の「:行番号」は外して見る。表示に、リポジトリの中で見つけた絶対パスを出す
+#      根拠: 読み手の画面にある実名を書く。読み手が開けないパスは実名にならない
+#            (rules「report-format」)
 #
 # 設定 (.claude/harness.json):
 #   responseQuality.enabled             false で無効化
@@ -673,6 +680,49 @@ if pat_on 21; then
       | sed 's/十/10/; s/一/1/; s/二/2/; s/三/3/; s/四/4/; s/五/5/; s/六/6/; s/七/7/; s/八/8/; s/九/9/' || true)
     joined=$(printf '%s\n' "$decl_hits" | awk '!seen[$0]++' | head -2 | tr '\n' ',' | sed 's/,$//')
     violations+=("確認点の数の宣言: [$joined]。宣言した数 ${decl_n:-?}、応答の中の【確認点N】 ${cp_count:-0} 件。確認点の数を宣言しない (Output Style「Concise JA」「成果物報告の型」)")
+  fi
+fi
+
+# 11-E) パターン 22: 作業ディレクトリから開けない相対パス
+# 読み手 (依頼者) は、応答の中のパスを hook 入力の cwd から開く。cwd から開けず、リポジトリの
+# 中に同じパスで終わるファイル (またはディレクトリ) があるときだけ止める。リポジトリに無い
+# パス (ブランチ名の origin/main 等) は止めない。コードブロックと引用行は prose_text と
+# grep -v で除く。
+if pat_on 22; then
+  p22_cwd=$(printf '%s' "$input" | jq -r '.cwd // empty')
+  p22_root=""
+  if [[ -n "$p22_cwd" && -d "$p22_cwd" ]]; then
+    p22_root=$(git -C "$p22_cwd" rev-parse --show-toplevel 2>/dev/null || true)
+  fi
+  if [[ -n "$p22_root" ]]; then
+    p22_spans=$(printf '%s\n' "$prose_text" | grep -vE '^[[:space:]]*>' \
+      | grep -oE '`[^`[:space:]]+`' | tr -d '`' \
+      | grep -F '/' | grep -vE '^(/|~|https?:|\$)' | grep -vE '[{}<>*\\]' \
+      | sed -E 's/:[0-9]+(-[0-9]+)?$//' | awk 'NF && !seen[$0]++' | head -50 || true)
+    if [[ -n "$p22_spans" ]]; then
+      p22_files=$(git -C "$p22_root" ls-files --cached --others --exclude-standard 2>/dev/null || true)
+      p22_bad=()
+      while IFS= read -r sp; do
+        [[ -n "$sp" ]] || continue
+        [[ -e "$p22_cwd/$sp" ]] && continue
+        key=${sp#./}
+        key=${key%/}
+        [[ -n "$key" && "$key" != ..* ]] || continue
+        # 同じパス、同じパスで終わるファイル、同じパスを途中に含むディレクトリの順に探す
+        cand=$(awk -v k="$key" '
+          $0 == k { print; exit }
+          length($0) > length(k) && substr($0, length($0) - length(k)) == "/" k { print; exit }
+          { p = "/" $0; i = index(p, "/" k "/"); if (i > 0) { print substr(p, 2, i - 2 + length(k) + 1); exit } }' \
+          <<< "$p22_files")
+        if [[ -n "$cand" ]]; then
+          p22_bad+=("\`$sp\` → $p22_root/$cand")
+        fi
+      done <<< "$p22_spans"
+      if (( ${#p22_bad[@]} > 0 )); then
+        joined=$(printf '%s, ' "${p22_bad[@]:0:3}" | sed 's/, $//')
+        violations+=("作業ディレクトリ ($p22_cwd) から開けないパス: [$joined]。読み手が開けるよう、絶対パスで書く")
+      fi
+    fi
   fi
 fi
 

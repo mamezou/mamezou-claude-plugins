@@ -89,6 +89,12 @@
   "noInlinePowershell": {
     "enabled": false,
     "cwdMatch": "",
-    "scriptDirHint": "scripts/{category}/*.ps1"
+    "scriptDirHint": "scripts/{category}/*.ps1",
+    "pasteRun": {
+      "enabled": false,
+      "scriptGlobs": ["scripts/*/*.ps1"],
+      "docGlobs": ["docs/reference/*.md"],
+      "hint": "ファイルを置けない環境では、スクリプトの中身を貼り付けて実行する。全体を & { } で包み、param と -File を使わず、ブロックの中に空行を入れない"
+    }
   }
 }
