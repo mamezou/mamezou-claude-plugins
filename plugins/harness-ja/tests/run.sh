@@ -935,6 +935,104 @@ rp_rc=0
 bash "$RP" --config "$CFG" "$TR/none.jsonl" >/dev/null 2>&1 || rp_rc=$?
 check "RP-23 記録のファイルが無い -> 1" 1 "$rp_rc"
 
+# ---------------------------------------------------------------------------
+# no-inline-powershell: 貼り付けて実行する形の検査 (pasteRun)
+# ---------------------------------------------------------------------------
+echo
+echo "== no-inline-powershell (pasteRun) =="
+PRCFG="$PROJ/.claude/harness-pr.json"
+PRCWD="$PROJ/.claude/harness-prcwd.json"
+jq '.noInlinePowershell.pasteRun={enabled:true, scriptGlobs:["scripts/*/*.ps1"], docGlobs:["docs/reference/*.md"]}' \
+  "$CFG" > "$PRCFG"
+jq '.noInlinePowershell.cwdMatch="nomatch"' "$PRCFG" > "$PRCWD"
+mkrepo() { # mkrepo <dir>: 空のコミットを 1 つ持つリポジトリを作る
+  mkdir -p "$1"
+  git -C "$1" init -q
+  git -C "$1" -c user.email=t@example.com -c user.name=t commit -q --allow-empty -m init
+}
+good_ps=$'# header\n& {\n$ErrorActionPreference = \'Stop\'\nWrite-Host \'CHECK: OK\'\n}\n# end of good.ps1'
+for r in good param nowrap blank doc old shallow; do mkrepo "$W/pr-$r"; mkdir -p "$W/pr-$r/scripts/x" "$W/pr-$r/docs/reference"; done
+printf '%s\n' "$good_ps" > "$W/pr-good/scripts/x/good.ps1"
+printf '%s\n' '& {' 'param([string]$Mode)' 'Write-Host x' '}' > "$W/pr-param/scripts/x/param.ps1"
+printf '%s\n' 'param([string]$Mode)' 'Write-Host x' > "$W/pr-nowrap/scripts/x/nowrap.ps1"
+printf '%s\n' '& {' 'Write-Host a' '' 'Write-Host b' '}' > "$W/pr-blank/scripts/x/blank.ps1"
+printf '%s\n' '# 手順' '' 'PowerShell -ExecutionPolicy Bypass -File C:\temp\x.ps1' > "$W/pr-doc/docs/reference/rb.md"
+cp "$W/pr-param/scripts/x/param.ps1" "$W/pr-old/scripts/x/param.ps1"
+touch -d '2020-01-01 00:00:00' "$W/pr-old/scripts/x/param.ps1"
+printf '%s\n' 'param([string]$Mode)' > "$W/pr-shallow/scripts/top.ps1"
+mk_user_ts() { jq -cn --arg t "$1" --arg ts "$2" '{type:"user",timestamp:$ts,message:{role:"user",content:$t}}'; }
+{ mk_user "確認して"; mk_asst "確認しました。"; } > "$TR/pr-plain.jsonl"
+{ mk_user_ts "確認して" "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"; mk_asst "確認しました。"; } > "$TR/pr-ts.jsonl"
+{ mk_user "確認して"; mk_asst "$(printf '次を実行してください。\n```\nPowerShell -ExecutionPolicy Bypass -File C:\\temp\\x.ps1\n```')"; } > "$TR/pr-text.jsonl"
+{ mk_user "確認して"; mk_asst '変更前: `PowerShell -ExecutionPolicy Bypass -File C:\temp\x.ps1` を消しました。'; } > "$TR/pr-inline.jsonl"
+{ mk_user "確認して"; mk_asst "$(printf '> PowerShell -ExecutionPolicy Bypass -File C:\\temp\\x.ps1\n\n前の手順の引用です。')"; } > "$TR/pr-quote.jsonl"
+stop_input "$TR/pr-plain.jsonl"  "$W/pr-good"      false > "$IN/pr-good.json"
+stop_input "$TR/pr-plain.jsonl"  "$W/pr-param"     false > "$IN/pr-param.json"
+stop_input "$TR/pr-plain.jsonl"  "$W/pr-nowrap"    false > "$IN/pr-nowrap.json"
+stop_input "$TR/pr-plain.jsonl"  "$W/pr-blank"     false > "$IN/pr-blank.json"
+stop_input "$TR/pr-plain.jsonl"  "$W/pr-doc/docs"  false > "$IN/pr-doc.json"
+stop_input "$TR/pr-text.jsonl"   "$W/pr-good"      false > "$IN/pr-text.json"
+stop_input "$TR/pr-inline.jsonl" "$W/pr-good"      false > "$IN/pr-inline.json"
+stop_input "$TR/pr-quote.jsonl"  "$W/pr-good"      false > "$IN/pr-quote.json"
+stop_input "$TR/pr-plain.jsonl"  "$W/pr-param"     true  > "$IN/pr-active.json"
+stop_input "$TR/pr-ts.jsonl"     "$W/pr-old"       false > "$IN/pr-old-ts.json"
+stop_input "$TR/pr-plain.jsonl"  "$W/pr-old"       false > "$IN/pr-old-nots.json"
+stop_input "$TR/pr-plain.jsonl"  "$W/pr-shallow"   false > "$IN/pr-shallow.json"
+stop_input "$TR/pr-plain.jsonl"  "$PROJ"           false > "$IN/pr-norepo.json"
+run "PR-1 & { } で包んだスクリプト -> pass" 0 no-inline-powershell.sh "$PRCFG" "$IN/pr-good.json"
+run "PR-2 param( がある -> block" 2 no-inline-powershell.sh "$PRCFG" "$IN/pr-param.json" "scripts/x/param.ps1:2: param( がある"
+run "PR-3 & { } で包んでいない -> block" 2 no-inline-powershell.sh "$PRCFG" "$IN/pr-nowrap.json" "全体が & { } で包まれていない"
+run "PR-4 ブロックの中に空行 -> block" 2 no-inline-powershell.sh "$PRCFG" "$IN/pr-blank.json" "scripts/x/blank.ps1:3: ブロックの中に空行がある"
+run "PR-5 文書に -File での実行 (cwd はサブディレクトリ) -> block" 2 no-inline-powershell.sh "$PRCFG" "$IN/pr-doc.json" "docs/reference/rb.md:3: -File での実行が書いてある"
+run "PR-6 応答のコードブロックに -File での実行 -> block" 2 no-inline-powershell.sh "$PRCFG" "$IN/pr-text.json" "応答の本文に -File での実行"
+run "PR-7 バッククォートの中の -File は見ない -> pass" 0 no-inline-powershell.sh "$PRCFG" "$IN/pr-inline.json"
+run "PR-8 引用行の -File は見ない -> pass" 0 no-inline-powershell.sh "$PRCFG" "$IN/pr-quote.json"
+run "PR-9 差し戻し後の再生成ではファイルを見ない -> pass" 0 no-inline-powershell.sh "$PRCFG" "$IN/pr-active.json"
+run "PR-10 pasteRun が無効 -> pass" 0 no-inline-powershell.sh "$CFG" "$IN/pr-param.json"
+run "PR-11 cwdMatch が不一致でも pasteRun は見る -> block" 2 no-inline-powershell.sh "$PRCWD" "$IN/pr-param.json" "param( がある"
+run "PR-12 最後の入力より前に更新したファイルは見ない -> pass" 0 no-inline-powershell.sh "$PRCFG" "$IN/pr-old-ts.json"
+run "PR-13 入力の時刻が無ければ全部見る -> block" 2 no-inline-powershell.sh "$PRCFG" "$IN/pr-old-nots.json" "param( がある"
+run "PR-14 scriptGlobs に当たらないファイルは見ない -> pass" 0 no-inline-powershell.sh "$PRCFG" "$IN/pr-shallow.json"
+run "PR-15 リポジトリの外 -> pass" 0 no-inline-powershell.sh "$PRCFG" "$IN/pr-norepo.json"
+
+# ---------------------------------------------------------------------------
+# response-quality: パターン 22 (作業ディレクトリから開けない相対パス)
+# ---------------------------------------------------------------------------
+echo
+echo "== response-quality (パターン 22) =="
+P22="$PROJ/.claude/harness-p22.json"
+jq '.responseQuality.patterns=[22]' "$CFG" > "$P22"
+R22="$W/p22"
+mkrepo "$R22"
+mkdir -p "$R22/kdkkb/scripts/grafana" "$R22/kdkkb/docs"
+touch "$R22/kdkkb/scripts/grafana/a.ps1" "$R22/kdkkb/docs/x.md"
+{ mk_user "状況を教えて"; mk_asst 'スクリプトは `kdkkb/scripts/grafana/a.ps1` です。'; } > "$TR/p22-bad.jsonl"
+{ mk_user "状況を教えて"; mk_asst 'スクリプトは `scripts/grafana/a.ps1` です。'; }       > "$TR/p22-rel.jsonl"
+{ mk_user "状況を教えて"; mk_asst "$(printf 'コマンドです。\n```\ncat kdkkb/scripts/grafana/a.ps1\n`kdkkb/scripts/grafana/a.ps1`\n```')"; } > "$TR/p22-code.jsonl"
+{ mk_user "状況を教えて"; mk_asst '`origin/main` へ Push しました。'; }                 > "$TR/p22-branch.jsonl"
+{ mk_user "状況を教えて"; mk_asst '置き場は `kdkkb/scripts/grafana/` です。'; }          > "$TR/p22-dir.jsonl"
+{ mk_user "状況を教えて"; mk_asst '`kdkkb/docs/x.md:12` を直しました。'; }               > "$TR/p22-line.jsonl"
+{ mk_user "状況を教えて"; mk_asst "$(printf '> 前の応答: `kdkkb/scripts/grafana/a.ps1`\n\n引用です。')"; } > "$TR/p22-quote.jsonl"
+stop_input "$TR/p22-bad.jsonl"    "$R22/kdkkb" false > "$IN/p22-bad.json"
+stop_input "$TR/p22-rel.jsonl"    "$R22/kdkkb" false > "$IN/p22-rel.json"
+stop_input "$TR/p22-bad.jsonl"    "$R22"       false > "$IN/p22-root.json"
+stop_input "$TR/p22-code.jsonl"   "$R22/kdkkb" false > "$IN/p22-code.json"
+stop_input "$TR/p22-branch.jsonl" "$R22/kdkkb" false > "$IN/p22-branch.json"
+stop_input "$TR/p22-dir.jsonl"    "$R22/kdkkb" false > "$IN/p22-dir.json"
+stop_input "$TR/p22-line.jsonl"   "$R22/kdkkb" false > "$IN/p22-line.json"
+stop_input "$TR/p22-quote.jsonl"  "$R22/kdkkb" false > "$IN/p22-quote.json"
+stop_input "$TR/p22-bad.jsonl"    "$PROJ"      false > "$IN/p22-norepo.json"
+run "RQ-47 パターン22 cwd から開けず、リポジトリにあるパス -> block" 2 response-quality.sh "$P22" "$IN/p22-bad.json" "→ $R22/kdkkb/scripts/grafana/a.ps1"
+run "RQ-48 パターン22 cwd から開けるパス -> pass" 0 response-quality.sh "$P22" "$IN/p22-rel.json"
+run "RQ-49 パターン22 cwd がリポジトリ直下なら開ける -> pass" 0 response-quality.sh "$P22" "$IN/p22-root.json"
+run "RQ-50 パターン22 コードブロックの中は見ない -> pass" 0 response-quality.sh "$P22" "$IN/p22-code.json"
+run "RQ-51 パターン22 リポジトリに無いパス (ブランチ名) -> pass" 0 response-quality.sh "$P22" "$IN/p22-branch.json"
+run "RQ-52 パターン22 ディレクトリ -> block" 2 response-quality.sh "$P22" "$IN/p22-dir.json" "→ $R22/kdkkb/scripts/grafana"
+run "RQ-53 パターン22 末尾の行番号は外して見る -> block" 2 response-quality.sh "$P22" "$IN/p22-line.json" "→ $R22/kdkkb/docs/x.md"
+run "RQ-54 パターン22 引用行は見ない -> pass" 0 response-quality.sh "$P22" "$IN/p22-quote.json"
+run "RQ-55 パターン22 リポジトリの外 -> pass" 0 response-quality.sh "$P22" "$IN/p22-norepo.json"
+run "RQ-56 既定では パターン22 を実行しない -> pass" 0 response-quality.sh "$CFG" "$IN/p22-bad.json"
+
 echo
 echo "PASS ${pass} / FAIL ${fail}"
 if [[ "$fail" -ne 0 ]]; then
