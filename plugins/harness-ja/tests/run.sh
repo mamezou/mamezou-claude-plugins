@@ -168,6 +168,8 @@ jq '.noInlinePowershell.enabled=false' "$CFG" > "$PROJ/.claude/harness-psoff.jso
 jq '.noInlinePowershell.cwdMatch="project-a"' "$CFG" > "$PROJ/.claude/harness-pscwd.json"
 jq '.harnessChange.enabled=false'      "$CFG" > "$PROJ/.claude/harness-hgoff.json"
 jq '.responseQuality.patterns=[5,18]'  "$CFG" > "$PROJ/.claude/harness-p518.json"
+jq '.responseQuality.patterns=[20]'    "$CFG" > "$PROJ/.claude/harness-p20.json"
+jq '.responseQuality.patterns=[21]'    "$CFG" > "$PROJ/.claude/harness-p21.json"
 jq '.draftPrecheck.checks={"internalPaths":false}' "$CFG" > "$PROJ/.claude/harness-dpoff.json"
 jq '.toolResultCheck.enabled=false'    "$CFG" > "$PROJ/.claude/harness-tcoff.json"
 jq '.requireReading.enabled=false'     "$CFG" > "$PROJ/.claude/harness-rroff.json"
@@ -184,6 +186,8 @@ TL2="$PROJ/.claude/harness-tl2.json"
 TLSKIP="$PROJ/.claude/harness-tlskip.json"
 TLBADRE="$PROJ/.claude/harness-tlbadre.json"
 P518="$PROJ/.claude/harness-p518.json"
+P20="$PROJ/.claude/harness-p20.json"
+P21="$PROJ/.claude/harness-p21.json"
 DPOFF="$PROJ/.claude/harness-dpoff.json"
 touch "$PROJ/TODO.md" "$RUNBOOK"
 
@@ -229,6 +233,33 @@ mk_asst_spaced() {
 { mk_user "状況を教えて"; mk_asst "以下のように整理しました。"; }                      > "$TR/rq-p18.jsonl"
 { mk_user "状況を教えて"; mk_asst "手順は次のとおり。作業は以下のように進めた記録がある。"; } \
   > "$TR/rq-p18ok.jsonl"
+
+# response-quality: パターン 20 (確認点の番号の飛び・重なり)
+{ mk_user "状況を教えて"; mk_asst "$(printf '【確認点1】A を消すか\n可否をお願いいたします。\n\n【確認点3】B を直すか\n可否をお願いいたします。')"; } \
+  > "$TR/rq-p20-skip.jsonl"
+{ mk_user "状況を教えて"; mk_asst "$(printf '【確認点１】A を消すか\n\n【確認点１】B を直すか')"; } > "$TR/rq-p20-dup.jsonl"
+{ mk_user "状況を教えて"; mk_asst "$(printf '【確認点2】B を直すか')"; }                       > "$TR/rq-p20-start.jsonl"
+{ mk_user "状況を教えて"; mk_asst "$(printf '【確認点1】`TODO.md`の日付の修正\n\n【確認点２】「概要」のページを直すか\n\n【確認点3】C')"; } \
+  > "$TR/rq-p20ok.jsonl"
+{ mk_user "状況を教えて"; mk_asst "$(printf '【確認点1】A\n```\n【確認点3】例\n```\n【確認点2】B')"; } > "$TR/rq-p20-code.jsonl"
+{ mk_user "状況を教えて"; mk_asst "$(printf '> 【確認点2】前の応答の問い\n\n【確認点1】A')"; }      > "$TR/rq-p20-quote.jsonl"
+{ mk_user "状況を教えて"; mk_asst "$(printf '前の応答で「【確認点1】この文面で送ってよいか」と書いた。\n\n【確認点1】A')"; } \
+  > "$TR/rq-p20-kagi.jsonl"
+{ mk_user "状況を教えて"; mk_asst "$(printf -- '- Before:\n  ```\n  【確認点1】<論点>\n  ```\n- After:\n  ```\n  【確認点1】<問い>\n  ```\n\n【確認点1】A')"; } \
+  > "$TR/rq-p20-indent.jsonl"
+{ mk_user "状況を教えて"; mk_asst "$(printf '直し方は【確認点2】に書いた。\n\n【確認点1】A\n\n【確認点2】B\n\n【確認点1】の答えで、手順書の直し方が変わる。')"; } \
+  > "$TR/rq-p20-ref.jsonl"
+
+# response-quality: パターン 21 (確認点の数の宣言)
+{ mk_user "状況を教えて"; mk_asst "$(printf 'お聞きしたいことは1つです。\n\n【確認点1】A')"; }               > "$TR/rq-p21.jsonl"
+{ mk_user "状況を教えて"; mk_asst "$(printf '決めていただきたい点が２点あります。\n\n【確認点1】A\n\n【確認点2】B\n\n【確認点3】C')"; } \
+  > "$TR/rq-p21-zen.jsonl"
+{ mk_user "状況を教えて"; mk_asst "確認点は三つです。"; }                                               > "$TR/rq-p21-kanji.jsonl"
+{ mk_user "状況を教えて"; mk_asst "$(printf '1点だけ確認させてください。\n\n【確認点1】A')"; }           > "$TR/rq-p21-dake.jsonl"
+{ mk_user "状況を教えて"; mk_asst "$(printf '```\nお聞きしたいことは1つです\n```\n\n【確認点1】A')"; }  > "$TR/rq-p21-code.jsonl"
+{ mk_user "状況を教えて"; mk_asst "$(printf '> お聞きしたいことは1つです\n\n前の応答の宣言を消した。')"; } > "$TR/rq-p21-quote.jsonl"
+{ mk_user "状況を教えて"; mk_asst "前の応答で「お聞きしたいことは1つ」と書いた。確認点は1件ずつ番号を振る。確認したいことは1つ目が費用です。"; } \
+  > "$TR/rq-p21-other.jsonl"
 
 # response-quality: バイパスの文字列 (それだけの行 / 質問文の中)
 { mk_user "$(printf '状況を教えて\n[hook-bypass: response-quality]')"; mk_asst "以後注意します。"; } \
@@ -382,7 +413,9 @@ post_input() { # post_input <cwd> <tool_name> <tool_response の JSON>
 }
 
 # response-quality
-for n in p3 p3ok p4 p4ok p8 p8ok p19-doc p19-docok p19-dis p19-disok p5 p5ok p18 p18ok bypass spaced; do
+for n in p3 p3ok p4 p4ok p8 p8ok p19-doc p19-docok p19-dis p19-disok p5 p5ok p18 p18ok bypass spaced \
+         p20-skip p20-dup p20-start p20ok p20-code p20-quote p20-kagi p20-indent p20-ref \
+         p21 p21-zen p21-kanji p21-dake p21-code p21-quote p21-other; do
   stop_input "$TR/rq-$n.jsonl" "$PROJ" false > "$IN/rq-$n.json"
 done
 stop_input "$TR/rq-p8.jsonl" "$PROJ"   true  > "$IN/rq-active.json"
@@ -646,6 +679,30 @@ HARNESS_DETECTIONS_LOG="$W/rq-envlog.log" env -u CLAUDE_PROJECT_DIR HARNESS_CONF
   bash "$H/response-quality.sh" < "$IN/rq-p8.json" >/dev/null 2>&1 || true
 check "RQ-27 HARNESS_DETECTIONS_LOG へ書き、logPath へは書かない" "yes no" \
   "$(exists "$W/rq-envlog.log") $(exists "$LOG")"
+
+echo
+echo "== response-quality (確認点のパターン 20 / 21) =="
+rm -f "$LOG"
+run "RQ-28 既定では パターン20 を実行しない -> pass" 0 response-quality.sh "$CFG" "$IN/rq-p20-skip.json"
+run "RQ-29 既定では パターン21 を実行しない -> pass" 0 response-quality.sh "$CFG" "$IN/rq-p21.json"
+run "RQ-30 パターン20 番号の飛び (1, 3) -> block" 2 response-quality.sh "$P20" "$IN/rq-p20-skip.json" "出てきた順に [1→3]"
+run "RQ-31 パターン20 全角の数字の重なり (１, １) -> block" 2 response-quality.sh "$P20" "$IN/rq-p20-dup.json" "出てきた順に [1→1]"
+run "RQ-32 パターン20 1 以外から始まる -> block" 2 response-quality.sh "$P20" "$IN/rq-p20-start.json" "確認点は1件ずつ番号を振る"
+run "RQ-33 パターン20 正しい連番 (全角、見出しの直後のバッククォート・「」を含む) -> pass" 0 response-quality.sh "$P20" "$IN/rq-p20ok.json"
+run "RQ-34 パターン20 コードブロックの中は数えない -> pass" 0 response-quality.sh "$P20" "$IN/rq-p20-code.json"
+run "RQ-35 パターン20 引用行 (>) は数えない -> pass" 0 response-quality.sh "$P20" "$IN/rq-p20-quote.json"
+run "RQ-36 パターン20 「」の中は数えない -> pass" 0 response-quality.sh "$P20" "$IN/rq-p20-kagi.json"
+run "RQ-37 パターン21 確認点の数の宣言 -> block" 2 response-quality.sh "$P21" "$IN/rq-p21.json" "宣言した数 1、応答の中の【確認点N】 1 件"
+run "RQ-38 パターン21 全角の数字 (２点) -> block" 2 response-quality.sh "$P21" "$IN/rq-p21-zen.json" "宣言した数 2、応答の中の【確認点N】 3 件"
+run "RQ-39 パターン21 「確認点は」+ 漢数字 -> block" 2 response-quality.sh "$P21" "$IN/rq-p21-kanji.json" "宣言した数 3"
+run "RQ-40 パターン21 「N点だけ」は対象外 -> pass" 0 response-quality.sh "$P21" "$IN/rq-p21-dake.json"
+run "RQ-41 パターン21 コードブロックの中は対象外 -> pass" 0 response-quality.sh "$P21" "$IN/rq-p21-code.json"
+run "RQ-42 パターン21 引用行 (>) は対象外 -> pass" 0 response-quality.sh "$P21" "$IN/rq-p21-quote.json"
+run "RQ-43 パターン21 「」の中・「1件ずつ」・「1つ目」は対象外 -> pass" 0 response-quality.sh "$P21" "$IN/rq-p21-other.json"
+run "RQ-44 パターン20 字下げしたコードブロックの中は数えない -> pass" 0 response-quality.sh "$P20" "$IN/rq-p20-indent.json"
+run "RQ-45 パターン20 文の途中と、助詞が続く【確認点N】は参照として数えない -> pass" 0 response-quality.sh "$P20" "$IN/rq-p20-ref.json"
+check "RQ-46 検知ログに パターン20 / 21 の種別とタグ" "3 3" \
+  "$(grep -c '\[session:.*\] \[input:.*\] 確認点の番号の飛び・重なり: ' "$LOG" 2>/dev/null || echo 0) $(grep -c '\[session:.*\] \[input:.*\] 確認点の数の宣言: ' "$LOG" 2>/dev/null || echo 0)"
 
 # 同じ入力への差し戻しの上限 (regenLimitPerInput=3)
 rm -f "$REGEN_LOG"
