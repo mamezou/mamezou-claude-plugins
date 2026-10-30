@@ -4,7 +4,7 @@
 # exit 2 で応答を作り直させる。
 #
 # 実行するパターンは responseQuality.patterns で選ぶ (既定 [3, 4, 8, 19])。
-# 配列に無い番号のパターンは実行しない。番号は 1〜22 (14 は欠番)。
+# 配列に無い番号のパターンは実行しない。番号は 1〜23 (14 は欠番)。
 #
 # 検知パターン (番号 / 検知ルール / 根拠となる文体規則)
 #   1  選択肢羅列 + 末尾確認質問
@@ -90,6 +90,14 @@
 #      末尾の「:行番号」は外して見る。表示に、リポジトリの中で見つけた絶対パスを出す
 #      根拠: 読み手の画面にある実名を書く。読み手が開けないパスは実名にならない
 #            (rules「report-format」)
+#  23  応答の前に開くべきファイルを開いていない (responseQuality.turnRequirements[])
+#      要件ごとに、依頼者の最後の入力が userMatch に当たるか、コードブロックの外の本文が
+#      responseMatch に当たるときに動く。その入力より後にエラーなく終わったツールの呼び出しのうち、
+#      名前が toolMatch (既定 ^(Read|Bash|Grep)$) に当たり、入力 (file_path / command / path /
+#      pattern / prompt) が inputMatch に当たるものが無ければ止める。会話の要約で続けた入力
+#      (「This session is being continued from a previous conversation」で始まるもの) には
+#      userMatch を当てない。表示に hint を出す。開いたかだけを見て、どの節を読んだかは見ない
+#      根拠: 規則を照らしたことを、ツールの実行として残す (rules「start-approval」)
 #
 # 設定 (.claude/harness.json):
 #   responseQuality.enabled             false で無効化
@@ -99,6 +107,8 @@
 #   responseQuality.fluffTerms[]        パターン 5 の辞書へ追加
 #   responseQuality.bannedLeads[]       パターン 18 の辞書へ追加
 #   responseQuality.regenLimitPerInput  同じ入力への差し戻しの上限回数 (既定 3)
+#   responseQuality.turnRequirements[]  パターン 23 の要件 (userMatch / responseMatch / toolMatch /
+#                                       inputMatch / hint)
 #   環境変数 HARNESS_DETECTIONS_LOG     検知ログの置き場。logPath より優先する
 #                                       (過去の記録で流す replay.sh が一時ディレクトリへ向ける)
 #
@@ -724,6 +734,34 @@ if pat_on 22; then
       fi
     fi
   fi
+fi
+
+# 11-F) パターン 23: 応答の前に開くべきファイルを開いたか (responseQuality.turnRequirements[])
+#   依頼者の最後の入力が userMatch に当たるか、応答の本文 (コードブロックの外) が responseMatch に
+#   当たるとき、その入力より後にエラーなく終わったツールの呼び出しのうち、名前が toolMatch
+#   (既定 Read|Bash|Grep) に当たり、入力 (パス・コマンド・依頼文) が inputMatch に当たるものが
+#   無ければ止める。要件ごとに別々に判定する。
+if pat_on 23; then
+  t23_tools=$(harness_tool_uses_since_user "$transcript" "$scan_tail" \
+    | jq -r 'select(.done) | [.name, ((.input.file_path // .input.command // .input.path // .input.pattern // .input.prompt // "") | tostring | gsub("[\n\t]"; " "))] | @tsv' 2>/dev/null || true)
+  while IFS= read -r req; do
+    [[ -n "$req" ]] || continue
+    u_re=$(jq -r '.userMatch // empty' <<< "$req"); r_re=$(jq -r '.responseMatch // empty' <<< "$req")
+    n_re=$(jq -r '.toolMatch // "^(Read|Bash|Grep)$"' <<< "$req"); i_re=$(jq -r '.inputMatch // empty' <<< "$req")
+    hint=$(jq -r '.hint // empty' <<< "$req")
+    fire=0
+    # 会話の要約で続けた入力 (要約の本文に過去の指摘の語が入る) は、依頼者の入力として数えない
+    if [[ -n "$u_re" && "${user_text:-}" != "This session is being continued from a previous conversation"* ]] \
+       && grep -qE -- "$u_re" <<< "${user_text:-}"; then fire=1; fi
+    if [[ -n "$r_re" ]] && grep -qE -- "$r_re" <<< "$prose_text"; then fire=1; fi
+    (( fire )) || continue
+    ok=0
+    while IFS=$'\t' read -r tn ti; do
+      [[ -n "$tn" ]] || continue
+      if grep -qE -- "$n_re" <<< "$tn" && grep -qE -- "$i_re" <<< "$ti"; then ok=1; break; fi
+    done <<< "$t23_tools"
+    (( ok )) || violations+=("応答の前に開くファイルを開いていない: ${hint}")
+  done < <(cfg_list '.responseQuality.turnRequirements[]? | @json')
 fi
 
 # 12) 違反なしなら通過

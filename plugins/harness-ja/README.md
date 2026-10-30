@@ -111,6 +111,7 @@ Stop の2本と PostToolUse の1本は同じ文を出しますが、応答とツ
 | 20 | 確認点の番号の飛び・重なり(【確認点N】の番号が1から1ずつ増えていない) | 無効 |
 | 21 | 確認点の数の宣言(「お聞きしたいことは1つ」「確認点は2件」等) | 無効 |
 | 22 | 作業ディレクトリから開けない相対パス(バッククォートの中のパスが cwd から開けず、リポジトリの中に同じパスで終わるファイル・ディレクトリがある) | 無効 |
+| 23 | 応答の前に開くべきファイルを開いていない(`responseQuality.turnRequirements` の要件ごと) | 無効 |
 
 パターン20と21は、コードブロック(字下げしたものを含む)、行頭が「>」の引用行、
 バッククォート・「」・『』・() の中を数えません。前の応答の確認点や規則の文を引用した箇所では
@@ -120,6 +121,12 @@ Stop の2本と PostToolUse の1本は同じ文を出しますが、応答とツ
 パターン22は、コードブロックと行頭が「>」の引用行の外で、バッククォートで囲んだ「/」を含むパスを
 見ます。リポジトリに無いパス(ブランチ名など)は止めません。止めたときは、リポジトリの中で
 見つけた絶対パスを示します。
+
+パターン23は、`turnRequirements` の要件ごとに動きます。利用者の最後の入力が `userMatch` に
+当たるか、コードブロックの外の本文が `responseMatch` に当たるとき、その入力より後にエラーなく
+終わったツールの呼び出し(名前は `toolMatch`、既定 `^(Read|Bash|Grep)$`)の入力に `inputMatch`
+が無ければ止めます。会話の要約で続けた入力には `userMatch` を当てません。見るのはファイルを
+開いたかだけで、どの節を読んだか、応答が規則どおりかは見ません。
 
 差し戻し後の再生成(`stop_hook_active=true`)も検査します。同じ利用者入力への差し戻しが
 3回に達したら、4回目の生成を `[regen-limit]` 付きで通します(無限ループ防止)。
@@ -140,6 +147,7 @@ Stop の2本と PostToolUse の1本は同じ文を出しますが、応答とツ
 | `responseQuality.uiTerms` / `fluffTerms` / `bannedLeads` | パターン2 / 5 / 18 の辞書への追加 |
 | `responseQuality.logPath` | 検知ログの置き場(プロジェクトルートからの相対パス) |
 | `responseQuality.regenLimitPerInput` | 同じ利用者入力への差し戻しの上限回数(既定3) |
+| `responseQuality.turnRequirements[]` | パターン23の要件。`userMatch` / `responseMatch`(どちらかで動く)、`toolMatch`、`inputMatch`、`hint` |
 | `cloudChange.projects[]` | クラウド変更コマンドの停止の対象。`clis`(az / aws / cdk)、`cwdMatch`、`runbookPattern`、`runbookHint`、`guideRef` |
 | `harnessChange.token` / `excludePatterns[]` | 設定・規則ファイルの保護で使う承認の文字列(既定 `[harness-go]`)と除外パス(既定 `.claude/projects/`) |
 | `draftPrecheck.targets[]` | 送付文面の置き場(bash の case パターン)。`excludePatterns[]`、`bannedTerms[]`、`honorific` |

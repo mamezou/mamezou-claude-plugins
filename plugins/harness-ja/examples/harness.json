@@ -8,7 +8,14 @@
     "uiTerms": [],
     "fluffTerms": [],
     "bannedLeads": [],
-    "regenLimitPerInput": 3
+    "regenLimitPerInput": 3,
+    "turnRequirements": [
+      {
+        "responseMatch": "\\|[[:space:]]*番号[[:space:]]*\\|[[:space:]]*お聞きしたいこと",
+        "inputMatch": "report-format\\.md",
+        "hint": "確認点の表を書く応答は、report-format.md を開いてから返す"
+      }
+    ]
   },
   "harnessChange": {
     "enabled": true,

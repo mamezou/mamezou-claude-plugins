@@ -1033,6 +1033,42 @@ run "RQ-54 パターン22 引用行は見ない -> pass" 0 response-quality.sh "
 run "RQ-55 パターン22 リポジトリの外 -> pass" 0 response-quality.sh "$P22" "$IN/p22-norepo.json"
 run "RQ-56 既定では パターン22 を実行しない -> pass" 0 response-quality.sh "$CFG" "$IN/p22-bad.json"
 
+# ---------------------------------------------------------------------------
+# response-quality: パターン 23 (応答の前に開くべきファイルを開いていない)
+# ---------------------------------------------------------------------------
+echo
+echo "== response-quality (パターン 23) =="
+P23="$PROJ/.claude/harness-p23.json"
+jq '.responseQuality.patterns=[23] | .responseQuality.turnRequirements=[
+  {"responseMatch":"\\|[[:space:]]*番号[[:space:]]*\\|[[:space:]]*お聞きしたいこと","inputMatch":"report-format\\.md","hint":"確認点の表は report-format.md を開いてから"},
+  {"userMatch":"論外|謝罪","inputMatch":"start-approval\\.md","hint":"不満の後は start-approval.md を開いてから"},
+  {"userMatch":"なぜ","toolMatch":"^(Read|Bash|Grep|Agent|Task)$","inputMatch":"\\.jsonl|会話の記録","hint":"理由は会話の記録を調べてから"}]' "$CFG" > "$P23"
+T23='| 番号 | お聞きしたいこと | はいの場合 | いいえの場合 | 推奨 |
+| --- | --- | --- | --- | --- |
+| 1 | コミットしてよいか | コミットする | しない | はい。記録に残すため |'
+{ mk_user "進めて"; mk_asst "$T23"; } > "$TR/p23-table.jsonl"
+{ mk_user "進めて"; mk_tool r1 Read '{"file_path":"/x/.claude/rules/report-format.md"}'; mk_toolres_id r1; mk_asst "$T23"; } > "$TR/p23-table-read.jsonl"
+{ mk_user "進めて"; mk_tool r1 Read '{"file_path":"/x/.claude/rules/report-format.md"}'; mk_toolres_id r1 true; mk_asst "$T23"; } > "$TR/p23-table-err.jsonl"
+{ mk_user "進めて"; mk_asst "$(printf '例です。\n```\n%s\n```' "$T23")"; } > "$TR/p23-table-code.jsonl"
+{ mk_user "それは論外です"; mk_asst "申し訳ございません。直します。"; } > "$TR/p23-comp.jsonl"
+{ mk_user "それは論外です"; mk_tool b1 Bash '{"command":"grep -n 承認 .claude/rules/start-approval.md"}'; mk_toolres_id b1; mk_asst "申し訳ございません。直します。"; } > "$TR/p23-comp-read.jsonl"
+{ mk_user "This session is being continued from a previous conversation that ran out of context. 論外と言われた"; mk_asst "続きを進めます。"; } > "$TR/p23-summary.jsonl"
+{ mk_user "なぜそうしたの"; mk_asst "急いでいたためです。"; } > "$TR/p23-why.jsonl"
+{ mk_user "なぜそうしたの"; mk_tool a1 Agent '{"prompt":"会話の記録を読んで、開いたファイルを調べて"}'; mk_toolres_id a1; mk_asst "記録では、規則を開いていませんでした。"; } > "$TR/p23-why-rec.jsonl"
+for n in table table-read table-err table-code comp comp-read summary why why-rec; do
+  stop_input "$TR/p23-$n.jsonl" "$PROJ" false > "$IN/p23-$n.json"
+done
+run "RQ-57 パターン23 確認点の表で report-format.md を開いていない -> block" 2 response-quality.sh "$P23" "$IN/p23-table.json" "report-format.md を開いてから"
+run "RQ-58 パターン23 report-format.md を開いた -> pass" 0 response-quality.sh "$P23" "$IN/p23-table-read.json"
+run "RQ-59 パターン23 開いた結果がエラー -> block" 2 response-quality.sh "$P23" "$IN/p23-table-err.json"
+run "RQ-60 パターン23 コードブロックの中の表は見ない -> pass" 0 response-quality.sh "$P23" "$IN/p23-table-code.json"
+run "RQ-61 パターン23 不満の後に start-approval.md を開いていない -> block" 2 response-quality.sh "$P23" "$IN/p23-comp.json" "start-approval.md を開いてから"
+run "RQ-62 パターン23 不満の後に grep で開いた -> pass" 0 response-quality.sh "$P23" "$IN/p23-comp-read.json"
+run "RQ-63 パターン23 会話の要約の入力には userMatch を当てない -> pass" 0 response-quality.sh "$P23" "$IN/p23-summary.json"
+run "RQ-64 パターン23 理由を聞かれて記録を調べていない -> block" 2 response-quality.sh "$P23" "$IN/p23-why.json" "会話の記録を調べてから"
+run "RQ-65 パターン23 記録を読むエージェントを起動した -> pass" 0 response-quality.sh "$P23" "$IN/p23-why-rec.json"
+run "RQ-66 既定では パターン23 を実行しない -> pass" 0 response-quality.sh "$CFG" "$IN/p23-table.json"
+
 echo
 echo "PASS ${pass} / FAIL ${fail}"
 if [[ "$fail" -ne 0 ]]; then
