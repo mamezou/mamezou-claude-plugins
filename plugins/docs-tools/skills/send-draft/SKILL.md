@@ -207,6 +207,6 @@ Write 後に `/docs-tools:draft-precheck` を対象ファイルへ実行する�
 
 ## 関連
 
-- 用語の言い換えは、harness-ja プラグインを併用している場合は Output Style「Concise JA」の避ける言葉の表に
-  従う。単体で使う場合は、普通の日本語で言い換えられる語を言い換える
+- 用語の言い換えは、harness-ja プラグインを併用している場合は Output Style「Concise JA」の「語の選び方」の表に
+  従う。単体で使う場合は、造語と意味の曖昧なカタカナ語を、業務の文書で使う書き言葉に言い換える
 - 送付後の記録は `/docs-tools:work-log` の定型 (作成 → 未送付、送付確認 → sent へ移動)
