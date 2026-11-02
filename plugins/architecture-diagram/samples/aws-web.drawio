@@ -1,0 +1,166 @@
+<mxfile host="Electron" version="30.4.1">
+  <diagram id="order-site-aws" name="AWS">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="page-background" parent="1" style="fontFamily=IPAPGothic;rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=none;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="898" width="1398" x="1" y="1" as="geometry" />
+        </mxCell>
+        <mxCell id="title" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=22;fontStyle=1;align=left;verticalAlign=middle;fontColor=#232F3E;" value="受注サイトの AWS 構成と AZ 障害時に残る経路" vertex="1">
+          <mxGeometry height="34" width="900" x="40" y="18" as="geometry" />
+        </mxCell>
+        <mxCell id="aws-cloud" parent="1" style="fontFamily=IPAPGothic;points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=16;fontStyle=1;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;" value="AWS Cloud" vertex="1">
+          <mxGeometry height="770" width="1190" x="170" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="region" parent="1" style="fontFamily=IPAPGothic;points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_region;strokeColor=#00A4A6;fillColor=none;dashed=1;dashPattern=3 1;verticalAlign=top;align=left;spacingLeft=30;fontSize=16;fontStyle=1;fontColor=#232F3E;" value="東京リージョン ap-northeast-1" vertex="1">
+          <mxGeometry height="720" width="1015" x="330" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="vpc" parent="1" style="fontFamily=IPAPGothic;points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc2;strokeColor=#8C4FFF;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#8C4FFF;" value="VPC 10.0.0.0/16" vertex="1">
+          <mxGeometry height="665" width="945" x="380" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="az-a" parent="1" style="fontFamily=IPAPGothic;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#00A4A6;dashed=1;dashPattern=4 3;verticalAlign=top;align=left;spacingLeft=14;spacingTop=7;fontSize=13;fontStyle=1;fontColor=#414D5C;" value="AZ ap-northeast-1a" vertex="1">
+          <mxGeometry height="270" width="625" x="690" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="az-c" parent="1" style="fontFamily=IPAPGothic;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#00A4A6;dashed=1;dashPattern=4 3;verticalAlign=top;align=left;spacingLeft=14;spacingTop=7;fontSize=13;fontStyle=1;fontColor=#414D5C;" value="AZ ap-northeast-1c" vertex="1">
+          <mxGeometry height="270" width="625" x="690" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="subnet-public-a" parent="1" style="fontFamily=IPAPGothic;points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group;strokeColor=#7AA116;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontSize=13;fontStyle=1;fontColor=#232F3E;" value="パブリックサブネット&#xa;10.0.0.0/24" vertex="1">
+          <mxGeometry height="215" width="160" x="705" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="subnet-app-a" parent="1" style="fontFamily=IPAPGothic;points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group;strokeColor=#00A4A6;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontSize=13;fontStyle=1;fontColor=#232F3E;" value="プライベートサブネット&#xa;10.0.10.0/24" vertex="1">
+          <mxGeometry height="215" width="185" x="895" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="subnet-db-a" parent="1" style="fontFamily=IPAPGothic;points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group;strokeColor=#00A4A6;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontSize=13;fontStyle=1;fontColor=#232F3E;" value="プライベートサブネット&#xa;10.0.20.0/24" vertex="1">
+          <mxGeometry height="215" width="175" x="1110" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="subnet-public-c" parent="1" style="fontFamily=IPAPGothic;points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group;strokeColor=#7AA116;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontSize=13;fontStyle=1;fontColor=#232F3E;" value="パブリックサブネット&#xa;10.0.1.0/24" vertex="1">
+          <mxGeometry height="215" width="160" x="705" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="subnet-app-c" parent="1" style="fontFamily=IPAPGothic;points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group;strokeColor=#00A4A6;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontSize=13;fontStyle=1;fontColor=#232F3E;" value="プライベートサブネット&#xa;10.0.11.0/24" vertex="1">
+          <mxGeometry height="215" width="185" x="895" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="subnet-db-c" parent="1" style="fontFamily=IPAPGothic;points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group;strokeColor=#00A4A6;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontSize=13;fontStyle=1;fontColor=#232F3E;" value="プライベートサブネット&#xa;10.0.21.0/24" vertex="1">
+          <mxGeometry height="215" width="175" x="1110" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="users" parent="1" style="fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#242F3E;strokeColor=none;html=1;aspect=fixed;shape=mxgraph.aws4.users;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="65" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="users-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#232F3E;" value="利用者" vertex="1">
+          <mxGeometry height="20" width="100" x="45" y="524" as="geometry" />
+        </mxCell>
+        <mxCell id="route53" parent="1" style="fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=#FFFFFF;html=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.route_53;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="210" y="135" as="geometry" />
+        </mxCell>
+        <mxCell id="route53-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#232F3E;" value="Amazon Route 53&#xa;example.com" vertex="1">
+          <mxGeometry height="40" width="130" x="175" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="igw" parent="1" style="fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;html=1;aspect=fixed;shape=mxgraph.aws4.internet_gateway;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="400" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="igw-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=12;align=center;verticalAlign=middle;fontColor=#232F3E;" value="インターネット&#xa;ゲートウェイ" vertex="1">
+          <mxGeometry height="36" width="96" x="463" y="434" as="geometry" />
+        </mxCell>
+        <mxCell id="alb" parent="1" style="fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;html=1;aspect=fixed;shape=mxgraph.aws4.application_load_balancer;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="570" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="alb-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=12;align=center;verticalAlign=middle;fontColor=#232F3E;" value="Application&#xa;Load Balancer&#xa;パブリック&#xa;サブネット a・c" vertex="1">
+          <mxGeometry height="70" width="140" x="530" y="524" as="geometry" />
+        </mxCell>
+        <mxCell id="nat-a" parent="1" style="fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;html=1;aspect=fixed;shape=mxgraph.aws4.nat_gateway;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="730" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="nat-a-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=12;align=center;verticalAlign=middle;fontColor=#232F3E;" value="NAT ゲートウェイ" vertex="1">
+          <mxGeometry height="20" width="150" x="685" y="374" as="geometry" />
+        </mxCell>
+        <mxCell id="task-a" parent="1" style="fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;html=1;aspect=fixed;shape=mxgraph.aws4.ecs_task;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="957" y="325" as="geometry" />
+        </mxCell>
+        <mxCell id="task-a-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#232F3E;" value="Amazon ECS タスク&#xa;AWS Fargate" vertex="1">
+          <mxGeometry height="40" width="150" x="912" y="389" as="geometry" />
+        </mxCell>
+        <mxCell id="rds-primary" parent="1" style="fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#C925D1;strokeColor=none;html=1;aspect=fixed;shape=mxgraph.aws4.rds_instance;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="1160" y="325" as="geometry" />
+        </mxCell>
+        <mxCell id="rds-primary-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#232F3E;" value="Amazon RDS&#xa;プライマリ" vertex="1">
+          <mxGeometry height="40" width="120" x="1130" y="389" as="geometry" />
+        </mxCell>
+        <mxCell id="nat-c" parent="1" style="fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;html=1;aspect=fixed;shape=mxgraph.aws4.nat_gateway;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="730" y="625" as="geometry" />
+        </mxCell>
+        <mxCell id="nat-c-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=12;align=center;verticalAlign=middle;fontColor=#232F3E;" value="NAT ゲートウェイ" vertex="1">
+          <mxGeometry height="20" width="150" x="685" y="689" as="geometry" />
+        </mxCell>
+        <mxCell id="task-c" parent="1" style="fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;html=1;aspect=fixed;shape=mxgraph.aws4.ecs_task;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="957" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="task-c-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#232F3E;" value="Amazon ECS タスク&#xa;AWS Fargate" vertex="1">
+          <mxGeometry height="40" width="150" x="912" y="674" as="geometry" />
+        </mxCell>
+        <mxCell id="rds-standby" parent="1" style="fontFamily=IPAPGothic;sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#C925D1;strokeColor=none;html=1;aspect=fixed;shape=mxgraph.aws4.rds_instance;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="1160" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="rds-standby-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#232F3E;" value="Amazon RDS&#xa;スタンバイ" vertex="1">
+          <mxGeometry height="40" width="120" x="1130" y="674" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-users-igw" edge="1" parent="1" source="users" target="igw" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#147EBA;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#147EBA;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" value="HTTPS のリクエスト">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-igw-alb" edge="1" parent="1" source="igw" target="alb" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#147EBA;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#147EBA;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-alb-task-a" edge="1" parent="1" source="alb" target="task-a" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#147EBA;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#147EBA;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.25;entryX=0;entryY=0.75;" value="振り分け">
+          <mxGeometry x="-0.45" relative="1" as="geometry"><Array as="points"><mxPoint x="880" y="475" /><mxPoint x="880" y="370" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="edge-alb-task-c" edge="1" parent="1" source="alb" target="task-c" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#147EBA;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#147EBA;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.75;entryX=0;entryY=0.25;" value="振り分け">
+          <mxGeometry x="-0.45" relative="1" as="geometry"><Array as="points"><mxPoint x="880" y="505" /><mxPoint x="880" y="625" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="edge-task-a-rds" edge="1" parent="1" source="task-a" target="rds-primary" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#147EBA;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#147EBA;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.25;entryX=0;entryY=0.25;" value="読み書き">
+          <mxGeometry x="-0.6" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-task-c-rds" edge="1" parent="1" source="task-c" target="rds-primary" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#147EBA;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#147EBA;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.75;" value="読み書き">
+          <mxGeometry x="-0.8" relative="1" as="geometry"><Array as="points"><mxPoint x="1095" y="640" /><mxPoint x="1095" y="370" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="edge-users-route53" edge="1" parent="1" source="users" target="route53" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#414D5C;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=11;fontColor=#414D5C;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;entryX=0;entryY=0.5;" value="名前解決">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="95" y="165" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="edge-task-a-nat" edge="1" parent="1" source="task-a" target="nat-a" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#414D5C;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=11;fontColor=#414D5C;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.25;entryX=1;entryY=0.5;" value="外向き通信">
+          <mxGeometry x="0.5" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-task-c-nat" edge="1" parent="1" source="task-c" target="nat-c" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#414D5C;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=11;fontColor=#414D5C;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.75;entryX=1;entryY=0.5;" value="外向き通信">
+          <mxGeometry x="0.5" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-nat-a-igw" edge="1" parent="1" source="nat-a" target="igw" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#414D5C;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=11;fontColor=#414D5C;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;entryX=0.5;entryY=0;" value="外向き通信">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="430" y="340" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="edge-nat-c-igw" edge="1" parent="1" source="nat-c" target="igw" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#414D5C;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=11;fontColor=#414D5C;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;entryX=0.5;entryY=1;" value="外向き通信">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="430" y="655" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="edge-rds-replication" edge="1" parent="1" source="rds-primary" target="rds-standby" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#414D5C;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=11;fontColor=#414D5C;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=1;entryY=0.5;" value="">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1300" y="355" /><mxPoint x="1300" y="640" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="replication-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=right;verticalAlign=middle;fontColor=#414D5C;" value="同期&#xa;レプリケーション" vertex="1">
+          <mxGeometry height="36" width="98" x="1196" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="note" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=12;align=left;verticalAlign=middle;fontColor=#232F3E;" value="注記: ap-northeast-1a が止まると、RDS のスタンバイがプライマリに昇格する(接続先の名前は変わらない)" vertex="1">
+          <mxGeometry height="24" width="800" x="40" y="852" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#AAB7B8;strokeWidth=1;verticalAlign=middle;align=left;spacingLeft=10;fontSize=12;fontStyle=1;fontColor=#232F3E;" value="凡例" vertex="1">
+          <mxGeometry height="40" width="490" x="870" y="848" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-line-blue" parent="1" style="fontFamily=IPAPGothic;line;html=1;strokeWidth=2.5;strokeColor=#147EBA;" value="" vertex="1">
+          <mxGeometry height="8" width="40" x="930" y="864" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text-blue" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#232F3E;" value="受注のリクエストの経路" vertex="1">
+          <mxGeometry height="20" width="150" x="978" y="858" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-line-grey" parent="1" style="fontFamily=IPAPGothic;line;html=1;strokeWidth=1.5;strokeColor=#414D5C;" value="" vertex="1">
+          <mxGeometry height="8" width="40" x="1140" y="864" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text-grey" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#232F3E;" value="そのほかの通信" vertex="1">
+          <mxGeometry height="20" width="150" x="1188" y="858" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

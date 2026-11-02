@@ -1,0 +1,145 @@
+<mxfile host="Electron" version="30.4.1">
+  <diagram id="expense-system-azure" name="Azure">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="page-background" parent="1" style="fontFamily=IPAPGothic;rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=none;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="898" width="1398" x="1" y="1" as="geometry" />
+        </mxCell>
+        <mxCell id="title" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=22;fontStyle=1;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="経費精算システムの Azure 構成と社外からの到達経路" vertex="1">
+          <mxGeometry height="34" width="900" x="40" y="18" as="geometry" />
+        </mxCell>
+        <mxCell id="internet" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#666666;strokeWidth=1;fontSize=12;fontColor=#1F1F1F;align=center;verticalAlign=middle;" value="インターネット" vertex="1">
+          <mxGeometry height="40" width="150" x="40" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="office" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#404040;strokeWidth=2;verticalAlign=bottom;align=left;spacingLeft=12;spacingBottom=8;fontSize=16;fontStyle=1;fontColor=#1F1F1F;" value="事務所" vertex="1">
+          <mxGeometry height="170" width="260" x="40" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="staff" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/identity/Users.svg;" value="" vertex="1">
+          <mxGeometry height="64" width="64" x="60" y="308" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1F1F1F;" value="社員" vertex="1">
+          <mxGeometry height="20" width="100" x="42" y="376" as="geometry" />
+        </mxCell>
+        <mxCell id="office-router" parent="1" style="fontFamily=IPAPGothic;sketch=0;html=1;aspect=fixed;pointerEvents=1;shape=mxgraph.cisco19.rect;prIcon=router;fillColor=#FAFAFA;strokeColor=#005073;verticalLabelPosition=bottom;verticalAlign=top;align=center;fontSize=12;fontColor=#1F1F1F;" value="VPN ルーター" vertex="1">
+          <mxGeometry height="50" width="50" x="220" y="315" as="geometry" />
+        </mxCell>
+        <mxCell id="admin" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/identity/Users.svg;" value="" vertex="1">
+          <mxGeometry height="64" width="64" x="60" y="608" as="geometry" />
+        </mxCell>
+        <mxCell id="admin-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1F1F1F;" value="管理者" vertex="1">
+          <mxGeometry height="20" width="100" x="42" y="676" as="geometry" />
+        </mxCell>
+        <mxCell id="subscription" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#0078D4;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=46;spacingTop=8;fontSize=16;fontStyle=1;fontColor=#0078D4;" value="サブスクリプション(本番)" vertex="1">
+          <mxGeometry height="730" width="940" x="420" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="subscription-icon" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/general/Subscriptions.svg;" value="" vertex="1">
+          <mxGeometry height="26" width="26" x="432" y="98" as="geometry" />
+        </mxCell>
+        <mxCell id="vnet" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#0078D4;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=42;spacingTop=8;fontSize=16;fontStyle=1;fontColor=#0078D4;" value="VNet 10.10.0.0/16(東日本)" vertex="1">
+          <mxGeometry height="620" width="680" x="460" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="vnet-icon" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/networking/Virtual_Networks.svg;" value="" vertex="1">
+          <mxGeometry height="24" width="24" x="470" y="178" as="geometry" />
+        </mxCell>
+        <mxCell id="subnet-gateway" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#0078D4;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;fontSize=13;fontStyle=1;fontColor=#1F1F1F;" value="GatewaySubnet&#xa;10.10.0.0/27" vertex="1">
+          <mxGeometry height="200" width="190" x="490" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="subnet-bastion" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#0078D4;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;fontSize=13;fontStyle=1;fontColor=#1F1F1F;" value="AzureBastionSubnet&#xa;10.10.1.0/26" vertex="1">
+          <mxGeometry height="280" width="190" x="490" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="subnet-app" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#0078D4;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;fontSize=13;fontStyle=1;fontColor=#1F1F1F;" value="アプリ用サブネット&#xa;10.10.2.0/24" vertex="1">
+          <mxGeometry height="520" width="240" x="720" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="subnet-pe" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#0078D4;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;fontSize=13;fontStyle=1;fontColor=#1F1F1F;" value="PE 用サブネット&#xa;10.10.3.0/24" vertex="1">
+          <mxGeometry height="280" width="120" x="1000" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="vpn-gateway" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/networking/Virtual_Network_Gateways.svg;" value="" vertex="1">
+          <mxGeometry height="64" width="64" x="553" y="308" as="geometry" />
+        </mxCell>
+        <mxCell id="vpn-gateway-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1F1F1F;" value="Azure VPN Gateway" vertex="1">
+          <mxGeometry height="20" width="170" x="500" y="376" as="geometry" />
+        </mxCell>
+        <mxCell id="bastion" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/networking/Bastions.svg;" value="" vertex="1">
+          <mxGeometry height="64" width="64" x="553" y="608" as="geometry" />
+        </mxCell>
+        <mxCell id="bastion-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1F1F1F;" value="Azure Bastion" vertex="1">
+          <mxGeometry height="20" width="170" x="500" y="676" as="geometry" />
+        </mxCell>
+        <mxCell id="load-balancer" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/networking/Load_Balancers.svg;" value="" vertex="1">
+          <mxGeometry height="64" width="64" x="818" y="308" as="geometry" />
+        </mxCell>
+        <mxCell id="load-balancer-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1F1F1F;" value="Azure Load Balancer&#xa;内部" vertex="1">
+          <mxGeometry height="40" width="190" x="755" y="376" as="geometry" />
+        </mxCell>
+        <mxCell id="vmss" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/compute/VM_Scale_Sets.svg;" value="" vertex="1">
+          <mxGeometry height="64" width="64" x="818" y="608" as="geometry" />
+        </mxCell>
+        <mxCell id="vmss-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1F1F1F;" value="Virtual Machine Scale Sets&#xa;業務アプリ(2 台)" vertex="1">
+          <mxGeometry height="40" width="216" x="742" y="676" as="geometry" />
+        </mxCell>
+        <mxCell id="private-endpoint" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/networking/Private_Endpoint.svg;" value="" vertex="1">
+          <mxGeometry height="64" width="64" x="1028" y="608" as="geometry" />
+        </mxCell>
+        <mxCell id="private-endpoint-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1F1F1F;" value="Private Endpoint" vertex="1">
+          <mxGeometry height="20" width="120" x="1000" y="676" as="geometry" />
+        </mxCell>
+        <mxCell id="sql-database" parent="1" style="fontFamily=IPAPGothic;image;aspect=fixed;html=1;points=[];image=img/lib/azure2/databases/SQL_Database.svg;" value="" vertex="1">
+          <mxGeometry height="64" width="64" x="1250" y="608" as="geometry" />
+        </mxCell>
+        <mxCell id="sql-database-label" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;fontColor=#1F1F1F;" value="Azure SQL Database&#xa;経費データ" vertex="1">
+          <mxGeometry height="40" width="160" x="1202" y="676" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-router-vpn-gateway" edge="1" parent="1" source="office-router" target="vpn-gateway" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#0078D4;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#0078D4;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" value="サイト間 VPN">
+          <mxGeometry x="-0.36" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-admin-bastion" edge="1" parent="1" source="admin" target="bastion" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#0078D4;strokeWidth=2.5;endArrow=block;endFill=1;fontSize=12;fontStyle=1;fontColor=#0078D4;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" value="HTTPS での接続">
+          <mxGeometry x="-0.2" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-staff-router" edge="1" parent="1" source="staff" target="office-router" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#404040;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=11;fontColor=#404040;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" value="業務の通信">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-vpn-gateway-lb" edge="1" parent="1" source="vpn-gateway" target="load-balancer" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#404040;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=11;fontColor=#404040;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" value="業務の通信">
+          <mxGeometry x="0.46" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-lb-vmss" edge="1" parent="1" source="load-balancer" target="vmss" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#404040;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=11;fontColor=#404040;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;spacingLeft=6;exitX=0.5;exitY=1;exitDy=47;exitPerimeter=0;entryX=0.5;entryY=0;" value="振り分け">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-bastion-vmss" edge="1" parent="1" source="bastion" target="vmss" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#404040;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=11;fontColor=#404040;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" value="SSH の中継">
+          <mxGeometry x="0.46" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-vmss-pe" edge="1" parent="1" source="vmss" target="private-endpoint" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#404040;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=11;fontColor=#404040;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" value="DB 接続">
+          <mxGeometry x="-0.47" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-pe-sql" edge="1" parent="1" source="private-endpoint" target="sql-database" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#404040;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=11;fontColor=#404040;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" value="Private Link&#xa;での接続">
+          <mxGeometry x="0.3" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-internet-sql-blocked" edge="1" parent="1" source="internet" target="sql-database" style="fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#CC0000;strokeWidth=2;dashed=1;dashPattern=8 4;endArrow=cross;endFill=0;fontSize=12;fontStyle=1;fontColor=#CC0000;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0.5;entryY=0;" value="パブリック アクセスの無効化で遮断">
+          <mxGeometry x="0.05" relative="1" as="geometry"><Array as="points"><mxPoint x="1282" y="130" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="legend" parent="1" style="fontFamily=IPAPGothic;rounded=0;html=1;whiteSpace=wrap;fillColor=none;strokeColor=#AAAAAA;strokeWidth=1;verticalAlign=middle;align=left;spacingLeft=10;fontSize=12;fontStyle=1;fontColor=#1F1F1F;" value="凡例" vertex="1">
+          <mxGeometry height="44" width="600" x="760" y="838" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-line-blue" parent="1" style="fontFamily=IPAPGothic;line;html=1;strokeWidth=2.5;strokeColor=#0078D4;" value="" vertex="1">
+          <mxGeometry height="8" width="40" x="820" y="856" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text-blue" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="社外から VNet へ入る経路" vertex="1">
+          <mxGeometry height="20" width="150" x="868" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-line-grey" parent="1" style="fontFamily=IPAPGothic;line;html=1;strokeWidth=1.5;strokeColor=#404040;" value="" vertex="1">
+          <mxGeometry height="8" width="40" x="1030" y="856" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text-grey" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="そのほかの通信" vertex="1">
+          <mxGeometry height="20" width="90" x="1078" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-line-blocked" parent="1" style="fontFamily=IPAPGothic;line;html=1;strokeWidth=2;strokeColor=#CC0000;dashed=1;dashPattern=8 4;" value="" vertex="1">
+          <mxGeometry height="8" width="40" x="1180" y="856" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text-blocked" parent="1" style="fontFamily=IPAPGothic;text;html=1;fontSize=11;align=left;verticalAlign=middle;fontColor=#1F1F1F;" value="遮断された経路" vertex="1">
+          <mxGeometry height="20" width="110" x="1228" y="850" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

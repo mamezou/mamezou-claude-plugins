@@ -27,6 +27,28 @@ git clone https://github.com/mamezou/mamezou-claude-plugins
 cp -r mamezou-claude-plugins/plugins/architecture-diagram ~/.claude/skills/architecture-diagram
 ```
 
+## 見本
+
+この Skill を使って描いた図。どれも架空の構成である。`samples/` に、編集元の `.drawio` と PNG がある。
+
+### AWS: 受注サイト
+
+![受注サイトの AWS 構成と AZ 障害時に残る経路](samples/aws-web.png)
+
+読み手は受注サイトの開発・運用の担当者。1 つの AZ が止まっても受注を続けられるかを判断する。
+
+### Azure: 経費精算システム
+
+![経費精算システムの Azure 構成と社外からの到達経路](samples/azure-internal.png)
+
+読み手は情報システムの担当者。社外から入る経路が、事務所のサイト間 VPN と管理者の Azure Bastion の 2 つだけかを判断する。
+
+### オンプレミス: 小さな事務所のネットワーク
+
+![事務所ネットワークの構成と、来客用 Wi-Fi から業務 PC・NAS への遮断](samples/onprem-office.png)
+
+読み手は事務所の IT 担当者。来客用 Wi-Fi の端末が、業務 PC と NAS に届かないかを判断する。
+
 ## 中身
 
 | パス | 内容 |
@@ -45,6 +67,7 @@ cp -r mamezou-claude-plugins/plugins/architecture-diagram ~/.claude/skills/archi
 | `assets/template-aws.drawio` | AWS 図のテンプレート。style 文字列を写す元 |
 | `assets/template-azure.drawio` | Azure 図のテンプレート。style 文字列を写す元 |
 | `assets/template-onprem.drawio` | オンプレミス図のテンプレート。style 文字列を写す元 |
+| `samples/` | 見本の図(AWS、Azure、オンプレミス)。編集元の `.drawio` と、書き出した PNG |
 
 ## PNG 書き出しに必要なもの
 
