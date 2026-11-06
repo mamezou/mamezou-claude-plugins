@@ -30,6 +30,11 @@ cp -n "${CLAUDE_PLUGIN_ROOT}"/rules-templates/*.md .claude/rules/
    複製した `writing-style.md` は、先頭に `paths:` があり、メールやチャットの下書きでは読み込まれず、
    「実例の確認」の節もない。`diff "${CLAUDE_PLUGIN_ROOT}/rules-templates/writing-style.md" .claude/rules/writing-style.md`
    で差分を示し、`paths:` の削除と「実例の確認」の節の追加を、利用者の判断で反映してもらう。
+   `orchestration.md` は 0.4.16 で足した。`cp -n` は無いファイルだけを写すため、0.4.15 以前に
+   初期設定した案件で再実行すると、`orchestration.md` が新しく写される。すでに
+   `.claude/rules/orchestration.md` がある案件では上書きされないため、
+   `diff "${CLAUDE_PLUGIN_ROOT}/rules-templates/orchestration.md" .claude/rules/orchestration.md`
+   で差分を示し、反映するかを利用者に判断してもらう。
 
 4. `.gitignore` に次の1行を追記する(既にあれば追記しない)。
 
@@ -55,7 +60,7 @@ cp -n "${CLAUDE_PLUGIN_ROOT}"/rules-templates/*.md .claude/rules/
 ## 完了条件
 
 - `.claude/harness.json` が存在し `jq . .claude/harness.json` が通る
-- `.claude/rules/` にテンプレート2本がある
+- `.claude/rules/` にテンプレート3本がある
 - `.gitignore` に1行がある
 - `examples/harness.json` のサンプル値(`project-a` 等)をプロジェクト固有の値に置き換えたか、
   使わない機能を `enabled: false` にした
