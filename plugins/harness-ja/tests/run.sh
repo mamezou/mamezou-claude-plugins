@@ -1069,6 +1069,34 @@ run "RQ-64 パターン23 理由を聞かれて記録を調べていない -> bl
 run "RQ-65 パターン23 記録を読むエージェントを起動した -> pass" 0 response-quality.sh "$P23" "$IN/p23-why-rec.json"
 run "RQ-66 既定では パターン23 を実行しない -> pass" 0 response-quality.sh "$CFG" "$IN/p23-table.json"
 
+# ---------------------------------------------------------------------------
+# response-quality: パターン 24 (指示のない確認点の取り下げ)
+# ---------------------------------------------------------------------------
+echo
+echo "== response-quality (パターン 24) =="
+P24="$PROJ/.claude/harness-p24.json"
+jq '.responseQuality.patterns=[24]' "$CFG" > "$P24"
+{ mk_user "なんでスキルを消す話にしてるの？"; mk_asst "申し訳ございません。確認点1は取り下げます。理由は次のとおりです。"; } > "$TR/p24-bad.jsonl"
+{ mk_user "早くやれ"; mk_asst "確認点1の取り下げと、確認点2の反映をします。"; } > "$TR/p24-and.jsonl"
+{ mk_user "確認点1はいらない"; mk_asst "確認点1は取り下げます。"; } > "$TR/p24-asked.jsonl"
+{ mk_user "取り下げるって言ってないだろう"; mk_asst "確認点1を取り下げました。申し訳ございません。確認点1は残します。"; } > "$TR/p24-past.jsonl"
+{ mk_user "なんで？"; mk_asst "$(printf '前の応答の文です。\n```\n確認点1は取り下げます。\n```')"; } > "$TR/p24-code.jsonl"
+{ mk_user "なんで？"; mk_asst "$(printf '前の応答で次のように書きました。\n> 確認点1は取り下げます。')"; } > "$TR/p24-quote.jsonl"
+{ mk_user "なんで？"; mk_asst "確認点２は撤回します。"; } > "$TR/p24-zen.jsonl"
+{ mk_user "なんで？"; mk_asst "確認点1は未回答のまま残します。取り下げる案は出しません。"; } > "$TR/p24-period.jsonl"
+for n in bad and asked past code quote zen period; do
+  stop_input "$TR/p24-$n.jsonl" "$PROJ" false > "$IN/p24-$n.json"
+done
+run "RQ-67 パターン24 指示のない取り下げ -> block" 2 response-quality.sh "$P24" "$IN/p24-bad.json" "指示のない確認点の取り下げ"
+run "RQ-68 パターン24 「確認点1の取り下げと」 -> block" 2 response-quality.sh "$P24" "$IN/p24-and.json" "確認点1の取り下げと"
+run "RQ-69 パターン24 依頼者が「いらない」と指示 -> pass" 0 response-quality.sh "$P24" "$IN/p24-asked.json"
+run "RQ-70 パターン24 過去形の「取り下げました」 -> pass" 0 response-quality.sh "$P24" "$IN/p24-past.json"
+run "RQ-71 パターン24 コードブロックの中は見ない -> pass" 0 response-quality.sh "$P24" "$IN/p24-code.json"
+run "RQ-72 パターン24 引用行は見ない -> pass" 0 response-quality.sh "$P24" "$IN/p24-quote.json"
+run "RQ-73 パターン24 全角の数字と「撤回します」 -> block" 2 response-quality.sh "$P24" "$IN/p24-zen.json" "確認点2は撤回します"
+run "RQ-74 パターン24 「。」をまたがない -> pass" 0 response-quality.sh "$P24" "$IN/p24-period.json"
+run "RQ-75 既定では パターン24 を実行しない -> pass" 0 response-quality.sh "$CFG" "$IN/p24-bad.json"
+
 echo
 echo "PASS ${pass} / FAIL ${fail}"
 if [[ "$fail" -ne 0 ]]; then
