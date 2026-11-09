@@ -19,12 +19,33 @@ mkdir -p .claude/rules
 [ -f .claude/harness.json ] || cp "${CLAUDE_PLUGIN_ROOT}/examples/harness.json" .claude/harness.json
 ```
 
-3. rules テンプレートを複製する。`cp -n` は既存ファイルを上書きしない。上書きを避けた
-   ファイルがあれば、テンプレートとの差分を提示して判断を仰ぐ。
+3. rules テンプレートを複製する。`~/.claude/rules/`(Claude Code がすべての案件で読み込む、
+   ユーザー単位の規則の置き場)に同じ名前のファイルがあるテンプレートは写さない。案件にも写すと
+   同じ名前の規則が二重に読み込まれ、食い違ったときにどちらに従うかが決まらないため。
+   案件の `.claude/rules/` にすでにあるファイルは上書きしない。
 
 ```bash
-cp -n "${CLAUDE_PLUGIN_ROOT}"/rules-templates/*.md .claude/rules/
+for f in "${CLAUDE_PLUGIN_ROOT}"/rules-templates/*.md; do
+  n=$(basename "$f")
+  if [ -e "$HOME/.claude/rules/$n" ]; then
+    echo "写さない: $n (~/.claude/rules/$n がある)"
+    [ -e ".claude/rules/$n" ] && echo "二重: $n (.claude/rules/$n もある)"
+    continue
+  fi
+  if [ -e ".claude/rules/$n" ]; then
+    echo "上書きしない: $n (.claude/rules/$n がある)"
+    continue
+  fi
+  cp -n "${CLAUDE_PLUGIN_ROOT}/rules-templates/$n" .claude/rules/
+done
 ```
+
+   出力の行は次のとおり扱う。
+   - `写さない:` の行: 名前と理由(`~/.claude/rules/` に同じ名前のファイルがあり、案件に写すと
+     同じ名前の規則が二重に読み込まれる)を手順8の報告に書く。テンプレートとの差分は示さない
+   - `二重:` の行: 案件の `.claude/rules/` と `~/.claude/rules/` の両方に同じ名前のファイルがあり、
+     二重に読み込まれていることを手順8の報告に書く。テンプレートとの差分は示さない
+   - `上書きしない:` の行: テンプレートとの差分を提示して、反映するかの判断を仰ぐ
 
    複製は初回だけで、プラグインを更新しても既存の `.claude/rules/` は変わらない。0.4.7 以前に
    複製した `writing-style.md` は、先頭に `paths:` があり、メールやチャットの下書きでは読み込まれず、
@@ -54,13 +75,15 @@ cp -n "${CLAUDE_PLUGIN_ROOT}"/rules-templates/*.md .claude/rules/
    - 使わない機能は `"enabled": false` で止める
 6. Output Style を使う場合は `/config` から「Concise JA」を選ぶよう案内する。
 7. 週次のレビューは `/harness-ja:harness-review` で行うことを案内する。
-8. 設定内容を要約して報告する。書き換えた・作成したファイルのパスを列挙する。
+8. 設定内容を要約して報告する。書き換えた・作成したファイルのパスを列挙する。手順3で `写さない:`
+   と `二重:` の行が出たテンプレートがあれば、その名前と理由も書く。
 9. サンプル値(`project-a` 等)を残していないか、利用者に `.claude/harness.json` を開いて確認してもらう。
 
 ## 完了条件
 
 - `.claude/harness.json` が存在し `jq . .claude/harness.json` が通る
-- `.claude/rules/` にテンプレート3本がある
+- テンプレート3本のそれぞれと同じ名前のファイルが、`.claude/rules/` か `~/.claude/rules/` にある。
+  両方にあるものは、手順8の報告に書いた
 - `.gitignore` に1行がある
 - `examples/harness.json` のサンプル値(`project-a` 等)をプロジェクト固有の値に置き換えたか、
   使わない機能を `enabled: false` にした

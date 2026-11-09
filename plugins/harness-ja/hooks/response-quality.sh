@@ -206,11 +206,13 @@ if [[ -z "$text" ]]; then
 fi
 
 # 4) 最後の依頼者のテキスト入力 (バイパスの文字列とパターン 9 / 13 / 14 / 19 / 24 の判定に使う)
-#    ツール結果行・isMeta 行 (hook のフィードバック等)・ローカルコマンドの記録は除外する。
+#    ツール結果行・isMeta 行 (hook のフィードバック等)・origin.kind が human 以外の行 (完了通知等)・
+#    ローカルコマンドの記録は除外する (判定は lib/config.sh の HARNESS_JQ_USER_INPUT)。
 #    除外しないと、差し戻し後は hook のフィードバック文が依頼者の入力として扱われる。
-#    uuid は「同じ入力への差し戻し回数」の集計キー (14 を参照)。
+#    「同じ入力への差し戻し回数」の集計キー (14 を参照) は、応答を始めた最後の入力の uuid。
+#    完了通知等 (origin.kind が human 以外) で始まった応答は、その行の uuid で数える。
 last_user_json=$(harness_last_user_entry "$transcript" "$scan_tail")
-user_uuid=$(printf '%s' "$last_user_json" | jq -r '.uuid // empty' 2>/dev/null || true)
+user_uuid=$(harness_last_turn_uuid "$transcript" "$scan_tail")
 user_text=$(printf '%s' "$last_user_json" | jq -r '.text // empty' 2>/dev/null || true)
 if harness_has_token "${user_text:-}" '[hook-bypass: response-quality]'; then
   exit 0

@@ -170,30 +170,55 @@ harness_has_token() {
 
 # 依頼者のテキスト入力の判定 (jq の定義)。harness_last_user_entry と
 # harness_tool_uses_since_user が同じ定義を使う。
-#   user_text:     user 行の本文 (content が文字列ならそのまま、配列なら text を改行で連結)
-#   is_user_input: 依頼者が書いたテキスト入力の行なら true
+#   user_text:     user 行の本文 (content が文字列ならそのまま、配列なら text を改行で連結)。
+#                  リモートから送った入力は、本文が <wake> 等の包みに入り、依頼者の発言は
+#                  <message from="human" trust="principal" ...>...</message> の中にある。
+#                  本文に from= を持つ <message> 要素があれば、from="human" かつ
+#                  trust="principal" の要素の中身だけを改行でつなぎ、&lt; 等を戻して本文とする。
+#                  ほかの要素の中身は捨てる (該当する要素が無ければ空)。包みの無い本文はそのまま
+#   is_turn_input: 応答を始めた入力の行なら true (依頼者の入力に加え、origin.kind が human
+#                  以外の行も含む。0.4.17 までの is_user_input と同じ範囲)。差し戻し回数の集計キー
+#                  (harness_last_turn_uuid) に使う
+#   is_user_input: 依頼者が書いたテキスト入力の行なら true (is_turn_input のうち、下の origin の
+#                  条件を満たす行)
 # 除外するもの:
 #   - ツール結果の行 (content 配列に tool_result を含む)
-#   - isMeta の行 (hook のフィードバック等、依頼者が書いていない user 行)
+#   - isMeta の行 (hook のフィードバック、別セッションからのメッセージ等、依頼者が書いていない user 行)
+#   - origin.kind が human 以外の行 (サブエージェントの完了通知、取りまとめ役のセッションからの
+#     メモ等は task-notification)。origin の無い行 (古い版の記録等) は、この条件では除外しない
 #   - ローカルコマンドの記録 (<command-name> / <local-command-stdout> / <local-command-caveat>)
 # 行の判定は jq で行う。grep の文字列一致 ('"type":"user"') では、空白入りの JSON
 # ('"type": "user"') を user 行と認識できない。
 HARNESS_JQ_USER_INPUT='
-  def user_text:
+  def raw_user_text:
     if (.message.content|type)=="string" then .message.content
     else ([.message.content[]? | select(.type=="text") | .text] | join("\n")) end;
-  def is_user_input:
+  def xml_unescape:
+    gsub("&lt;"; "<") | gsub("&gt;"; ">") | gsub("&quot;"; "\"") | gsub("&apos;"; "\u0027")
+    | gsub("&amp;"; "&");
+  def user_text:
+    raw_user_text as $t
+    | if ($t | test("<message(\\s[^>]*)?\\sfrom=\"")) then
+        [$t | scan("<message(\\s[^>]*)>([\\s\\S]*?)</message>")
+         | select((.[0] | test("\\sfrom=\"human\"")) and (.[0] | test("\\strust=\"principal\"")))
+         | .[1] | xml_unescape]
+        | join("\n")
+      else $t end;
+  def is_turn_input:
     .type=="user" and ((.isMeta // false) | not)
     and ((.message.content|type)=="string"
          or ((.message.content|type)=="array"
              and ([.message.content[]? | select(.type=="tool_result")] | length)==0))
-    and (user_text | test("^\\s*<(command-name|local-command-stdout|local-command-caveat)") | not);
+    and (raw_user_text | test("^\\s*<(command-name|local-command-stdout|local-command-caveat)") | not);
+  def is_user_input:
+    is_turn_input
+    and (if (.origin | type)=="object" and (.origin | has("kind")) then .origin.kind=="human" else true end);
 '
 
 # transcript の末尾から、依頼者の最後のテキスト入力を {uuid, text} の 1 行 JSON で返す
 # harness_last_user_entry <transcript> [末尾行数 (既定 2000)]
-# 依頼者のテキスト入力の判定は HARNESS_JQ_USER_INPUT を参照。
-# uuid は「同じ入力への差し戻し回数」の集計キーに使う。取れなければ空文字。
+# 依頼者のテキスト入力の判定は HARNESS_JQ_USER_INPUT を参照。uuid は取れなければ空文字。
+# 「同じ入力への差し戻し回数」の集計キーには harness_last_turn_uuid を使う。
 harness_last_user_entry() {
   local transcript="$1" tail_lines="${2:-2000}"
   [[ -f "$transcript" ]] || return 0
@@ -202,6 +227,17 @@ harness_last_user_entry() {
      | select(is_user_input)
      | {uuid: (.uuid // ""), text: user_text}]
     | last // empty' 2>/dev/null || true
+}
+
+# harness_last_turn_uuid <transcript> [末尾行数 (既定 2000)]
+# 応答を始めた最後の入力 (is_turn_input) の uuid を返す。取れなければ空文字。完了通知で始まった
+# 応答ごとに別の集計キーになり、hook のフィードバック (isMeta) は数えないため、差し戻し後の
+# 再生成は同じ集計キーになる。
+harness_last_turn_uuid() {
+  local transcript="$1" tail_lines="${2:-2000}"
+  [[ -f "$transcript" ]] || return 0
+  tail -n "$tail_lines" "$transcript" | jq -rR -n "$HARNESS_JQ_USER_INPUT"'
+    [inputs | fromjson? // empty | select(is_turn_input) | (.uuid // "")] | last // empty' 2>/dev/null || true
 }
 
 # harness_last_user_message <transcript> [末尾行数]
