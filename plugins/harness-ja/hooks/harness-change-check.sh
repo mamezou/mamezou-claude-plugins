@@ -159,7 +159,8 @@ case "$tool_name" in
 esac
 [[ -z "$target" ]] && exit 0
 
-# 2) 最後の依頼者のテキスト入力 (ツール結果行・isMeta 行・ローカルコマンドの記録を除く)
+# 2) 最後の依頼者のテキスト入力 (ツール結果行・isMeta 行・origin.kind が human 以外の行・
+#    ローカルコマンドの記録を除く。判定は lib/config.sh の HARNESS_JQ_USER_INPUT)
 transcript=$(printf '%s' "$input" | jq -r '.transcript_path // empty')
 last_user_msg=""
 if [[ -n "$transcript" && -f "$transcript" ]]; then

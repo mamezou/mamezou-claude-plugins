@@ -6,8 +6,8 @@ keep-coding-instructions: true
 
 # Concise JA 応答スタイル
 
-対象は依頼者への返信・チャット文面。送付文面は
-`.claude/rules/writing-style.md` に従う。出典は文化庁
+対象は依頼者への返信・チャット文面。送付文面は `writing-style.md`(案件の
+`.claude/rules/` か、ユーザー単位の `~/.claude/rules/` にある)に従う。出典は文化庁
 「公用文作成の考え方」と指摘の記録。
 
 ## 簡潔さ

@@ -25,8 +25,8 @@
 #                 - 記録に Stop の hook の実行の記録 (type が system、subtype が
 #                   stop_hook_summary の行) があれば、その行ごと。他のセッションからの
 #                   メッセージ (isMeta) で始まった応答の終わりも拾える
-#                 - 無ければ (Stop の hook を入れていない頃の記録)、依頼者の入力
-#                   (lib/config.sh の HARNESS_JQ_USER_INPUT と同じ定義) の直前、Stop hook の
+#                 - 無ければ (Stop の hook を入れていない頃の記録)、応答を始めた入力
+#                   (lib/config.sh の is_turn_input。依頼者の入力と完了通知等) の直前、Stop hook の
 #                   差し戻し (isMeta の行で "Stop hook feedback" で始まる行) の直前、記録の
 #                   末尾ごと。依頼者の中断 ("[Request interrupted by user" で始まる行) の直前は
 #                   除く (Claude Code は中断では Stop の hook を流さない)。要約で続けた
@@ -83,7 +83,7 @@ usage() {
 command -v jq >/dev/null 2>&1 || die "jq が見つかりません。jq を入れてから再実行してください。"
 [[ -f "$HOOKS_JSON" ]] || die "hooks.json が見つかりません: $HOOKS_JSON"
 [[ -f "$ROOT/hooks/lib/config.sh" ]] || die "hooks/lib/config.sh が見つかりません: $ROOT/hooks/lib/config.sh"
-# 依頼者の入力の判定 (HARNESS_JQ_USER_INPUT) を hook と同じ定義で使う
+# 入力の判定 (HARNESS_JQ_USER_INPUT の is_turn_input) を hook と同じ定義で使う
 # shellcheck source=../../hooks/lib/config.sh
 source "$ROOT/hooks/lib/config.sh"
 
@@ -210,11 +210,11 @@ JQ_POINTS="$HARNESS_JQ_USER_INPUT$JQ_HOOK_NAME"'
              elif $has_summary and ($e.o | is_stop_summary) then
                take(false)
              elif ($e.o | is_delim) then
-               (if ($has_summary | not) and (($e.o | is_user_input) or ($e.o | is_feedback))
+               (if ($has_summary | not) and (($e.o | is_turn_input) or ($e.o | is_feedback))
                 then take($e.o | is_interrupt) else . end)
                | .tf = false
                | (if ($e.o | is_feedback) then .fb = true
-                  elif ($e.o | is_user_input) then .fb = false
+                  elif ($e.o | is_turn_input) then .fb = false
                   else . end)
              else . end)
           | (if $has_summary then . else take(false) end)

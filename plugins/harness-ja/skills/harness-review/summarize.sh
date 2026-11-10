@@ -116,8 +116,13 @@ echo
 echo "| ファイル | 行数 |"
 echo "|---|---|"
 total=0
-for f in "$root/CLAUDE.md" "$root"/.claude/rules/*.md "$HOME/.claude/CLAUDE.md"; do
+# ~/.claude/rules/ はユーザー単位の規則の置き場で、すべての案件で読み込まれる。
+# root が $HOME のときは同じファイルを 2 回数えない
+declare -A seen=()
+for f in "$root/CLAUDE.md" "$root"/.claude/rules/*.md "$HOME/.claude/CLAUDE.md" "$HOME"/.claude/rules/*.md; do
   [[ -f "$f" ]] || continue
+  [[ -n "${seen[$f]:-}" ]] && continue
+  seen[$f]=1
   n=$(wc -l < "$f"); total=$((total+n))
   tilde="~"; printf "| %s | %s |\n" "${f/#$HOME/$tilde}" "$n"
 done
