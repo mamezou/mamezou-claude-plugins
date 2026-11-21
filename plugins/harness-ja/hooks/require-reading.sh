@@ -10,7 +10,7 @@
 #   - cwd には依存しない (リポジトリルート起動のセッションでも発火する)
 #
 # 通過条件 (ファイルの編集):
-#   - 通常: requiredReadPattern に一致する資料を直近 200 行の transcript で Read
+#   - 通常: requiredReadPattern に一致する資料を直近 200 行の transcript(サブエージェントの中では、サブエージェント自身の記録)で Read
 #   - mode="logs" の既存ファイル編集: そのファイル自身の Read。判定は cwd 基準で
 #     正規化した絶対パスの一致で行う (同名の別ファイルの Read では通さない)
 #   - mode="logs" の新規作成: requiredReadPattern に一致する任意のファイルの Read
@@ -213,7 +213,7 @@ if harness_has_token "$last_user_msg" '[hook-bypass: resource-reading]'; then
 fi
 
 # 6) Read 済みファイル一覧 (直近 200 行)
-read_files=$(tail -200 "$transcript" \
+read_files=$(tail -200 "$(harness_read_transcript "$input")" \
   | jq -rR -n '[inputs | fromjson? // empty] | .[]
       | select(.type=="assistant") | .message.content[]?
       | select(.type=="tool_use" and .name=="Read")

@@ -74,13 +74,19 @@
 
 | hook | イベント | 止める条件 | バイパス |
 |---|---|---|---|
-| `cloud-change-check.sh` | PreToolUse(Bash) | az / aws / cdk の変更系コマンドで、手順書の Read と `[change-go: <案件>]` のいずれかが無い。変更系を検知したのに設定のどの案件にも一致しないときも止める | `[hook-bypass: cloud-change]` |
+| `cloud-change-check.sh` | PreToolUse(Bash) | az / aws / cdk の変更系コマンドで、手順書の Read と `[change-go: <案件>]` のいずれかが無い。変更系を検知したのに設定のどの案件にも一致しないときも止める。サブエージェントの中では、手順書の Read をサブエージェント自身の記録で探す | `[hook-bypass: cloud-change]` |
 | `harness-change-check.sh` | PreToolUse(Bash / Write / Edit / MultiEdit) | `.claude/` 配下(hooks / rules / skills / settings 等)の書き換えで、`[harness-go]` が無い。例外として、プラグイン配下からの `cp`、`mkdir`、`.claude/harness.json` の新規作成は初期設定のため通す | なし(承認の文字列がバイパスを兼ねる) |
 | `response-quality.sh` | Stop | 応答本文に文体違反(既定は4種類。下の表を参照) | `[hook-bypass: response-quality]` |
 | `draft-precheck.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 送付文面に内部パス・ローカル拡張子・組版記号・外部 AI 言及・禁止語・長い識別子の繰り返し。MCP のツールは `draftPrecheck.toolRules[]` に書いたものだけ、`subject` と `body` などの文字列を検査する | `[hook-bypass: draft-precheck]` |
-| `require-reading.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 必読資料を直近で Read せずに対象ファイルを編集。対応する読み取りのツールを呼ばずに、外部へ書き込むツールを呼び出し | `[hook-bypass: resource-reading]` |
+| `require-reading.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 必読資料を直近で Read せずに対象ファイルを編集(サブエージェントの中では、Read をサブエージェント自身の記録で探す)。対応する読み取りのツールを呼ばずに、外部へ書き込むツールを呼び出し | `[hook-bypass: resource-reading]` |
 | `tool-result-check.sh` | PostToolUse(MCP のツール) | 止めない。ツールの結果に成立の印が無いとき、作成・更新が成立していないことを Claude へ知らせる | なし |
 | `no-inline-powershell.sh` | Stop | 5行以上の PowerShell をファイル化せずにコードブロックで提示(既定は無効)。`pasteRun` を有効にすると、貼り付けて実行する形に合わないスクリプトと、`-File` での実行を書いた文書・応答も止める | なし |
+
+0.4.20 から、サブエージェントの中で発火した `cloud-change-check.sh` と `require-reading.sh` は、
+ファイルの Read を、サブエージェント自身の記録(`<本体の記録から .jsonl を除いた名前>/subagents/agent-<agent_id>.jsonl`)
+で探します。本体が読んだだけでは、サブエージェントの編集とコマンドを通しません。サブエージェント自身の
+記録が見つからないときは、本体の記録で探します。承認の文字列、バイパスの文字列、外部へ書き込むツールの
+前の読み取り(`requireReading.toolRules[]`)は、今までどおり本体の記録で探します。
 
 設定ファイルが見つからない場合、7本とも何もしません。設定ファイルはあるが JSON として
 読めない場合、PreToolUse の4本は「設定ファイルが読めません: <パス>」を出してツールを止めます。

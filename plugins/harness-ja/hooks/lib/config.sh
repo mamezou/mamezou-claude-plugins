@@ -265,3 +265,22 @@ harness_tool_uses_since_user() {
     | {name: (.name // ""), input: (.input // {}), done: (.id as $id | ($ok | index($id)) != null)}' \
     2>/dev/null || true
 }
+
+# harness_read_transcript <hook の入力の JSON>
+# Read の判定に使う記録のパスを返す。サブエージェントの中で発火した hook (入力に agent_id がある) は、
+# <transcript_path から .jsonl を除いた名前>/subagents/agent-<agent_id>.jsonl があれば、そのパスを返す。
+# 無ければ transcript_path を返す。承認とバイパスの文字列は、この関数を使わず transcript_path で探す
+harness_read_transcript() {
+  local input="$1" transcript agent_id sub
+  transcript=$(printf '%s' "$input" | jq -r '.transcript_path // empty' 2>/dev/null || true)
+  agent_id=$(printf '%s' "$input" | jq -r '.agent_id // empty' 2>/dev/null || true)
+  agent_id="${agent_id#agent-}"
+  if [[ -n "$agent_id" && -n "$transcript" ]]; then
+    sub="${transcript%.jsonl}/subagents/agent-${agent_id}.jsonl"
+    if [[ -f "$sub" ]]; then
+      printf '%s' "$sub"
+      return 0
+    fi
+  fi
+  printf '%s' "$transcript"
+}

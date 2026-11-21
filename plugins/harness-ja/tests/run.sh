@@ -327,6 +327,26 @@ RELAY_GO=$(printf '<relay from="coordinator" session="session_DUMMY" current-tim
 { mk_user "ログを追記して";  mk_read "$WORKLOG"; }      > "$TR/rr-logread.jsonl"
 { mk_user "ログを追記して";  mk_read "$ALT_WORKLOG"; }  > "$TR/rr-logalt.jsonl"
 
+# サブエージェントの中の hook 用。サブエージェント自身の記録は
+# <本体の記録から .jsonl を除いた名前>/subagents/agent-<agent_id>.jsonl に置く
+mkdir -p "$TR/sa-rr-main/subagents" "$TR/sa-rr-sub/subagents" \
+         "$TR/sa-cg-sub/subagents" "$TR/sa-cg-main/subagents" "$TR/sa-cg-nogo/subagents"
+# 本体は読んでいない。サブエージェントが TODO.md を読んだ
+{ mk_user "TODO を更新して"; mk_toolres; }              > "$TR/sa-rr-sub.jsonl"
+{ mk_user "TODO を更新して"; mk_read "$PROJ/TODO.md"; } > "$TR/sa-rr-sub/subagents/agent-sa1.jsonl"
+# 本体が TODO.md を読んだ。サブエージェントは読んでいない
+{ mk_user "TODO を更新して"; mk_read "$PROJ/TODO.md"; } > "$TR/sa-rr-main.jsonl"
+{ mk_user "TODO を更新して"; mk_toolres; }              > "$TR/sa-rr-main/subagents/agent-sa2.jsonl"
+# 本体の最後の入力に承認の文字列。手順書はサブエージェントだけが読んだ
+{ mk_user "$(printf 'リソースグループを作って\n[change-go: project-a]')"; mk_toolres; } > "$TR/sa-cg-sub.jsonl"
+{ mk_user "リソースグループを作って"; mk_read "$RUNBOOK"; } > "$TR/sa-cg-sub/subagents/agent-sc1.jsonl"
+# 本体の最後の入力に承認の文字列。手順書は本体だけが読んだ
+{ mk_user "$(printf 'リソースグループを作って\n[change-go: project-a]')"; mk_read "$RUNBOOK"; } > "$TR/sa-cg-main.jsonl"
+{ mk_user "リソースグループを作って"; mk_toolres; } > "$TR/sa-cg-main/subagents/agent-sc2.jsonl"
+# 承認の文字列なし。手順書はサブエージェントが読んだ
+{ mk_user "リソースグループを作って"; mk_toolres; } > "$TR/sa-cg-nogo.jsonl"
+{ mk_user "リソースグループを作って"; mk_read "$RUNBOOK"; } > "$TR/sa-cg-nogo/subagents/agent-sc3.jsonl"
+
 # require-reading のツールの規則用 (下書きのツールの前に、同じスレッドの読み取りを求める)
 TL_READ='{"room_id":"R1","thread_id":"111.222"}'
 TL_OTHER='{"room_id":"R1","thread_id":"999.000"}'
@@ -606,6 +626,17 @@ write_input "$TR/rr-noread.jsonl"  "$PROJ"   "$WORKLOG"        "# ログ" > "$IN
 edit_input  "$TR/rr-noread.jsonl"  "$PROJ"   "$WORKLOG"        "b"      > "$IN/rr-logedit.json"
 edit_input  "$TR/rr-logread.jsonl" "$PROJ"   "$WORKLOG"        "b"      > "$IN/rr-logedit2.json"
 edit_input  "$TR/rr-logalt.jsonl"  "$PROJ"   "$WORKLOG"        "b"      > "$IN/rr-logalt.json"
+
+# サブエージェントの中の hook (入力に agent_id と agent_type を足す)
+with_agent() { jq -c --arg a "$1" '. + {agent_id:$a, agent_type:"general-purpose"}'; }
+edit_input "$TR/sa-rr-sub.jsonl"  "$PROJ" "$PROJ/TODO.md" "b" | with_agent "sa1"        > "$IN/sa-rr-sub.json"
+edit_input "$TR/sa-rr-main.jsonl" "$PROJ" "$PROJ/TODO.md" "b" | with_agent "sa2"        > "$IN/sa-rr-main.json"
+edit_input "$TR/sa-rr-main.jsonl" "$PROJ" "$PROJ/TODO.md" "b"                           > "$IN/sa-rr-noagent.json"
+edit_input "$TR/sa-rr-main.jsonl" "$PROJ" "$PROJ/TODO.md" "b" | with_agent "sa-missing" > "$IN/sa-rr-nofile.json"
+edit_input "$TR/sa-rr-sub.jsonl"  "$PROJ" "$PROJ/TODO.md" "b" | with_agent "agent-sa1"  > "$IN/sa-rr-prefix.json"
+bash_input "$TR/sa-cg-sub.jsonl"  "$PROJ" "$cg_change" | with_agent "sc1" > "$IN/sa-cg-sub.json"
+bash_input "$TR/sa-cg-main.jsonl" "$PROJ" "$cg_change" | with_agent "sc2" > "$IN/sa-cg-main.json"
+bash_input "$TR/sa-cg-nogo.jsonl" "$PROJ" "$cg_change" | with_agent "sc3" > "$IN/sa-cg-nogo.json"
 
 # require-reading のツールの規則
 TL_DRAFT='{"room_id":"R1","reply_to":"111.222","message":"本文"}'
@@ -896,6 +927,17 @@ run "RT-14 requiredTool の無い規則を飛ばす -> block" 2 require-reading.
 run "RT-15 requiredTool が正規表現として読めない -> block" 2 require-reading.sh "$TLBADRE" "$IN/tl-read.json" "正規表現として読めません"
 run "RT-16 transcript が無い -> block" 2 require-reading.sh "$CFG" "$IN/tl-notr.json" "transcript が取得できない"
 run "RT-17 読み取りの後に完了通知の行 -> pass" 0 require-reading.sh "$CFG" "$IN/tl-notify.json"
+
+echo
+echo "== サブエージェントの中の hook (Read をサブエージェント自身の記録で探す) =="
+run "SA-1 サブエージェントが読んだ。本体は読んでいない -> pass" 0 require-reading.sh "$CFG" "$IN/sa-rr-sub.json"
+run "SA-2 本体が読んだ。サブエージェントは読んでいない -> block" 2 require-reading.sh "$CFG" "$IN/sa-rr-main.json" "必読資料の先読みの原則"
+run "SA-3 本体の中 (agent_id なし)。本体が読んだ -> pass" 0 require-reading.sh "$CFG" "$IN/sa-rr-noagent.json"
+run "SA-4 サブエージェントの記録が無い。本体が読んだ -> pass" 0 require-reading.sh "$CFG" "$IN/sa-rr-nofile.json"
+run "SA-5 agent_id が agent- で始まる。サブエージェントが読んだ -> pass" 0 require-reading.sh "$CFG" "$IN/sa-rr-prefix.json"
+run "SA-6 サブエージェントが手順書を読んだ + 本体に承認 -> pass" 0 cloud-change-check.sh "$CFG" "$IN/sa-cg-sub.json"
+run "SA-7 本体だけが手順書を読んだ + 本体に承認 -> block" 2 cloud-change-check.sh "$CFG" "$IN/sa-cg-main.json" "直近で手順書"
+run "SA-8 サブエージェントが手順書を読んだ + 承認なし -> block" 2 cloud-change-check.sh "$CFG" "$IN/sa-cg-nogo.json" "[change-go: project-a]"
 
 echo
 echo "== tool-result-check =="
