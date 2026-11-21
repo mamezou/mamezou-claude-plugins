@@ -110,7 +110,7 @@ fontFamily=IPAPGothic;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor
 ## Azure公式アイコンに基づく作図ルール
 
 - 作成時点で公開されているAzure architecture icons、またはDraw.io内蔵のAzureアイコンセットを使用する。
-- 図中のAzure公式アイコンは64×64を標準サイズとし、同じ階層では表示サイズをそろえる。
+- 図中のAzure公式アイコンは64×64を標準サイズとし、同じ階層のアイコンは、サイズ・背景・ラベルの位置(アイコンの下)・フォント・ラベルの言語をそろえる。
 - 境界の入れ子は、Microsoft Entraテナント、サブスクリプション、仮想ネットワーク(VNet)、サブネットの順とする。構成上存在する範囲だけを記載する。
 - リソースグループの枠は、読者の判断に必要な場合だけ記載する。
 - App ServiceやStorage Accountなどのリージョンサービスは仮想ネットワークの中に配置しない。閉域アクセスを示す場合は、サブネット内にPrivate Endpointを配置し、対象のリージョンサービスへ線で結ぶ。
