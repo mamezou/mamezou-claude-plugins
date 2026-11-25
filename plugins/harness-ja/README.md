@@ -21,11 +21,11 @@
 
 | 種別 | 内容 |
 |---|---|
-| hooks(7本) | クラウド変更コマンドの停止、設定・規則ファイルの保護、応答の文体検査、送付文面の事前検査、必読資料の先読みの強制、ツールの結果の検査、インライン PowerShell の禁止 |
+| hooks(8本) | クラウド変更コマンドの停止、設定・規則ファイルの保護、応答の文体検査、送付文面の事前検査、必読資料の先読みの強制、ツールの結果の検査、インライン PowerShell の禁止、クラウドのセッションでのプロジェクトの hook の中継(任意) |
 | Output Style | `Concise JA`。簡潔な日本語応答と、返信文体の規則 |
 | rules テンプレート(3本) | 着手と承認、文章の書き方、サブエージェントへの委任 |
 | Skills(2本) | `/harness-ja:harness-init`(初期設定)、`/harness-ja:harness-review`(検知ログのレビュー) |
-| tests | hook 7本の合成入力テスト。`bash tests/run.sh` |
+| tests | hook 8本の合成入力テスト。`bash tests/run.sh` |
 
 ## 用語
 
@@ -81,14 +81,15 @@
 | `require-reading.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 必読資料を直近で Read せずに対象ファイルを編集(サブエージェントの中では、Read をサブエージェント自身の記録で探す)。対応する読み取りのツールを呼ばずに、外部へ書き込むツールを呼び出し | `[hook-bypass: resource-reading]` |
 | `tool-result-check.sh` | PostToolUse(MCP のツール) | 止めない。ツールの結果に成立の印が無いとき、作成・更新が成立していないことを Claude へ知らせる | なし |
 | `no-inline-powershell.sh` | Stop | 5行以上の PowerShell をファイル化せずにコードブロックで提示(既定は無効)。`pasteRun` を有効にすると、貼り付けて実行する形に合わないスクリプトと、`-File` での実行を書いた文書・応答も止める | なし |
+| `project-hooks-relay.sh` | PreToolUse・PostToolUse・UserPromptSubmit・Stop(すべてのツール) | 止める条件は持たない。クラウドのセッション(`CLAUDE_CODE_REMOTE` あり)に限り、cwd とその1つ下の階層にあるプロジェクトの `.claude/settings.json` の hook を、呼ばれた時点で流す。中継した hook の終了コード2はそのまま返す。`projectHooksRelay.enabled` が `true` のときだけ動く(既定は無効) | なし |
 
-0.4.20 から、サブエージェントの中で発火した `cloud-change-check.sh` と `require-reading.sh` は、
+0.5.1 から、サブエージェントの中で発火した `cloud-change-check.sh` と `require-reading.sh` は、
 ファイルの Read を、サブエージェント自身の記録(`<本体の記録から .jsonl を除いた名前>/subagents/agent-<agent_id>.jsonl`)
 で探します。本体が読んだだけでは、サブエージェントの編集とコマンドを通しません。サブエージェント自身の
 記録が見つからないときは、本体の記録で探します。承認の文字列、バイパスの文字列、外部へ書き込むツールの
 前の読み取り(`requireReading.toolRules[]`)は、今までどおり本体の記録で探します。
 
-設定ファイルが見つからない場合、7本とも何もしません。設定ファイルはあるが JSON として
+設定ファイルが見つからない場合、8本とも何もしません。設定ファイルはあるが JSON として
 読めない場合、PreToolUse の4本は「設定ファイルが読めません: <パス>」を出してツールを止めます。
 Stop の2本と PostToolUse の1本は同じ文を出しますが、応答とツールは止めません。
 
@@ -154,6 +155,26 @@ Stop の2本と PostToolUse の1本は同じ文を出しますが、応答とツ
 `<時刻>\t[session:<ID>] [input:<UUID>] <検知内容>` です。タグの無い旧形式の行は集計に
 入りません。
 
+## クラウドのセッションでのプロジェクトの hook の中継
+
+Claude Code は hook の設定をセッションの起動時に読みます。クラウドのセッションのうち、起動
+フォルダーが repo の親で、repo の取得が起動の後になるものでは、repo の `.claude/settings.json`
+の hook が読み込まれません。プラグインの hook は起動時に読まれるため、`project-hooks-relay.sh` が
+呼ばれた時点で repo の hook を探して流します。
+
+- 動く条件: 環境変数 `CLAUDE_CODE_REMOTE` が空でなく、hook 入力の cwd かその1つ下の階層に
+  `.claude/settings.json` と、`projectHooksRelay.enabled` が `true` の `.claude/harness.json` がある
+- 流すもの: `hooks.<イベント>` のうち matcher がツール名に合うもの(空・`*` はすべて、それ以外は
+  正規表現の全体一致)。`CLAUDE_PROJECT_DIR` をその repo にし、hook 入力を標準入力に渡す
+- SessionStart: 起動時には repo が無いため、そのセッションの最初の UserPromptSubmit で1回流す
+  (matcher は `startup` と照らす)
+- 終了コード: 中継した hook のどれかが2を返したら、その標準エラーを出して2で終わる。2以外の
+  失敗は標準エラーを出して続ける。標準出力はつなげて出す
+- 同じ実体の `settings.json`(シンボリックリンクを含む)は1回だけ流す
+- ローカルのセッションでは何もしません。プロジェクトの設定が起動時に読まれるためです。
+  クラウドでも起動時に repo があって設定が読まれた場合は、同じ hook が2回流れます。
+  hook が同じ入力に同じ結果を返すなら、止める・通すの結果は変わりません
+
 ## 設定ファイル `.claude/harness.json`
 
 `examples/harness.json` が全キーの例です。使わない機能は `"enabled": false` で止めます。
@@ -177,6 +198,7 @@ Stop の2本と PostToolUse の1本は同じ文を出しますが、応答とツ
 | `noInlinePowershell.enabled` | 既定は `false`。使う場合だけ `true` にする |
 | `noInlinePowershell.cwdMatch` | 指定すると、cwd がそのディレクトリ名を含むときだけインライン提示を検査する(案件を限る用途) |
 | `noInlinePowershell.pasteRun` | 貼り付けて実行する形の検査。`enabled`(既定 `false`)、`scriptGlobs` と `docGlobs`(リポジトリ直下からの bash のパターン)、`hint`。cwdMatch によらず、依頼者の最後の入力より後に変えたファイルと、応答の本文を見る。スクリプトは、全体が `& { }` で包まれ、`param(`・`-ExecutionPolicy … -File`・ブロックの中の空行がないこと。文書と応答は `-ExecutionPolicy … -File` がないこと。差し戻し後の再生成ではファイルを見ない |
+| `projectHooksRelay.enabled` | 既定は `false`。クラウドのセッションで、プロジェクトの `.claude/settings.json` の hook が読み込まれないときに `true` にする(下の「クラウドのセッションでのプロジェクトの hook の中継」) |
 
 hook は設定ファイルを `HARNESS_CONFIG` 環境変数、`$CLAUDE_PROJECT_DIR/.claude/harness.json`、
 hook 実行時の cwd から上へ辿った `.claude/harness.json` の順で探します。
@@ -319,7 +341,7 @@ Skill は集計を読み、`harness.json`・hook・規則の変更前後を【�
 bash tests/run.sh
 ```
 
-hook 7本に合成の会話履歴 JSONL と入力 JSON を与え、差し戻し(終了コード2)と通過
+hook 8本に合成の会話履歴 JSONL と入力 JSON を与え、差し戻し(終了コード2)と通過
 (終了コード0)、承認の文字列、バイパスの文字列、設定なし、設定の壊れ、差し戻し回数の
 上限、検知ログの UTF-8 を確認します。hook や辞書を変えたら実行してください。
 

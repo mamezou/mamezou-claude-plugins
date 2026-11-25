@@ -3,6 +3,7 @@
 # tests/fixtures/precheck-sample.md を precheck.sh に通し、節ごとの出力を期待値と比べる。
 # tests/fixtures/transcripts/ の会話の記録を一時ディレクトリへ写し、session-recall.sh と
 # code-origin.sh の出力を期待値と比べる。
+# skills/doc-structure/samples/ の見本を outline-check.py に通し、当たりの件数を期待値と比べる。
 # 末尾に PASS / FAIL 件数を出し、FAIL が 1 件でもあれば exit 1。
 #
 # 使い方: bash tests/run.sh   (リポジトリ内のどのディレクトリからでも実行できる)
@@ -215,6 +216,19 @@ store="$home/projects/$(sed 's/[^A-Za-z0-9]/-/g' <<< "$proj")"
 mkdir -p "$store"
 cp "$transcript" "$store/sess-c1.jsonl"
 expect "CO-16 記録を省くと今のディレクトリの最新の記録を使う" has "$store/sess-c1.jsonl" "$(cd "$proj" && origin "$draft")"
+
+# --- outline-check.py ---
+OUTLINE="$ROOT/skills/doc-structure/scripts/outline-check.py"
+SAMPLES="$ROOT/skills/doc-structure/samples"
+out=$(python3 "$OUTLINE" "$SAMPLES/decision-before.md" --type decision 2>&1)
+expect_rc "OC-1 当たりがあっても 0 で終わる" 0 $?
+expect "OC-2 直す前の見本は当たりが 11 件" has "当たり: 11件" "$out"
+out=$(python3 "$OUTLINE" "$SAMPLES/decision-after.md" --type decision 2>&1)
+expect "OC-3 直した後の見本は当たりが 0 件" has "当たり: 0件" "$out"
+python3 "$OUTLINE" "$work/no-such-file.md" --type decision > /dev/null 2>&1
+expect_rc "OC-4 資料がなくても 0 で終わる" 0 $?
+python3 "$OUTLINE" "$SAMPLES/decision-after.md" --type unknown > /dev/null 2>&1
+expect_rc "OC-5 未定義の種類でも 0 で終わる" 0 $?
 
 echo
 echo "PASS ${pass} / FAIL ${fail}"
