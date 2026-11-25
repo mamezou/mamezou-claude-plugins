@@ -1177,6 +1177,12 @@ for _ in 1 2 3; do printf '2026-01-01T00:00:00+0000\t[session:s-notify] [input:u
 check "RQ-77 完了通知で始まった応答は通知の uuid で数える -> block" 2 "$(rq_run "$REGEN_CFG" "$IN/rq-notify-regen.json")"
 check "RQ-78 RQ-77 の記録の集計キー" 1 "$(grep -c '\[input:u-n1\]' "$REGEN_LOG" 2>/dev/null || echo 0)"
 
+if bash "$SCRIPT_DIR/project-hooks-relay.test.sh" >/dev/null 2>&1; then
+  check "RELAY プロジェクトの hook の中継 (tests/project-hooks-relay.test.sh)" 0 0
+else
+  check "RELAY プロジェクトの hook の中継 (tests/project-hooks-relay.test.sh)" 0 1
+fi
+
 echo
 echo "PASS ${pass} / FAIL ${fail}"
 if [[ "$fail" -ne 0 ]]; then

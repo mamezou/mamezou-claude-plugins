@@ -1,5 +1,5 @@
 {
-  "description": "harness-ja: 応答の文体検査 (Stop)、クラウド変更コマンドの停止と設定・規則ファイルの保護 (PreToolUse Bash)、送付文面の事前検査・必読資料の先読みの強制・設定・規則ファイルの保護 (PreToolUse Write|Edit|MultiEdit)、外部へ書き込むツールの前の読み取りの強制と、メールやチャットの下書きの本文の事前検査 (PreToolUse mcp__.*)、ツールの結果の検査 (PostToolUse mcp__.*)",
+  "description": "harness-ja: 応答の文体検査 (Stop)、クラウド変更コマンドの停止と設定・規則ファイルの保護 (PreToolUse Bash)、送付文面の事前検査・必読資料の先読みの強制・設定・規則ファイルの保護 (PreToolUse Write|Edit|MultiEdit)、外部へ書き込むツールの前の読み取りの強制と、メールやチャットの下書きの本文の事前検査 (PreToolUse mcp__.*)、ツールの結果の検査 (PostToolUse mcp__.*)、クラウドのセッションでのプロジェクトの hook の中継 (PreToolUse・PostToolUse・UserPromptSubmit・Stop。任意)",
   "hooks": {
     "PreToolUse": [
       {
@@ -44,6 +44,15 @@
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/draft-precheck.sh\""
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/project-hooks-relay.sh\" PreToolUse"
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -53,6 +62,15 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/tool-result-check.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/project-hooks-relay.sh\" PostToolUse"
           }
         ]
       }
@@ -67,6 +85,20 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/response-quality.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/project-hooks-relay.sh\" Stop"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/project-hooks-relay.sh\" UserPromptSubmit"
           }
         ]
       }
