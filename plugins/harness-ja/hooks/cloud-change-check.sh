@@ -21,7 +21,7 @@
 #   cdk  deploy / destroy / bootstrap / watch (synth / diff は対象外)
 #
 # 通過条件 (両方満たす、またはバイパスあり):
-#   (A) 直近 200 行の transcript で runbookPattern に一致するファイルの Read がある
+#   (A) 直近 200 行の transcript(サブエージェントの中では、サブエージェント自身の記録)で runbookPattern に一致するファイルの Read がある
 #       (Write / Edit / MultiEdit は数えない。書いただけでは読んだことにならない)
 #   (B) 依頼者の最後のテキスト入力に [change-go: <name>] がそれだけの行としてある
 #
@@ -273,7 +273,7 @@ if harness_has_token "$last_user_msg" "$go_token"; then
 fi
 
 # 9) 手順書の Read 判定 (案件別パターン。Write / Edit / MultiEdit は数えない)
-runbook_access=$(tail -200 "$transcript" \
+runbook_access=$(tail -200 "$(harness_read_transcript "$input")" \
   | jq -rR -n '[inputs | fromjson? // empty] | .[]
       | select(.type=="assistant") | .message.content[]?
       | select(.type=="tool_use" and .name=="Read")
