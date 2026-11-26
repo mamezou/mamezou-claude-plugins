@@ -45,6 +45,9 @@
 #                    strictTargets[] は通さない (本文に日付を一切書かない決まりの資料に使う)
 #
 # 検査範囲: Write は全文、Edit/MultiEdit は追加・置換後の文字列のみ。
+#   話し言葉の語と日付の検査は、Edit/MultiEdit では置き換えた後の全文で場所を判定し、編集で増えた行だけを止める
+#   (前の全文が読めないときは、追加・置換後の文字列だけで判定する)。
+#   colloquial と dates の設定の型か正規表現が誤っているときは、検査を通さずに止める
 #
 # バイパス:
 #   - 依頼者の最後のテキスト入力に [hook-bypass: draft-precheck] がそれだけの行としてある
@@ -58,7 +61,7 @@
 #   draftPrecheck.bannedTerms[]     禁止語 (既定値は持たない)
 #   draftPrecheck.colloquial.excludeTerms[] 表から外す行。tsv の 1 列目の語 (例: "足りる") を書く
 #   draftPrecheck.colloquial.extraTerms[]   表に追加する語。{ "pattern": grep -P の正規表現, "use": 使う語,
-#                                           "term": 表示する語 (省くと pattern), "except": 除く言い回しの正規表現,
+#                                           "term": 表示する語 (省くと pattern), "except": 除く言い回しの正規表現 (Perl 互換),
 #                                           "targets": [case パターン] (書くと、一致するファイルだけで見る) }
 #   draftPrecheck.dates.targets[]           日付を見るファイルの case パターン (いつの値かを示す日付は通す)
 #   draftPrecheck.dates.strictTargets[]     日付を見るファイルの case パターン (本文の日付をすべて止める)
@@ -307,8 +310,35 @@ path_in() { # path_in <case パターンを 1 行ずつ>: 編集対象のパス�
   done <<< "$1"
   return 1
 }
-if cfg_flag '.draftPrecheck.checks.colloquialTerms' 'false'; then
+doc_config_stop() { # doc_config_stop <colloquial|dates>: 設定の誤りがあれば、理由を出して止める
+  local errs
+  errs=$(harness_doc_config_errors "$1")
+  [[ -n "$errs" ]] || return 0
+  cat >&2 <<MSG
+[送付文面の事前検査: 設定の誤り]
+.claude/harness.json の draftPrecheck の設定を読めないため、検査できません:
+${errs}
+設定を直してから再試行してください。
+MSG
+  exit 2
+}
+# Edit / MultiEdit は、置き換えた後の全文を作る (語と日付の検査が、引用・コードブロック・表・記録の節の
+# 場所を全文で判定し、編集で増えた行だけを止めるため)。前の全文が読めないときと Write は、渡された文だけで判定する
+edit_after=""
+edit_before_file=""
+if cfg_flag '.draftPrecheck.checks.colloquialTerms' 'false' || cfg_flag '.draftPrecheck.checks.dates' 'false'; then
   source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/doc-text.sh"
+  if [[ "$tool_name" == "Edit" || "$tool_name" == "MultiEdit" ]] && [[ -f "$target_file_path" ]]; then
+    # 置き換えが 1 つも当たらないとき (前の全文と同じ) は、渡された文だけで判定する
+    if applied=$(printf '%s' "$input" | harness_apply_edit "$target_file_path" 2>/dev/null) \
+       && [[ "$applied" != "$(cat "$target_file_path")" ]]; then
+      edit_after="$applied"
+      edit_before_file="$target_file_path"
+    fi
+  fi
+fi
+if cfg_flag '.draftPrecheck.checks.colloquialTerms' 'false'; then
+  doc_config_stop colloquial
   HARNESS_EXCLUDE_TERMS=$(cfg_list '.draftPrecheck.colloquial.excludeTerms[]? | strings')
   HARNESS_EXTRA_TERMS=""
   while IFS= read -r row; do
@@ -316,10 +346,20 @@ if cfg_flag '.draftPrecheck.checks.colloquialTerms' 'false'; then
     row_targets=$(printf '%s' "$row" | jq -r '(.targets // [])[] | strings')
     if [[ -n "$row_targets" ]] && ! path_in "$row_targets"; then continue; fi
     HARNESS_EXTRA_TERMS+=$(printf '%s' "$row" | jq -r '[(.term // .pattern), .pattern, (.use // "書き言葉にする"), (.except // "")] | join("\t")')$'\n'
-  done < <(cfg_list '.draftPrecheck.colloquial.extraTerms[]?
-    | select(type == "object" and (.pattern | type) == "string" and (.pattern | length) > 0) | @json')
+  done < <(cfg_list '.draftPrecheck.colloquial.extraTerms[]? | @json')
   export HARNESS_EXCLUDE_TERMS HARNESS_EXTRA_TERMS
-  matched=$(printf '%s\n' "$content" | harness_colloquial_hits)
+  if [[ -n "$edit_before_file" ]]; then
+    # 置き換えた後の全文で当たりを出し、編集で増えた行の当たりだけを残す
+    new_lines=$(printf '%s\n' "$edit_after" | harness_new_lines "$edit_before_file")
+    matched=""
+    if [[ -n "$new_lines" ]]; then
+      matched=$(printf '%s\n' "$edit_after" | HARNESS_HITS_MAX=1000000 harness_colloquial_hits \
+        | awk -v ls="$new_lines" 'BEGIN { n = split(ls, a, "\n"); for (i = 1; i <= n; i++) keep[a[i]] = 1 }
+            { k = $0; sub(/行:.*/, "", k) } (k in keep) && ++c <= 8')
+    fi
+  else
+    matched=$(printf '%s\n' "$content" | harness_colloquial_hits)
+  fi
   if [[ -n "$matched" ]]; then
     hits="${hits}  - 話し言葉の語検出 (書き言葉にする。引用は「」に入れる。行を外すには colloquial.excludeTerms):"$'\n'"${matched}"$'\n'
   fi
@@ -327,31 +367,28 @@ fi
 
 # 9) 本文の確認日・作業経緯の日付 (既定は無効。dates.targets[] / dates.strictTargets[] に一致するファイルだけ)
 if cfg_flag '.draftPrecheck.checks.dates' 'false' && [[ "$tool_name" != mcp__* ]]; then
+  doc_config_stop dates
   date_mode=""
   if path_in "$(cfg_list '.draftPrecheck.dates.strictTargets[]?')"; then date_mode=strict
   elif path_in "$(cfg_list '.draftPrecheck.dates.targets[]?')"; then date_mode=asof; fi
   if [[ -n "$date_mode" ]]; then
-    source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/doc-text.sh"
     date_rec=$(cfg '.draftPrecheck.dates.recordHeadings' '')
-    # Edit / MultiEdit は、置き換えた後の全文で場所 (表・記録の節) を判定し、編集の前から当たっていた行を除く。
-    # 前の全文が読めないときと Write は、渡された文だけで判定する
-    date_after="$content"
-    date_before=""
-    if [[ "$tool_name" != "Write" && -f "$target_file_path" ]]; then
-      if applied=$(printf '%s' "$input" | harness_apply_edit "$target_file_path" 2>/dev/null); then
-        date_after="$applied"
-        date_before=$(cat "$target_file_path")
+    if [[ -n "$edit_before_file" ]]; then
+      # 当たった行を、編集の前の当たりと本文で比べ、増えた行だけを残す (同じ本文の行は回数で数える)
+      after_hits=$(printf '%s\n' "$edit_after" | harness_date_hits "$date_mode" "$date_rec")
+      if [[ -n "$after_hits" ]]; then
+        before_hits_file=$(mktemp)
+        harness_date_hits "$date_mode" "$date_rec" < "$edit_before_file" > "$before_hits_file"
+        keep_lines=$(printf '%s\n' "$after_hits" | harness_new_lines "$before_hits_file")
+        rm -f "$before_hits_file"
+        after_hits=$(printf '%s\n' "$after_hits" | awk -v ls="$keep_lines" \
+          'BEGIN { n = split(ls, a, "\n"); for (i = 1; i <= n; i++) keep[a[i]] = 1 } NR in keep')
       fi
-    fi
-    after_hits=$(printf '%s\n' "$date_after" | harness_date_hits "$date_mode" "$date_rec")
-    if [[ -n "$after_hits" && -n "$date_before" ]]; then
-      before_hits=$(printf '%s\n' "$date_before" | harness_date_hits "$date_mode" "$date_rec")
-      if [[ -n "$before_hits" ]]; then
-        after_hits=$(printf '%s\n' "$after_hits" | grep -vxF -f <(printf '%s\n' "$before_hits") || true)
-      fi
+    else
+      after_hits=$(printf '%s\n' "$content" | harness_date_hits "$date_mode" "$date_rec")
     fi
     if [[ -n "$after_hits" ]]; then
-      matched=$(printf '%s\n' "$after_hits" | head -5)
+      matched=$(printf '%s\n' "$after_hits" | awk 'NR <= 5')
       hits="${hits}  - 本文の日付検出 (本文に確認日・作業経緯を書かない。書くなら記録の節に分ける):"$'\n'"${matched}"$'\n'
     fi
   fi

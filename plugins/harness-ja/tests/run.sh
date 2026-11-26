@@ -1364,6 +1364,78 @@ run "DD-12 Edit で本文に日付の文を追加する -> block" 2 draft-preche
 run "DD-13 Edit で記録の節に日付を追記する -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-e-rec.json"
 run "DD-14 Edit の前からある日付の行は止めない -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-e-old.json"
 run "DD-15 MCP ツールの本文の日付は見ない -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-mcp-date.json"
+# --- レビューの指摘から追加した試験 (件数の多い文、設定の誤り、活用の形、Edit の前後、表と見出し) ---
+cfg_with() { jq "$2" "$DPCOL" > "$PROJ/.claude/harness-$1.json"; printf '%s' "$PROJ/.claude/harness-$1.json"; }
+dc_multi() { # dc_multi <名前> <ファイル> <edits の JSON>
+  jq -cn --arg tr "$TR/rr-noread.jsonl" --arg cwd "$PROJ" --arg p "$2" --argjson e "$3" \
+    '{tool_name:"MultiEdit",tool_input:{file_path:$p,edits:$e},transcript_path:$tr,cwd:$cwd}' > "$IN/dc-$1.json"
+}
+dc_in many     "$DRAFT"  "$(awk 'BEGIN{for(i=0;i<3000;i++) print "先方に聞く。"}')"
+dc_in many-d   "$DESIGN" "$(awk 'BEGIN{for(i=0;i<3000;i++) print "2026-08-16に確認した。"}')"
+dc_in stems    "$DRAFT"  "素足しか見えません。遠足した日です。音が聞こえる状態です。"
+dc_in tara     "$DRAFT"  "枠が足らない場合があります。"
+dc_in hama     "$DRAFT"  "この手順ではハマらないようにします。"
+dc_in kakukoto "$DRAFT"  "確かめることを次に示します。"
+dc_in kakumasu "$DRAFT"  "動作を確かめます。"
+dc_in url      "$DRAFT"  "手順は https://example.com/guide。先方に聞く。"
+dc_in tilde    "$DRAFT"  "$(printf '実行例を示します。\n~~~\n先方に聞く\n~~~\n')"
+dc_in extra-la "$DRAFT"  "めっちゃ速くなりました。A/B の比較です。"
+dc_in d-head   "$DESIGN" "$(printf '# 2026-08-16に確認\n\n方式Aを採用する。\n')"
+dc_in d-nest   "$DESIGN" "$(printf '# 設計\n\n## 変更履歴\n\n### 作業記録\n\n- 2026-08-01 着手\n\n### 設計の変更\n\n- 2026-08-16 方式Aに変更\n')"
+dc_in d-tbl2   "$DESIGN" "$(printf '項目 | 開始日\n--- | ---\n移行 | 2026-08-16\n')"
+dc_in d-title  "$DESIGN" "<title>2026-08-16の確認</title>"
+dc_in d-asofsp "$DESIGN" "2026年8月16日 時点の単価を使用する。"
+dc_in d-url    "$DESIGN" "手順は https://example.com/guide。2026-08-16に確認した。"
+CFG_BADT=$(cfg_with badt '.draftPrecheck.colloquial.extraTerms=[{"pattern":"めっちゃ","use":{},"targets":1}]')
+CFG_BADA=$(cfg_with bada '.draftPrecheck.colloquial.excludeTerms="足りる"')
+CFG_BADR=$(cfg_with badr '.draftPrecheck.colloquial.extraTerms=[{"pattern":"(","use":"x"}]')
+CFG_BADH=$(cfg_with badh '.draftPrecheck.dates.recordHeadings="("')
+CFG_BADD=$(cfg_with badd '.draftPrecheck.dates.targets="*/docs/*.md"')
+CFG_BADB=$(cfg_with badb '.draftPrecheck.bashWriteDirs="docs/drafts/"')
+CFG_LA=$(cfg_with la '.draftPrecheck.colloquial.extraTerms=[{"pattern":"めっちゃ","use":"非常に","except":"めっちゃ(?=速)"},{"pattern":"比較","use":"x","except":"A/B の比較"}]')
+CFG_T0=$(cfg_with t0 '.draftPrecheck.colloquial.extraTerms=[{"pattern":"めっちゃ","use":"非常に","targets":[]}]')
+CFG_XK=$(cfg_with xk '.draftPrecheck.colloquial.excludeTerms=["確かめます / 確かめられます"]')
+printf '# 設計\n\n表示は「未定」とする。\n\n```\nstatus: 未定\n```\n\n方式Aを採用する。\n\n2026-08-16に確認した。\n\n## 方式\n\n方式Bは採用しない。\n' > "$DESIGN"
+dc_edit e-quote  "$DESIGN" "表示は「未定」とする。" "表示は「足りる」とする。"
+dc_edit e-code   "$DESIGN" "status: 未定" "status: 足りる"
+dc_edit e-word   "$DESIGN" "方式Aを採用する。" "方式Aを採用する。枠は足りる。"
+dc_edit e-same   "$DESIGN" "方式Bは採用しない。" "$(printf '方式Bは採用しない。\n\n2026-08-16に確認した。')"
+dc_multi m-date  "$DESIGN" '[{"old_string":"方式Aを採用する。","new_string":"方式Cを採用する。"},{"old_string":"方式Bは採用しない。","new_string":"2026-08-20に方式Bを外した。"}]'
+dc_multi m-ok    "$DESIGN" '[{"old_string":"方式Aを採用する。","new_string":"方式Cを採用する。"},{"old_string":"未定","new_string":"確定","replace_all":true}]'
+run "DC-16 当たりが 3 千行ある文 -> block (141 で終わらない)" 2 draft-precheck.sh "$DPCOL" "$IN/dc-many.json" "話し言葉の語検出"
+run "DC-17 extraTerms の型の誤り (targets が数、use がオブジェクト) -> block" 2 draft-precheck.sh "$CFG_BADT" "$IN/dc-tariru.json" "設定の誤り"
+run "DC-18 excludeTerms が配列でない -> block" 2 draft-precheck.sh "$CFG_BADA" "$IN/dc-tariru.json" "設定の誤り"
+run "DC-19 extraTerms の正規表現が読めない -> block" 2 draft-precheck.sh "$CFG_BADR" "$IN/dc-fusoku.json" "正規表現を読めません"
+run "DC-20 except の先読みと / を含む式 -> pass" 0 draft-precheck.sh "$CFG_LA" "$IN/dc-extra-la.json"
+run "DC-21 extraTerms の targets が空の配列 -> すべての対象で block" 2 draft-precheck.sh "$CFG_T0" "$IN/dc-extra.json" "非常に"
+run "DC-22 「素足しか」「遠足した」「聞こえる」は当たらない -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-stems.json"
+run "DC-23 「足らない」 -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-tara.json" "十分である"
+run "DC-24 「ハマらない」 -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-hama.json" "つまずいた"
+run "DC-25 「確かめること」は、その行の使う語を示す -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-kakukoto.json" "確認事項"
+run "DC-26 「確かめます」は、その行の使う語を示す -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-kakumasu.json" "確認します"
+run "DC-27 excludeTerms で「確かめます」の行を外す -> pass" 0 draft-precheck.sh "$CFG_XK" "$IN/dc-kakumasu.json"
+run "DC-28 「確かめます」の行を外しても、「確かめること」は止める -> block" 2 draft-precheck.sh "$CFG_XK" "$IN/dc-kakukoto.json" "確認事項"
+run "DC-29 URL の直後の「。」の後ろの文は見る -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-url.json" "確認する"
+run "DC-30 ~~~ のコードブロックの中は見ない -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-tilde.json"
+run "DC-31 Edit で、既にある「」の中だけを書き換える -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-e-quote.json"
+run "DC-32 Edit で、既にあるコードブロックの中だけを書き換える -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-e-code.json"
+run "DC-33 Edit で、本文に話し言葉の語を追加する -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-e-word.json" "十分である"
+rc_c=0; env -u CLAUDE_PROJECT_DIR LC_ALL=C HARNESS_CONFIG="$DPCOL" bash "$H/draft-precheck.sh" < "$IN/dc-monotari.json" >/dev/null 2>&1 || rc_c=$?
+rc_u=0; env -u CLAUDE_PROJECT_DIR LC_ALL=C.UTF-8 HARNESS_CONFIG="$DPCOL" bash "$H/draft-precheck.sh" < "$IN/dc-tariru.json" >/dev/null 2>&1 || rc_u=$?
+rc_c2=0; env -u CLAUDE_PROJECT_DIR LC_ALL=C HARNESS_CONFIG="$DPCOL" bash "$H/draft-precheck.sh" < "$IN/dc-tariru.json" >/dev/null 2>&1 || rc_c2=$?
+check "DC-34 外側のロケールが C でも UTF-8 でも、結果が同じ (通す文 0、止める文 2・2)" "0 2 2" "$rc_c $rc_u $rc_c2"
+run "DD-16 日付の行が 3 千行ある文 -> block (141 で終わらない)" 2 draft-precheck.sh "$DPCOL" "$IN/dc-many-d.json" "本文の日付検出"
+run "DD-17 記録の節でない見出しの日付 -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-d-head.json" "本文の日付検出"
+run "DD-18 記録の節の中の、深い見出しの下の日付 -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-d-nest.json"
+run "DD-19 先頭に | が無い表の日付 -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-d-tbl2.json"
+run "DD-20 <title> の行は表として扱わない -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-d-title.json" "本文の日付検出"
+run "DD-21 日付と「時点」の間に空白がある -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-d-asofsp.json"
+run "DD-22 URL の直後の「。」の後ろの日付は見る -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-d-url.json" "本文の日付検出"
+run "DD-23 Edit で、既にある日付の行と同じ行を追加する -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-e-same.json" "本文の日付検出"
+run "DD-24 MultiEdit で、本文に日付の文を追加する -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-m-date.json" "2026-08-20"
+run "DD-25 MultiEdit と replace_all で、日付を追加しない -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-m-ok.json"
+run "DD-26 recordHeadings の正規表現が読めない -> block" 2 draft-precheck.sh "$CFG_BADH" "$IN/dc-date.json" "正規表現を読めません"
+run "DD-27 dates.targets が配列でない -> block" 2 draft-precheck.sh "$CFG_BADD" "$IN/dc-date.json" "設定の誤り"
 rm -f "$DESIGN" "$STRICT"
 
 echo
@@ -1409,6 +1481,27 @@ run "DB-19 本文にパスと sed -i の文字があり、書く先は別 -> pas
 run "DB-20 バイパスの文字列だけの行で git mv -> pass" 0 draft-bash-write-check.sh "$DPCOL" "$IN/db-bypass.json"
 run "DB-21 設定ファイルなし -> pass" 0 draft-bash-write-check.sh "$NOCFG" "$IN/db-sed.json"
 run "DB-22 設定ファイルが壊れている -> block" 2 draft-bash-write-check.sh "$BROKEN" "$IN/db-sed.json" "設定ファイルが読めません"
+db_in sed-e    "sed -e s/a/b/ -i docs/drafts/a-draft.md"
+db_in sed-path "/bin/sed -i s/a/b/ docs/drafts/a-draft.md"
+db_in cp-t     "cp -t docs/drafts/ /tmp/a.md"
+db_in cp-opt   "cp /tmp/a.md docs/drafts/a-draft.md --verbose"
+db_in cp-opt-o "cp docs/drafts/a-draft.md /tmp/ -v"
+db_in py-x     "python3 -c \"open('docs/drafts/a-draft.md','x')\""
+db_in py-wname "python3 -c \"print(open('docs/drafts/work-draft.md').read())\""
+db_in tee-in   "tee /tmp/out < docs/drafts/a-draft.md"
+db_in tee      "echo x | tee docs/drafts/a-draft.md"
+db_in gitrs    "git restore --source=HEAD~1 --worktree docs/drafts/a-draft.md"
+run "DB-23 sed の -i が、ほかの引数の後にある -> block" 2 draft-bash-write-check.sh "$DPCOL" "$IN/db-sed-e.json" "書き換えの停止"
+run "DB-24 実行ファイルのパス付きの sed -i -> block" 2 draft-bash-write-check.sh "$DPCOL" "$IN/db-sed-path.json" "書き換えの停止"
+run "DB-25 cp -t でコピー先が対象 -> block" 2 draft-bash-write-check.sh "$DPCOL" "$IN/db-cp-t.json" "コピー先"
+run "DB-26 cp のコピー先の後ろにオプション -> block" 2 draft-bash-write-check.sh "$DPCOL" "$IN/db-cp-opt.json" "コピー先"
+run "DB-27 cp のコピー元が対象で、後ろにオプション -> pass" 0 draft-bash-write-check.sh "$DPCOL" "$IN/db-cp-opt-o.json"
+run "DB-28 open の 'x' のモード -> block" 2 draft-bash-write-check.sh "$DPCOL" "$IN/db-py-x.json" "スクリプト"
+run "DB-29 名前が w で始まるファイルの読み取り -> pass" 0 draft-bash-write-check.sh "$DPCOL" "$IN/db-py-wname.json"
+run "DB-30 tee の入力のリダイレクトの元が対象 -> pass" 0 draft-bash-write-check.sh "$DPCOL" "$IN/db-tee-in.json"
+run "DB-31 tee の書く先が対象 -> block" 2 draft-bash-write-check.sh "$DPCOL" "$IN/db-tee.json" "tee"
+run "DB-32 git restore は対象外 (README の限界) -> pass" 0 draft-bash-write-check.sh "$DPCOL" "$IN/db-gitrs.json"
+run "DB-33 bashWriteDirs が配列でない -> block" 2 draft-bash-write-check.sh "$CFG_BADB" "$IN/db-sed.json" "設定の誤り"
 
 if bash "$SCRIPT_DIR/project-hooks-relay.test.sh" >/dev/null 2>&1; then
   check "RELAY プロジェクトの hook の中継 (tests/project-hooks-relay.test.sh)" 0 0
