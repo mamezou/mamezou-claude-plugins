@@ -1,7 +1,7 @@
 ---
 name: draft-precheck
 description: 先方・内部へ送る文面 (Slack / Teams / Notion / メール / PDF 元の Markdown 等) に、内部リポジトリ表現・組版記号・外部 AI 言及・指示語・括弧注記が混じっていないかを検査する。文面を Write したあと、送る前に呼び出す。grep の結果を1件ずつ判定し、docs-tools:doc-review による主語と述語の確認と、読者としての通し読みまでを1セットで行う。長文資料とブログ記事は節の構造・表のセル・手順の要素も見る。事実を述べる送付文面と、元の資料がある長文資料は、docs-tools:doc-review に元の資料と照らし合わせさせる。コードブロックを含む送付文面は、各行が会話の記録のどこに出ていたかを表示する。
-argument-hint: [--slides] <チェック対象ファイルパス (空白を含んでも引用符は不要)>
+argument-hint: "[--slides] <チェック対象ファイルパス (空白を含んでも引用符は不要)>"
 allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/precheck.sh *) Bash(${CLAUDE_SKILL_DIR}/scripts/code-origin.sh *)
 ---
 
@@ -14,7 +14,7 @@ allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/precheck.sh *) Bash(${CLAUDE_SKI
 
 報告の規則: 依頼者への報告には、直した項目とその内容だけを書く。検出の一覧・バイト数などの
 機械的な数値・通過の報告は書かない。直す対象がなければ、チェックには触れず本題だけ報告する。
-例外は、後の「コードの出どころ」で求める報告で、該当する行があれば必ず書く。
+例外は2つある。後の「コードの出どころ」で求める報告は、該当する行があれば必ず書く。`--slides` のときに要確認として出た当たりは、直す対象と分けて列挙し、判断を依頼者へ渡す。
 
 ## grep の実行
 
@@ -34,7 +34,7 @@ ${CLAUDE_SKILL_DIR}/scripts/precheck.sh '<対象のパス>'
 ```
 
 枠の文字列が `--slides ` で始まるときは、スライドの文を書き出したファイルの検査とする。
-`--slides` を外した残りの全体を対象のパスとし、次の形で実行する。判定は「スライドのとき」の節に従う。
+先頭の `--slides ` を区切りの空白ごと外し、残りの全体を対象のパスとする。残りのパスの中の空白はそのまま保つ。次の形で実行する。判定は「スライドのとき」の節に従う。
 
 ```bash
 ${CLAUDE_SKILL_DIR}/scripts/precheck.sh --slides '<対象のパス>'
