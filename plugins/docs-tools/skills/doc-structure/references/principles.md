@@ -55,7 +55,13 @@
 | 全体図は要約でなく枠組み | 全体図が、区分と全部の項目の名前を見せる枠組みか。数値と細部が全体図に入っていないか | 細部を部分のページへ移す。最初の全体を省かない | Universal Principles of Design の先行オーガナイザー、Whole-Part-Whole の解説 |
 | 今の部を目立たせる | 部分のページで、全体図のどこを読んでいるかが一目で分かるか | 全体図の縮小で今の区分を目立たせる | Mayer の合図の原則 |
 | 関係の無いものを消す | 題の裏付けにならないページと要素が無いか | 消すか、まとめるか、付録へ移す | Mayer の一貫性の原則、Umbrex |
+| 答えを後に回すときは先に約束する | 答えを後のページに回すとき、どこで答えるかを先に書いたか | 答えるページを先に示す | ラッコの記事 |
+| 題に項目の数を入れる、1枚の図と表は1つか2つ | 項目を並べるページの題に数があるか。1枚に図と表を詰め込んでいないか | 題に数を入れる。ページを分ける | ラッコの記事、立教大学 |
+| 見た目の決まり | 近接、読む順、並びの型、色の数、文字の大きさの差、全体の統一、飾りが無いこと | ページを作った後に直す | 名古屋大学、広島大学、NTT東日本、ラッコの記事 |
+| 出典を書く | 引用した数値、図、画面に出典があるか | 出典を足す | 立教大学 |
 | 説明を図の該当箇所の隣に置く | 画面の写真の説明が、写真の該当する箇所の隣にあるか。読み手が知らない語を、本題の前で説明したか | 説明と番号を写真の上の該当箇所に移す。語の説明を全体図の前へ移す | Mayer の空間的近接の原則と事前学習の原則 |
+
+日本語の記事のうち、次のものは採らない。目的ごとの章の型(報告は結論、根拠、詳細、まとめ。提案は課題、提案、効果、実行計画、依頼)は、資料の種類ごとに章を切る今の決まりと重なり、目的、前提、現状、対策、まとめの型を癖として直す今の決まりとも合わないため。目次の項目を3〜5個や5〜7個に限る決まりは、記事によって数が違い、7前後に限る決まりを採らなかった理由と同じため。1枚あたりの話す時間は、記事によって1分と2〜3分で違うため、数を決めず、話す時間に合わせる決まりにした。「スライドの題にこだわらない」は、題を結論の文にする決まりと逆になるため。フォントの名前の指定は、体裁の話で、利用側の決まりに従うため。
 
 Mayer の原則のうち、話す言葉を字より優先する原則と、図に話す言葉と同じ字幕を付けない原則は、配る資料に当たらないため採らない。読み手の速さで区切って見せる分割の原則は、配る資料では読み手が自分の速さで読み、部が区切りに当たるため、別の決まりにしない。
 
@@ -68,7 +74,7 @@ Mayer の原則のうち、話す言葉を字より優先する原則と、図�
 | MECE を全部の一覧に当てること | 出典のページが、MECE は余計な項目を除かないことと、重なりが要る場合があることを限界に挙げている。3番と11番で余計な項目を除き、冒頭の一覧を重なりの例外にした |
 | Diátaxis の tutorial | 学習用の教材で、案件の資料に当たるものが無い |
 | IMRAD、逆ピラミッド、Amazon の6ページの文書 | 論文、記事、社内の企画書の型で、4番と9番に同じ中身がある。Amazon は、読んだページに章ごとの中身が書かれていなかった |
-| Nielsen Norman Group の、太字と枠で目立たせる決まり | 体裁の話で、構成の検査の対象外 |
+| Nielsen Norman Group の、太字と枠で目立たせる決まり | 体裁の話で、構成の検査の対象外。スライドの見た目は、「スライドに足す決まり」の見た目の決まりで見る |
 
 ## 出典
 
@@ -101,3 +107,10 @@ Mayer の原則のうち、話す言葉を字より優先する原則と、図�
 - Mayer のマルチメディア教材の原則: https://www.unh.edu/teaching-learning-resource-hub/sites/default/files/media/2023-06/itow-research-based-principles-for-designing-multimedia-instruction-mayer.pdf
 - Martin Fowler のスライドが要るかの判断: https://martinfowler.com/articles/never-send-slides/need-presentation.html
 - Universal Principles of Design の先行オーガナイザー: https://oreilly.com/library/view/universal-principles-of/9781592535873/xhtml/ch03.html
+- 名古屋大学のプレゼンテーションのデザイン: https://web.cshe.nagoya-u.ac.jp/asg/designpresentation/DesignPresentation.pdf
+- NTT東日本の資料作りの5つの決まり: https://business.ntt-east.co.jp/column/bizdrive/presentation-materials-5-rules.html
+- 立教大学のスライドの作り方: https://www.rikkyo.ac.jp/about/activities/fd/cdshe/mknpps000001ri7e-att/MoP_4-2.pdf
+- マネーフォワードのアジェンダの作り方: https://biz.moneyforward.com/work-efficiency/basic/22052/
+- マネーフォワードの構成例: https://biz.moneyforward.com/work-efficiency/basic/23083/
+- ラッコの記事の伝わるスライドの見せ方: https://zenn.dev/rakko_inc/articles/purpose-driven-slide-visual
+- 広島大学の情報デザインを意識したスライド作成: https://home.riise.hiroshima-u.ac.jp/~ten/slide20190519.pdf
