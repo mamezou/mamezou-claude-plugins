@@ -58,9 +58,21 @@
       "typography": true,
       "externalAi": true,
       "honorific": true,
-      "longIdentifiers": true
+      "longIdentifiers": true,
+      "colloquialTerms": false,
+      "dates": false,
+      "bashWrites": false
     },
     "bannedTerms": [],
+    "colloquial": {
+      "excludeTerms": [],
+      "extraTerms": []
+    },
+    "dates": {
+      "targets": [],
+      "strictTargets": []
+    },
+    "bashWriteDirs": [],
     "honorific": {
       "name": "",
       "suffix": "様"

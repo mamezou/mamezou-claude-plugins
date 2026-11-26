@@ -21,11 +21,11 @@
 
 | 種別 | 内容 |
 |---|---|
-| hooks(9本) | クラウド変更コマンドの停止、設定・規則ファイルの保護、応答の文体検査、送付文面の事前検査、必読資料の先読みの強制、ツールの結果の検査、人に届く送信のツールの停止、インライン PowerShell の禁止、クラウドのセッションでのプロジェクトの hook の中継(任意) |
+| hooks(10本) | クラウド変更コマンドの停止、設定・規則ファイルの保護、応答の文体検査、送付文面の事前検査、必読資料の先読みの強制、ツールの結果の検査、人に届く送信のツールの停止、インライン PowerShell の禁止、クラウドのセッションでのプロジェクトの hook の中継(任意) |
 | Output Style | `Concise JA`。簡潔な日本語応答と、返信文体の規則 |
 | rules テンプレート(3本) | 着手と承認、文章の書き方、サブエージェントへの委任 |
 | Skills(3本) | `/harness-ja:harness-init`(初期設定)、`/harness-ja:harness-review`(検知ログのレビュー)、`/harness-ja:project-rules`(働き方の決まりを claude.ai のプロジェクトへ入れる) |
-| tests | hook 9本の合成入力テスト。`bash tests/run.sh` |
+| tests | hook 10本の合成入力テスト。`bash tests/run.sh` |
 
 ## 用語
 
@@ -77,7 +77,8 @@
 | `cloud-change-check.sh` | PreToolUse(Bash) | az / aws / cdk の変更系コマンドで、手順書の Read と `[change-go: <案件>]` のいずれかが無い。変更系を検知したのに設定のどの案件にも一致しないときも止める。サブエージェントの中では、手順書の Read をサブエージェント自身の記録で探す | `[hook-bypass: cloud-change]` |
 | `harness-change-check.sh` | PreToolUse(Bash / Write / Edit / MultiEdit) | `.claude/` 配下(hooks / rules / skills / settings 等)の書き換えで、`[harness-go]` が無い。例外として、プラグイン配下からの `cp`、`mkdir`、`.claude/harness.json` の新規作成は初期設定のため通す | なし(承認の文字列がバイパスを兼ねる) |
 | `response-quality.sh` | Stop | 応答本文に文体違反(既定は4種類。下の表を参照) | `[hook-bypass: response-quality]` |
-| `draft-precheck.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 送付文面に内部パス・ローカル拡張子・組版記号・外部 AI 言及・禁止語・長い識別子の繰り返し。MCP のツールは `draftPrecheck.toolRules[]` に書いたものだけ、`subject` と `body` などの文字列を検査する | `[hook-bypass: draft-precheck]` |
+| `draft-precheck.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 送付文面に内部パス・ローカル拡張子・組版記号・外部 AI 言及・禁止語・長い識別子の繰り返し。話し言葉の語と本文の日付は、設定で有効にしたプロジェクトでだけ見る。MCP のツールは `draftPrecheck.toolRules[]` に書いたものだけ、`subject` と `body` などの文字列を検査する | `[hook-bypass: draft-precheck]` |
+| `draft-bash-write-check.sh` | PreToolUse(Bash) | 送付文面・原稿のフォルダー(`draftPrecheck.bashWriteDirs[]`)のファイルを、`sed -i`、リダイレクト、スクリプト、`cp` / `mv` で書き換える(既定は無効。`draftPrecheck.checks.bashWrites` を `true` にしたプロジェクトでだけ動く)。読み取りと git の操作は止めない | `[hook-bypass: draft-precheck]` |
 | `require-reading.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 必読資料を直近で Read せずに対象ファイルを編集(サブエージェントの中では、Read をサブエージェント自身の記録で探す)。対応する読み取りのツールを呼ばずに、外部へ書き込むツールを呼び出し | `[hook-bypass: resource-reading]` |
 | `tool-result-check.sh` | PostToolUse(MCP のツール) | 止めない。ツールの結果に成立の印が無いとき、作成・更新が成立していないことを Claude へ知らせる | なし |
 | `send-gate.sh` | PreToolUse(MCP のツール) | チャットの送信・予約送信、メールの送信・返信・転送のツールを呼び出した。`sendGate.mode` が `"allow"` のプロジェクトでは止めない。設定に `sendGate` を書いていないプロジェクトでは止める | なし(送ってよいプロジェクトは、設定の `sendGate.mode` を `"allow"` にする) |
@@ -90,9 +91,121 @@
 記録が見つからないときは、本体の記録で探します。承認の文字列、バイパスの文字列、外部へ書き込むツールの
 前の読み取り(`requireReading.toolRules[]`)は、今までどおり本体の記録で探します。
 
-設定ファイルが見つからない場合、9本とも何もしません。設定ファイルはあるが JSON として
-読めない場合、PreToolUse の5本は「設定ファイルが読めません: <パス>」を出してツールを止めます。
+設定ファイルが見つからない場合、10本とも何もしません。設定ファイルはあるが JSON として
+読めない場合、PreToolUse の6本は「設定ファイルが読めません: <パス>」を出してツールを止めます。
 Stop の2本と PostToolUse の1本は同じ文を出しますが、応答とツールは止めません。
+
+## 話し言葉の語・日付・Bash での書き換えの検査(0.8.0)
+
+送付文面の事前検査に、既定は無効の検査を3つ追加しました。`draftPrecheck.checks` に `true` と
+書いたプロジェクトでだけ動きます。3つのキーを書いていないプロジェクトの hook の動作は、0.7.0 と同じです。
+Output Style「Concise JA」の「語の選び方」の表には、97行を追加しました(44行から141行。下の「語の表」)。
+
+```json
+"draftPrecheck": {
+  "checks": { "colloquialTerms": true, "dates": true, "bashWrites": true },
+  "colloquial": { "excludeTerms": [], "extraTerms": [] },
+  "dates": { "targets": ["*/docs/notion/*.md"], "strictTargets": [] },
+  "bashWriteDirs": ["docs/notion/"]
+}
+```
+
+3つの検査の対象は、次のとおりです。
+
+| 検査 | 対象 |
+|---|---|
+| `colloquialTerms` | `draftPrecheck.targets[]` に一致するファイルと、`draftPrecheck.toolRules[]` に一致する MCP のツールの本文 |
+| `dates` | `draftPrecheck.targets[]` に一致し、`dates.targets[]` か `dates.strictTargets[]` にも一致するファイル。MCP のツールの本文は見ない |
+| `bashWrites` | `bashWriteDirs[]` の文字列がある Bash のコマンド。`draftPrecheck.targets[]` と `toolRules[]` は見ない |
+
+`dates.targets[]` や `extraTerms[].targets` に書いたパスが `draftPrecheck.targets[]` に無いときは、
+そのパスでは何も検査しません。`bashWriteDirs[]` のフォルダーが `draftPrecheck.targets[]` に無いと、
+Bash での書き換えを止めた後の Write と Edit が検査を通らないため、両方に書いてください。
+
+3つの検査の設定(`colloquial`、`dates`、`bashWriteDirs`)の型か正規表現が誤っているときは、
+有効にした検査が、誤りの場所を示して止めます(誤った設定のまま、検査なしで通しません)。
+語と日付の検査には `grep -P`(Perl 互換の正規表現)と `perl` が必要で、無い環境でも同じく止めます。
+
+### 語の表(`colloquialTerms`)
+
+語の表の正本は、`output-styles/concise-ja.md` の「語の選び方」の表です。hook は、表を読める形に
+した写し `hooks/data/colloquial-terms.tsv` と照らします。写しは表の1行につき1行で、
+`tests/run.sh` が、語と使う語が表と同じであることを確かめます。表と同じく、宛先と媒体で
+語を分けません。ファイルの文面にも、メールやチャットの下書きの本文にも、同じ行を当てます。
+
+- 止めたときは、`1行: 足り → 十分である(否定は不足する) [表の行: 足りる]` のように、行、当たった字、使う語、表の行を示します
+- 「」と『』の中、コードブロック(``` と `~~~`)、バッククォートの中、URL は見ません
+- Edit と MultiEdit は、置き換えた後の全文で上の場所を判定し、編集で増えた行の当たりだけを止めます。既にある「」やコードブロックの中だけを書き換える編集と、編集の前からある行は止めません。前の全文が読めないときは、渡された文だけで判定します
+- 表の141行のうち20行は、別の語や正式な用語と区別できないため、hook では見ません(お願いする、〜ベース、スコープ、フロー、タスク、フェーズ、リソース / コミット / デフォルト など)。理由は写しの4列目に書いてあります
+- 写しの1行は、表の1行の語と活用の形だけに当てます(「確かめること」「確かめます」「確かめ方」は、それぞれの行が、その行の使う語を示します)
+- 写しの4列目に書いた言い回し(「物足りない」「取るに足りない」「足し算」など)は、当たりから除きます
+- プロジェクトで行を外すときは、`colloquial.excludeTerms[]` に写しの1列目の語を書きます(例: `["足りる", "作りました"]`)
+- プロジェクトで語を追加するときは、`colloquial.extraTerms[]` に `pattern`(`grep -P` の正規表現)と `use`(使う語)を書きます。`targets`(case パターンの配列)を書くと、一致するファイルだけで見ます(設計書だけで避ける語に使う)。`targets` を書かないか空の配列にすると、すべての対象で見ます。`except` に、除く言い回しの正規表現を書けます(`pattern` と同じ Perl 互換)
+
+限界: 改行をまたぐ「」の中は、引用として扱いません。活用の形は写しの正規表現に書いた形だけを見るため、
+表の語のすべての活用は止まりません。
+
+表の行の出どころは、次のとおりです。話し言葉の語は、日本語の教材「話し言葉と書き言葉」の対照表
+(MIT の kakikotoba の教材)から採りました。冗長な言い回しは、文化審議会「公用文作成の考え方」(2022年)の
+Ⅱ-5・Ⅱ-6・Ⅲ-3 から採りました。カタカナ語は、同じ建議のⅡ-3、国立国語研究所『「外来語」言い換え提案』
+(2006年)、ビジネス用語の解説の記事から採りました。「ゲート」「棚卸し」「横展開」のような造語と業界の
+言い回しは、公的な資料に言い換えが無く、利用したプロジェクトの資料での出現数から選び、言い換えは
+このプラグインで決めました。前置きと結びの定型の言い回し、値のない程度と効果の語、「〜の確かめ」の
+ような連用形の名詞、指す中身を書くカタカナ語は、文章の推敲のプラグイン yomiyasu(MIT ライセンス)の
+一覧を参考にしました。追加の前に、利用したプロジェクトの依頼者が送付した文面に表を当て、当たった行
+(「洗い出し」「マター」「ちょっと」「圧倒的」)は表に入れていません。
+値のない程度と効果の語(「大幅に」「信頼性が向上」など)は、同じ文に数字があるときは通します。
+
+語幹が短い行は、同じ字を含む別の語に当たることがあります(「作[らりるれろっ]」が「手作り」に、
+「使え」が「使える」の名詞の用法に当たる など)。当たりが多い行は `excludeTerms` で外してください。
+
+### 日付(`dates`)
+
+docs-tools の draft-precheck の決まり「本文に確認日・作業経緯を書かない。書くなら記録の節に
+分ける」を、hook で見ます。
+
+| 項目 | 動作 |
+|---|---|
+| 見る日付 | `2026-08-16`、`2026/8/16`、`2026年8月`、`2026年8月16日`、`8月16日`、`8/16` |
+| 見ない場所 | 表の行(`\|` で始まる行、区切りの行 `---\|---` の前後の行、`<table>` `<tr>` `<td>` などの行)、コードブロック(``` と `~~~`)、バッククォートの中、URL、ファイル名やパスの中(`report-2026-08-16.pdf`)、記録の節、「約1/3」の形の分数 |
+| 記録の節 | 見出しが `dates.recordHeadings`(既定 `記録\|履歴\|経緯\|改訂\|変更ログ\|作業ログ\|Changelog\|History`)に一致する節。次の同じ深さ以上の見出しまで(中の深い見出しでは終わらない)。記録の節でない見出しの文は見る |
+| `dates.targets[]` | いつの値かを示す日付(直後が 時点・現在・から・まで・以降・以前。間の空白は許す)は通す。費用の実績や単価の基準日を書く資料に使う |
+| `dates.strictTargets[]` | 上の日付も止める。本文に日付を一切書かない決まりの資料(設計の記録など)に使う。両方に一致するファイルは `strictTargets` として扱う |
+| Edit / MultiEdit | 置き換えた後の全文で場所を判定し、編集で増えた行だけを止める。表の1セルの書き換え、記録の節への追記、編集の前からある日付の行は止めない。既にある日付の行と同じ行を追加する編集は止める |
+| Write | 渡された全文で判定する(既存のファイルの日付も止まる) |
+| MCP のツール | 見ない(メールやチャットの本文には、日付を書くため) |
+
+限界:
+
+- 「1/3」のような分数は、「約」が付かないと日付として止まります
+- 前の全文が読めない Edit は、渡された文だけで判定するため、表のセルの書き換えでも止まります
+- `dates.targets[]` は、直後の語だけで判定するため、「2026-08-16から作業を開始した」のような作業の経緯も通します。経緯も止める資料は `dates.strictTargets[]` に書いてください
+- 記録の節は、見出しに既定の語を含むかで判定するため、「記録の保存方式」のような設計の節も記録の節として扱います。該当する資料は `dates.recordHeadings` に見出しの正規表現を書いてください
+
+### Bash での書き換え(`bashWrites`)
+
+`draft-bash-write-check.sh` は、`bashWriteDirs[]` のフォルダーのファイルの中身を、Bash のコマンドで
+書き換える操作を止めます。判定の形は `harness-change-check.sh` の Bash の判定を元にしています。
+コマンドを解析せず、文字列の形で判定します。
+
+| 止める形 | 通す形 |
+|---|---|
+| 対象のフォルダーへのリダイレクト(`>` / `>>`)、`tee`、`truncate` | `grep ... docs/notion/a.md > /tmp/out`(書く先が対象の外)、`tee /tmp/out < docs/notion/a.md`(読む元が対象) |
+| `sed -i`、`sed --in-place`、`perl -i`(`sed -e … -i` のように後ろにある形、`/bin/sed` のようなパス付きの形を含む) | `sed -n`、`grep`、`cat`、`git diff` |
+| `cp` / `mv` / `rsync` / `install` / `ln` / `git mv` の最後の引数(コピー先・移動先。後ろにオプションだけが続く形を含む)か、`-t` / `--target-directory` の値が対象 | `cp docs/notion/a.md /tmp/`、`mv docs/notion/a.md /tmp/`(対象の外へ出す) |
+| `git apply` | `git add`、`git commit`、`git checkout`、`git restore`、`git reset`、`git stash` |
+| python / node / perl / ruby / php の後ろに、書き込みの呼び出し(`open(…,'w')`・`'a'`・`'x'`、`write_text`、`.write(` など)がある | 読むだけのスクリプト、`rm`、`touch`、`chmod` |
+
+`harness-change-check.sh` との違いは、`rm` / `touch` / `chmod`、対象の外へ出す `mv`、git の操作
+(`git apply` と `git mv` を除く)、読むだけのスクリプトを止めないことです。
+
+限界:
+
+- 対象のフォルダーの文字列を書かずに触れる形(`cd docs/notion && sed -i ... a.md` のような cd の後の相対パス、変数の展開、スクリプトのファイルの中での書き込み、パッチの中にだけパスがある `git apply`)は止まりません
+- git の操作は、`git apply` と `git mv` のほかは止めません。`git restore --source=<ほかのコミット>` や `git stash pop` は、検査を通っていない中身を入れられますが、対象外です
+- 表に挙げていないコマンド(`dd`、`patch` など)と、挙げていない書き込みの呼び出しは止まりません
+- heredoc やコミットメッセージの本文に、対象のフォルダーの文字列と `sed -i` などの文字が並ぶと、書き換えでなくても止まります。スクリプトの実行と書き込みの呼び出しが同じコマンドの中かは見ないため、読むだけのスクリプトの後ろに書き込みの呼び出しの文字があると止まります
+- ファイルの移動、名前の変更、一括の置き換えが要るときは、依頼者の `[hook-bypass: draft-precheck]` だけの行で通します
 
 ## 人に届く送信のツールの停止
 
@@ -218,7 +331,10 @@ Claude Code は hook の設定をセッションの起動時に読みます。�
 | `harnessChange.token` / `excludePatterns[]` | 設定・規則ファイルの保護で使う承認の文字列(既定 `[harness-go]`)と除外パス(既定 `.claude/projects/`) |
 | `draftPrecheck.targets[]` | 送付文面の置き場(bash の case パターン)。`excludePatterns[]`、`bannedTerms[]`、`honorific` |
 | `draftPrecheck.toolRules[]` | 本文を検査する MCP のツール(`tool`、`jq` の `test()` の正規表現)と、検査する引数(`fields`、既定は `subject` と `body`)。`requiredFields` に挙げた引数がない呼び出しは止める。既定は空 |
-| `draftPrecheck.checks` | 検査項目ごとの on / off。`bannedTerms` / `internalPaths` / `extensions` / `typography` / `externalAi` / `honorific` / `longIdentifiers`(既定すべて true) |
+| `draftPrecheck.checks` | 検査項目ごとの on / off。`bannedTerms` / `internalPaths` / `extensions` / `typography` / `externalAi` / `honorific` / `longIdentifiers`(既定すべて true)。`colloquialTerms` / `dates` / `bashWrites` は既定 false で、`true` にしたプロジェクトでだけ動く |
+| `draftPrecheck.colloquial` | 話し言葉の語の検査(`checks.colloquialTerms`)の設定。`excludeTerms[]` は語の表から外す行の語、`extraTerms[]` は語の表に追加する語(`pattern`、`use`、`term`、`except`、`targets`) |
+| `draftPrecheck.dates` | 日付の検査(`checks.dates`)の設定。`targets[]` と `strictTargets[]` は対象のファイルの case パターン。`targets[]` は「2026年7月時点」のように、いつの値かを示す日付を通し、`strictTargets[]` は本文の日付をすべて止める。`recordHeadings` は記録の節の見出しの正規表現。表の行、コードブロック、URL、ファイル名、記録の節の日付は止めない |
+| `draftPrecheck.bashWriteDirs[]` | Bash での書き換えを止めるフォルダー(パスの一部の文字列)。`checks.bashWrites` が `true` のときに使う |
 | `requireReading.rules[]` | 編集対象(`target`)と必読資料(`requiredReadPattern`)の対応表。`mode: "logs"` で作業ログの特例 |
 | `requireReading.toolRules[]` | 外部へ書き込むツール(`tool`)と、先に呼んでおく読み取りのツール(`requiredTool`)の対応表。`sameInput` に、値が等しいことを求める引数の組を書く。既定は空 |
 | `toolResultCheck.rules[]` | ツール(`tool`)と、結果にあるはずの成立の印(`successPattern`)の対応表。既定は空 |
@@ -383,7 +499,7 @@ Skill は集計を読み、`harness.json`・hook・規則の変更前後を【�
 bash tests/run.sh
 ```
 
-hook 9本に合成の会話履歴 JSONL と入力 JSON を与え、差し戻し(終了コード2)と通過
+hook 10本に合成の会話履歴 JSONL と入力 JSON を与え、差し戻し(終了コード2)と通過
 (終了コード0)、承認の文字列、バイパスの文字列、設定なし、設定の壊れ、差し戻し回数の
 上限、検知ログの UTF-8 を確認します。hook や辞書を変えたら実行してください。
 
