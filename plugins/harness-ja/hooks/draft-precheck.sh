@@ -31,12 +31,18 @@
 #   externalAi       外部 AI ツール名の言及
 #   longIdentifiers  長い識別子のフル表記の繰り返し
 # 次の 2 項目は、既定が false。draftPrecheck.checks.<名前> を true にしたプロジェクトでだけ動く:
-#   colloquialTerms  話し言葉の語 (hooks/data/colloquial-terms.tsv。「足す」→「追加する」など、使う語を示す)。
-#                    範囲 all の語はすべての文面、範囲 doc の語は colloquial.docTargets[] に一致するファイルで見る。
+#   colloquialTerms  話し言葉・独自の言い換え・造語 (output-styles/concise-ja.md の「語の選び方」の表。hook が読む写しは
+#                    hooks/data/colloquial-terms.tsv)。「足した」→「追加した」のように、使う語を示す。
+#                    ファイルの文面にも、MCP ツールの本文にも、同じ表を当てる。
 #                    「」『』の中、コードブロック、バッククォートの中、URL は見ない
-#   dates            表の外の日付 (2026-08-16 / 2026年8月 / 8月16日 / 8/16)。dates.targets[] か
-#                    dates.strictTargets[] に一致するファイルだけで見る (MCP ツールの本文では見ない)。
-#                    targets[] は、いつの値かを示す日付 (直後が 時点・現在・から・まで・以降・以前) を通す
+#   dates            本文の確認日・作業経緯の日付 (2026-08-16 / 2026年8月 / 8月16日 / 8/16)。dates.targets[] か
+#                    dates.strictTargets[] に一致するファイルだけで見る。MCP ツールの本文では見ない。
+#                    表の行、コードブロック、バッククォートの中、URL、ファイル名の中、記録の節
+#                    (見出しが dates.recordHeadings に一致する節) の日付は見ない。
+#                    Edit / MultiEdit は、置き換えた後の全文で場所を判定し、編集で増えた行だけを止める
+#                    (表の 1 セルの書き換えや、記録の節への追記は止めない)。
+#                    targets[] は、いつの値かを示す日付 (直後が 時点・現在・から・まで・以降・以前) を通す。
+#                    strictTargets[] は通さない (本文に日付を一切書かない決まりの資料に使う)
 #
 # 検査範囲: Write は全文、Edit/MultiEdit は追加・置換後の文字列のみ。
 #
@@ -50,11 +56,15 @@
 #   draftPrecheck.toolRules[]       MCP ツールの規則 tool / fields / requiredFields
 #   draftPrecheck.checks            検査項目ごとの on / off
 #   draftPrecheck.bannedTerms[]     禁止語 (既定値は持たない)
-#   draftPrecheck.colloquial.docTargets[]  範囲 doc の語も見るファイルの case パターン (既定は空)
-#   draftPrecheck.colloquial.extraTerms[]  語の表に追加する語。{ "pattern": grep -P の正規表現, "use": 使う語,
-#                                          "scope": "all" (既定) か "doc" }
-#   draftPrecheck.dates.targets[]          日付を見るファイルの case パターン (いつの値かを示す日付は通す)
-#   draftPrecheck.dates.strictTargets[]    日付を見るファイルの case パターン (すべての日付を止める)
+#   draftPrecheck.colloquial.excludeTerms[] 表から外す行。tsv の 1 列目の語 (例: "足りる") を書く
+#   draftPrecheck.colloquial.extraTerms[]   表に追加する語。{ "pattern": grep -P の正規表現, "use": 使う語,
+#                                           "term": 表示する語 (省くと pattern), "except": 除く言い回しの正規表現,
+#                                           "targets": [case パターン] (書くと、一致するファイルだけで見る) }
+#   draftPrecheck.dates.targets[]           日付を見るファイルの case パターン (いつの値かを示す日付は通す)
+#   draftPrecheck.dates.strictTargets[]     日付を見るファイルの case パターン (本文の日付をすべて止める)
+#   draftPrecheck.dates.recordHeadings      記録の節の見出しの正規表現 (既定 記録|履歴|経緯|改訂|変更ログ|作業ログ|Changelog|History)
+#   colloquial と dates は、draftPrecheck.targets[] か toolRules[] に当たった文面の中でだけ動く。
+#   dates.targets[] に書いても、draftPrecheck.targets[] に無いパスは検査しない
 #   draftPrecheck.honorific.name    敬称の検査対象名 (空なら検査しない)
 #   draftPrecheck.honorific.suffix  付いているべき敬称 (既定「様」)
 
@@ -287,40 +297,62 @@ if check_on longIdentifiers; then
 fi
 
 # 8) 話し言葉の語 (既定は無効)
-path_matches() { # path_matches <jq の配列のパス>: 編集対象のパスが case パターンのどれかに一致すれば 0
+path_in() { # path_in <case パターンを 1 行ずつ>: 編集対象のパスがどれかに一致すれば 0 (MCP ツールでは常に 1)
   local pat
   [[ "$tool_name" != mcp__* ]] || return 1
   while IFS= read -r pat; do
     [[ -z "$pat" ]] && continue
     # shellcheck disable=SC2254
     case "$target_file_path" in $pat) return 0 ;; esac
-  done < <(cfg_list "$1")
+  done <<< "$1"
   return 1
 }
 if cfg_flag '.draftPrecheck.checks.colloquialTerms' 'false'; then
   source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/doc-text.sh"
-  scope=all
-  if path_matches '.draftPrecheck.colloquial.docTargets[]?'; then scope=doc; fi
-  HARNESS_EXTRA_TERMS=$(cfg_list '.draftPrecheck.colloquial.extraTerms[]?
-    | select(type == "object" and (.pattern | type) == "string" and (.pattern | length) > 0)
-    | [(.scope // "all"), .pattern, (.use // "書き言葉にする")] | join("\t")')
-  export HARNESS_EXTRA_TERMS
-  matched=$(printf '%s\n' "$content" | harness_colloquial_hits "$scope")
+  HARNESS_EXCLUDE_TERMS=$(cfg_list '.draftPrecheck.colloquial.excludeTerms[]? | strings')
+  HARNESS_EXTRA_TERMS=""
+  while IFS= read -r row; do
+    [[ -z "$row" ]] && continue
+    row_targets=$(printf '%s' "$row" | jq -r '(.targets // [])[] | strings')
+    if [[ -n "$row_targets" ]] && ! path_in "$row_targets"; then continue; fi
+    HARNESS_EXTRA_TERMS+=$(printf '%s' "$row" | jq -r '[(.term // .pattern), .pattern, (.use // "書き言葉にする"), (.except // "")] | join("\t")')$'\n'
+  done < <(cfg_list '.draftPrecheck.colloquial.extraTerms[]?
+    | select(type == "object" and (.pattern | type) == "string" and (.pattern | length) > 0) | @json')
+  export HARNESS_EXCLUDE_TERMS HARNESS_EXTRA_TERMS
+  matched=$(printf '%s\n' "$content" | harness_colloquial_hits)
   if [[ -n "$matched" ]]; then
-    hits="${hits}  - 話し言葉の語検出 (業務の文書で使う書き言葉にする。引用は「」に入れる):"$'\n'"${matched}"$'\n'
+    hits="${hits}  - 話し言葉の語検出 (書き言葉にする。引用は「」に入れる。行を外すには colloquial.excludeTerms):"$'\n'"${matched}"$'\n'
   fi
 fi
 
-# 9) 表の外の日付 (既定は無効。dates.targets[] / dates.strictTargets[] に一致するファイルだけ)
-if cfg_flag '.draftPrecheck.checks.dates' 'false'; then
+# 9) 本文の確認日・作業経緯の日付 (既定は無効。dates.targets[] / dates.strictTargets[] に一致するファイルだけ)
+if cfg_flag '.draftPrecheck.checks.dates' 'false' && [[ "$tool_name" != mcp__* ]]; then
   date_mode=""
-  if path_matches '.draftPrecheck.dates.strictTargets[]?'; then date_mode=strict
-  elif path_matches '.draftPrecheck.dates.targets[]?'; then date_mode=asof; fi
+  if path_in "$(cfg_list '.draftPrecheck.dates.strictTargets[]?')"; then date_mode=strict
+  elif path_in "$(cfg_list '.draftPrecheck.dates.targets[]?')"; then date_mode=asof; fi
   if [[ -n "$date_mode" ]]; then
     source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/doc-text.sh"
-    matched=$(printf '%s\n' "$content" | harness_date_hits "$date_mode")
-    if [[ -n "$matched" ]]; then
-      hits="${hits}  - 日付検出 (日程と作業の記録は、資料の本文に入れない。要る日付は表に入れる):"$'\n'"${matched}"$'\n'
+    date_rec=$(cfg '.draftPrecheck.dates.recordHeadings' '')
+    # Edit / MultiEdit は、置き換えた後の全文で場所 (表・記録の節) を判定し、編集の前から当たっていた行を除く。
+    # 前の全文が読めないときと Write は、渡された文だけで判定する
+    date_after="$content"
+    date_before=""
+    if [[ "$tool_name" != "Write" && -f "$target_file_path" ]]; then
+      if applied=$(printf '%s' "$input" | harness_apply_edit "$target_file_path" 2>/dev/null); then
+        date_after="$applied"
+        date_before=$(cat "$target_file_path")
+      fi
+    fi
+    after_hits=$(printf '%s\n' "$date_after" | harness_date_hits "$date_mode" "$date_rec")
+    if [[ -n "$after_hits" && -n "$date_before" ]]; then
+      before_hits=$(printf '%s\n' "$date_before" | harness_date_hits "$date_mode" "$date_rec")
+      if [[ -n "$before_hits" ]]; then
+        after_hits=$(printf '%s\n' "$after_hits" | grep -vxF -f <(printf '%s\n' "$before_hits") || true)
+      fi
+    fi
+    if [[ -n "$after_hits" ]]; then
+      matched=$(printf '%s\n' "$after_hits" | head -5)
+      hits="${hits}  - 本文の日付検出 (本文に確認日・作業経緯を書かない。書くなら記録の節に分ける):"$'\n'"${matched}"$'\n'
     fi
   fi
 fi

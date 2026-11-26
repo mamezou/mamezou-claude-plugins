@@ -65,14 +65,14 @@
     },
     "bannedTerms": [],
     "colloquial": {
-      "docTargets": ["*/docs/notion/*.md"],
+      "excludeTerms": [],
       "extraTerms": []
     },
     "dates": {
-      "targets": ["*/docs/notion/*.md"],
+      "targets": [],
       "strictTargets": []
     },
-    "bashWriteDirs": ["docs/notion/", "docs/drafts/"],
+    "bashWriteDirs": [],
     "honorific": {
       "name": "",
       "suffix": "様"
