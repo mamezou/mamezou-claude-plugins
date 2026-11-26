@@ -71,6 +71,7 @@ done
    - `draftPrecheck.toolRules[]`: メールやチャットの下書きを渡す MCP のツールの本文を、送付文面の事前検査に通す対応表(既定は空)
    - `requireReading.rules[]`: 編集前に必読とする資料の対応表
    - `requireReading.toolRules[]`: 外部へ書き込む MCP のツールの前に呼んでおく、読み取りのツールの対応表(既定は空)
+   - `sendGate.mode`: 人に届く送信のツール(チャットの送信、メールの送信・返信・転送)を止めるなら `"block"`、Claude が送ってよいプロジェクトなら `"allow"`。どちらにするかは利用者に聞いて決める。書かないと `"block"` として扱われる
    - `toolResultCheck.rules[]`: MCP のツールの結果にあるはずの成立の印の対応表(既定は空)
    - 使わない機能は `"enabled": false` で止める
 6. Output Style を使う場合は `/config` から「Concise JA」を選ぶよう案内する。
