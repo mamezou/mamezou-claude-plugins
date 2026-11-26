@@ -1278,6 +1278,21 @@ grep -v '^#' "$TSV" | awk -F'\t' 'NF{print $1 "\t" $3}' > "$W/tsv-rows.tsv"
 check "CT-1 表の行と tsv の行 (語と使う語) が同じ" same "$(if diff -q "$W/cj-rows.tsv" "$W/tsv-rows.tsv" >/dev/null; then echo same; else echo differ; fi)"
 check "CT-2 tsv の行は 2〜4 列で、正規表現が空でない" 0 "$(grep -v '^#' "$TSV" | awk -F'\t' 'NF && (NF<3 || NF>4 || $2=="")' | wc -l | tr -d ' ')"
 check "CT-3 正規表現が - の行には理由がある" 0 "$(grep -v '^#' "$TSV" | awk -F'\t' '$2=="-" && $4==""' | wc -l | tr -d ' ')"
+# 例文 (tests/colloquial-cases.tsv) を語の表に流し、当たるはずの行に当たり、当たらないはずの文に当たらないことを見る
+ct_bad=0; ct_n=0
+source "$H/lib/doc-text.sh"
+while IFS=$'\t' read -r ct_want ct_text; do
+  case "$ct_want" in ''|'#'*) continue ;; esac
+  ct_n=$((ct_n+1))
+  ct_got=$(printf '%s\n' "$ct_text" | HARNESS_HITS_MAX=100 harness_colloquial_hits)
+  if [[ "$ct_want" == "-" ]]; then
+    [[ -z "$ct_got" ]] || { ct_bad=$((ct_bad+1)); echo "      当たらないはず: $ct_text => $ct_got"; }
+  else
+    [[ "$ct_got" == *"[表の行: $ct_want]"* ]] || { ct_bad=$((ct_bad+1)); echo "      当たるはず ($ct_want): $ct_text"; }
+  fi
+done < "$SCRIPT_DIR/colloquial-cases.tsv"
+check "CT-4 例文 ${ct_n} 件が、期待した表の行に当たる・当たらない" 0 "$ct_bad"
+check "CT-5 例文の「当たるはずの行」は、すべて tsv にある" 0 "$(grep -v '^#' "$SCRIPT_DIR/colloquial-cases.tsv" | awk -F'\t' 'NF && $1 != "-" {print $1}' | sort -u | grep -vxF -f <(grep -v '^#' "$TSV" | cut -f1) | wc -l | tr -d ' ')"
 
 echo
 echo "== draft-precheck (話し言葉の語・日付) =="
