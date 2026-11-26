@@ -41,6 +41,20 @@
 | 説明の資料 | 理解する | 読み手の問い1つに章1つ | 一般の話を先に、例外を後に | Diátaxis の explanation |
 
 
+## スライドに足す決まり
+
+スライドは、資料の種類の決まりに加えて、次の決まりで検査する。種類の決まりの「章」は「部」と読み替える。確認の項目は `slides-checklist.md` にある。
+
+| 決まり | 検査の問い | 当たったときの直し方 | 出典 |
+|---|---|---|---|
+| 見せる資料と配る資料を分ける | 人が話しながら映す資料か、読み手が1人で読む資料か、1つに決めたか。配る資料は、説明する人がいなくても結論が分かるか | 用途ごとに資料を分けるか、配る資料の文をノートに書く | Duarte、Martin Fowler |
+| 最初の全体、部分、最後の全体 | 部分より前に、母集団の全部を載せた全体図があるか。部分のページに現在地の印があるか。最後に同じ全体図へ戻るか | 全体図を目的のページの次に置き、部分のページに全体図の縮小と現在地を置き、最後に全体図へ戻る | Swanson と Law の Whole-Part-Whole、Whole-Part-Whole の解説 |
+| ページの題を結論の文にする | 判断を求める資料と説明の資料で、ページの題が話題の名前でなく結論の文か。本文の図と表が題の裏付けか | 題を結論の文に直し、裏付けにならない図と表を消すか付録へ移す | Penn State の assertion-evidence の研究 |
+| 題だけで筋が通る | 全部のページの題を順に読んで、話の筋が通るか。冒頭の要約の各項目が、後のページの題と同じ順で対応するか | 筋から外れるページを消すか、まとめるか、付録へ移す | Umbrex、Storytelling with Data |
+| 説明を図の該当箇所の隣に置く | 画面の写真の説明が、写真の該当する箇所の隣にあるか。読み手が知らない語を、本題の前で説明したか | 説明と番号を写真の上の該当箇所に移す。語の説明を全体図の前へ移す | Mayer の空間的近接の原則と事前学習の原則 |
+
+Mayer の原則のうち、話す言葉を字より優先する原則は、配る資料に当たらないため採らない。
+
 ## 採らなかった手法
 
 | 手法 | 採らなかった理由 |
@@ -74,3 +88,11 @@
 - Nielsen Norman Group の読み方の調査: https://www.nngroup.com/articles/f-shaped-pattern-reading-web-content/
 - Amazon の6ページの文書: https://www.anecdote.com/2018/05/amazons-six-page-narrative-structure/
 - ISO 24495-1 の概要: https://www.iso.org/standard/78907.html
+- Swanson と Law の Whole-Part-Whole の要旨: https://synapsesocial.com/papers/W2086537466
+- Whole-Part-Whole の解説: https://literacycentre.immigrant-education.ca/the-whole-part-whole-approach-for-literacy-instruction/
+- Duarte の見せる資料と配る資料: https://www.duarte.com/?p=41191
+- Penn State の assertion-evidence の研究: https://writing.engr.psu.edu/research.html
+- Umbrex の資料の筋の作り方: https://umbrex.com/resources/the-consulting-career-guide/storylining-and-deck-structure/
+- Storytelling with Data の横の論理: https://www.storytellingwithdata.com/blog/2013/12/horizontal-logic
+- Mayer のマルチメディア教材の原則: https://www.unh.edu/teaching-learning-resource-hub/sites/default/files/media/2023-06/itow-research-based-principles-for-designing-multimedia-instruction-mayer.pdf
+- Martin Fowler のスライドが要るかの判断: https://martinfowler.com/articles/never-send-slides/need-presentation.html
