@@ -41,6 +41,26 @@
 | 説明の資料 | 理解する | 読み手の問い1つに章1つ | 一般の話を先に、例外を後に | Diátaxis の explanation |
 
 
+## スライドに足す決まり
+
+スライドは、資料の種類の決まりに加えて、次の決まりで検査する。種類の決まりの「章」は「部」と読み替える。確認の項目は `slides-checklist.md` にある。
+
+| 決まり | 検査の問い | 当たったときの直し方 | 出典 |
+|---|---|---|---|
+| 見せる資料と配る資料を分ける | 人が話しながら映す資料か、読み手が1人で読む資料か、1つに決めたか。配る資料は、説明する人がいなくても結論が分かるか | 用途ごとに資料を分けるか、配る資料の文をノートに書く | Duarte、Martin Fowler |
+| 最初の全体、部分、最後の全体 | 部分より前に、母集団の全部を載せた全体図があるか。部分のページに現在地の印があるか。最後に同じ全体図へ戻るか | 全体図を冒頭の一覧の後に置き、語の説明のページはその間に置いてよい。部分のページに全体図の縮小と現在地を置き、最後に全体図へ戻る | Swanson と Law の Whole-Part-Whole、Whole-Part-Whole の解説 |
+| ページの題を結論の文にする | 判断を求める資料と説明の資料の部分のページで、資料の題と部の名前を除き、ページの題が話題の名前でなく結論の文か。本文の図と表が題の裏付けか | 題を結論の文に直し、裏付けにならない図と表を消すか付録へ移す | Penn State の assertion-evidence の研究 |
+| 題だけで筋が通る | 全部のページの題を順に読んで、話の筋が通るか。冒頭の一覧の各項目が、後のページの題と同じ順で対応するか | 筋から外れるページを消すか、まとめるか、付録へ移す | Umbrex、Storytelling with Data |
+| スライドを使う場面 | 依頼者が形式を決めておらず、その場で相手に働きかけるか、反論にその場で答える用途でもないとき、文書で足りないかを聞いたか | 文書で足りるときは文書にする | Martin Fowler |
+| 全体図は要約でなく枠組み | 全体図が、区分と全部の項目の名前を見せる枠組みか。数値と細部が全体図に入っていないか | 細部を部分のページへ移す。最初の全体を省かない | Universal Principles of Design の先行オーガナイザー、Whole-Part-Whole の解説 |
+| 今の部を目立たせる | 部分のページで、全体図のどこを読んでいるかが一目で分かるか | 全体図の縮小で今の区分を目立たせる | Mayer の合図の原則 |
+| 関係の無いものを消す | 題の裏付けにならないページと要素が無いか | 消すか、まとめるか、付録へ移す | Mayer の一貫性の原則、Umbrex |
+| 答えを後に回すときは先に約束する | 答えを後のページに回すとき、どこで答えるかを先に書いたか | 答えるページを先に示す | ラッコの記事 |
+| 題に項目の数を入れる、1枚の図と表は2つまで | 項目を並べるページの題に数があるか。1枚に図と表を詰め込んでいないか | 題に数を入れる。ページを分ける | ラッコの記事、立教大学 |
+| 見た目の決まり | 近接、読む順、並びの型、色の数、文字の大きさの差、全体の統一、飾りが無いこと | ページを作った後に直す | 名古屋大学、広島大学、NTT東日本、ラッコの記事 |
+| 出典を書く | 引用した数値、図、画面に出典があるか | 出典を足す | 立教大学 |
+| 説明を図の該当箇所の隣に置く | 画面の写真の説明が、写真の該当する箇所の隣にあるか。全体図を読むのに要る語を、全体図のページか、その直前のページで説明したか | 説明と番号を写真の上の該当箇所に移す。語の説明を全体図のページか、その直前のページへ移す | Mayer の空間的近接の原則と事前学習の原則 |
+
 ## 採らなかった手法
 
 | 手法 | 採らなかった理由 |
@@ -50,7 +70,14 @@
 | MECE を全部の一覧に当てること | 出典のページが、MECE は余計な項目を除かないことと、重なりが要る場合があることを限界に挙げている。3番と11番で余計な項目を除き、冒頭の一覧を重なりの例外にした |
 | Diátaxis の tutorial | 学習用の教材で、案件の資料に当たるものが無い |
 | IMRAD、逆ピラミッド、Amazon の6ページの文書 | 論文、記事、社内の企画書の型で、4番と9番に同じ中身がある。Amazon は、読んだページに章ごとの中身が書かれていなかった |
-| Nielsen Norman Group の、太字と枠で目立たせる決まり | 体裁の話で、構成の検査の対象外 |
+| マネーフォワードの記事の、目的ごとの章の型 | 資料の種類ごとに章を切る今の決まりと重なる。目的、前提、現状、対策、まとめの型を癖として直す決まりとも合わない |
+| マネーフォワードの記事の、目次の項目を3〜5個か5〜7個に限る決まり | 記事によって数が違う。7前後に限る決まりを採らなかった理由と同じ |
+| 名古屋大学、立教大学、広島大学の、1枚あたりの話す時間 | 1分と2〜3分で食い違う。数を決めず、話す時間に合わせる決まりにした |
+| 広島大学の「スライドの題にこだわらない」 | 題を結論の文にする決まりと逆になる |
+| NTT東日本の、フォントの名前の指定 | 体裁の話で、利用側の決まりに従う |
+| Mayer の、話す言葉を字より優先する原則と、話す言葉と同じ字幕を付けない原則 | 配る資料に当たらない |
+| Mayer の、読み手の速さで区切って見せる分割の原則 | 配る資料では読み手が自分の速さで読み、部が区切りに当たる |
+| Nielsen Norman Group の、太字と枠で目立たせる決まり | 体裁の話で、構成の検査の対象外。スライドの見た目は、「スライドに足す決まり」の見た目の決まりで見る |
 
 ## 出典
 
@@ -74,3 +101,19 @@
 - Nielsen Norman Group の読み方の調査: https://www.nngroup.com/articles/f-shaped-pattern-reading-web-content/
 - Amazon の6ページの文書: https://www.anecdote.com/2018/05/amazons-six-page-narrative-structure/
 - ISO 24495-1 の概要: https://www.iso.org/standard/78907.html
+- Swanson と Law の Whole-Part-Whole の要旨: https://synapsesocial.com/papers/W2086537466
+- Whole-Part-Whole の解説: https://literacycentre.immigrant-education.ca/the-whole-part-whole-approach-for-literacy-instruction/
+- Duarte の見せる資料と配る資料: https://www.duarte.com/?p=41191
+- Penn State の assertion-evidence の研究: https://writing.engr.psu.edu/research.html
+- Umbrex の資料の筋の作り方: https://umbrex.com/resources/the-consulting-career-guide/storylining-and-deck-structure/
+- Storytelling with Data の横の論理: https://www.storytellingwithdata.com/blog/2013/12/horizontal-logic
+- Mayer のマルチメディア教材の原則: https://www.unh.edu/teaching-learning-resource-hub/sites/default/files/media/2023-06/itow-research-based-principles-for-designing-multimedia-instruction-mayer.pdf
+- Martin Fowler のスライドが要るかの判断: https://martinfowler.com/articles/never-send-slides/need-presentation.html
+- Universal Principles of Design の先行オーガナイザー: https://oreilly.com/library/view/universal-principles-of/9781592535873/xhtml/ch03.html
+- 名古屋大学のプレゼンテーションのデザイン: https://web.cshe.nagoya-u.ac.jp/asg/designpresentation/DesignPresentation.pdf
+- NTT東日本の資料作りの5つの決まり: https://business.ntt-east.co.jp/column/bizdrive/presentation-materials-5-rules.html
+- 立教大学のスライドの作り方: https://www.rikkyo.ac.jp/about/activities/fd/cdshe/mknpps000001ri7e-att/MoP_4-2.pdf
+- マネーフォワードのアジェンダの作り方: https://biz.moneyforward.com/work-efficiency/basic/22052/
+- マネーフォワードの構成例: https://biz.moneyforward.com/work-efficiency/basic/23083/
+- ラッコの記事の伝わるスライドの見せ方: https://zenn.dev/rakko_inc/articles/purpose-driven-slide-visual
+- 広島大学の情報デザインを意識したスライド作成: https://home.riise.hiroshima-u.ac.jp/~ten/slide20190519.pdf
