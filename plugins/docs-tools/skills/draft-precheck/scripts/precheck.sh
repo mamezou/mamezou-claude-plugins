@@ -1,6 +1,9 @@
 #!/bin/bash
 # 送付前 grep チェック。/docs-tools:draft-precheck から呼ばれる。
-# 使い方: precheck.sh <チェック対象ファイル>
+# 使い方: precheck.sh [--slides] <チェック対象ファイル>
+# --slides: スライドの文を書き出したファイル用。1通の文面として数える項目 (同じ括弧の中身が
+#   3回以上、3回以上の長い識別子、バイト数) を出さず、題材しだいで誤検知になる項目の見出しに
+#   「(スライド: 要確認)」を付ける。指定なしの動きは変えない
 # 各項目の出現行を印字する。判定(残す / 直す)は Skill 本文の基準で行う。
 
 set -uo pipefail
@@ -8,6 +11,11 @@ export LC_ALL=C.UTF-8
 
 # 空白を含むパスが引用符なしで渡ると複数の引数に分かれるため、全引数を1つのパスとして扱う。
 # 引用符が文字のまま渡ったときは、両端が同じ種類の引用符で対になっている場合だけ外す
+slides=0
+if [[ "${1:-}" == "--slides" ]]; then
+  slides=1
+  shift
+fi
 f="$*"
 if [[ ! -f "$f" ]]; then
   case "$f" in
@@ -20,6 +28,14 @@ if [[ -z "$f" || ! -f "$f" ]]; then
 fi
 
 section() { printf '\n[%s]\n' "$1"; }
+# スライドのときだけ、見出しに「(スライド: 要確認)」を付ける
+section_check() {
+  if (( slides )); then
+    section "$1 (スライド: 要確認)"
+  else
+    section "$1"
+  fi
+}
 none() { echo "  なし"; }
 
 # 地の文を「。」で分け、「元の行番号:文」で印字する。コードブロックと、行頭が | の表の行は外す。
@@ -122,38 +138,40 @@ many_commas() {
 
 sents="$(sentences)"
 
-section "内部パス断片"
+section_check "内部パス断片"
 grep -nE '(^|[^A-Za-z0-9])(docs|src|scripts|exports)/' -- "$f" || none
-section "絶対パス"
+section_check "絶対パス"
 grep -nE '(/home/|/tmp/|/var/)' -- "$f" || none
-section "ローカル拡張子の素出し"
+section_check "ローカル拡張子の素出し"
 grep -nE '\.(md|ps1|drawio|kql)([[:space:]]|$|[、。)）」])' -- "$f" || none
 section "文脈依存度の高い英単語 (要文脈確認)"
 grep -nE '(レイヤー|パイプライン|フェーズ|ターゲット)' -- "$f" || none
 section "組版記号 § ¶ ‡ †"
 grep -nE '(§|¶|‡|†)' -- "$f" || none
-section "外部 AI 言及"
+section_check "外部 AI 言及"
 grep -nE '(Codex|ChatGPT|Gemini|Copilot)' -- "$f" || none
 section "指示語の出現行"
 grep -nE '(これ|それ|その|この|こうした)' -- "$f" || none
 section "括弧の中身"
 grep -noE '[（(][^（()）]{2,}[）)]' -- "$f" || none
-section "同じ括弧の中身が3回以上 (回数 中身)"
-# 括弧を外した中身で数える (全角と半角の括弧を同じものとして数えるため)。表の行も数える
-grep -oE '[（(][^（()）]{2,}[）)]' -- "$f" | sed -E 's/^(（|\()//; s/(）|\))$//' | sort | uniq -c | sort -rn | grep -E '^ *([3-9]|[1-9][0-9]+) ' || none
-section "3回以上の長い識別子"
-grep -oE '[A-Za-z][A-Za-z0-9_./-]{19,}' -- "$f" | sort | uniq -c | sort -rn | grep -E '^ *([3-9]|[1-9][0-9]+) ' || none
+if (( ! slides )); then
+  section "同じ括弧の中身が3回以上 (回数 中身)"
+  # 括弧を外した中身で数える (全角と半角の括弧を同じものとして数えるため)。表の行も数える
+  grep -oE '[（(][^（()）]{2,}[）)]' -- "$f" | sed -E 's/^(（|\()//; s/(）|\))$//' | sort | uniq -c | sort -rn | grep -E '^ *([3-9]|[1-9][0-9]+) ' || none
+  section "3回以上の長い識別子"
+  grep -oE '[A-Za-z][A-Za-z0-9_./-]{19,}' -- "$f" | sort | uniq -c | sort -rn | grep -E '^ *([3-9]|[1-9][0-9]+) ' || none
+fi
 section "60字超の文"
 grep -E '^[0-9]+:.{61,}' <<< "$sents" || none
 section "読点が2つ以上の文 (括弧の中の読点は数えない)"
 many_commas || none
 section "予告の文 (次のとおり / 次の〜がある / 以下に示す)"
 grep -E '((次|以下|下記)の((とおり|通り)(です|である|とする)?|[^、。]*が(ある|あります))[。:：]|(次|以下|下記)に示す。)$' <<< "$sents" || none
-section "同じ文末が3文以上続く箇所"
+section_check "同じ文末が3文以上続く箇所"
 same_form end || none
-section "「〜は、」で始まる文が3文以上続く箇所"
+section_check "「〜は、」で始まる文が3文以上続く箇所"
 same_form head || none
-section "物や事柄を主語にしがちな文末 (発生する / 決まる / 変わる)"
+section_check "物や事柄を主語にしがちな文末 (発生する / 決まる / 変わる)"
 grep -E '(発生(する|しない|します|しません)|決ま(る|らない|ります|りません)|変わ(る|らない|ります|りません))。$' <<< "$sents" || none
 section "矮小化表現 (するだけ / だけです / のみです)"
 grep -nE '(するだけ|だけです|のみです)' -- "$f" || none
@@ -163,5 +181,7 @@ section "数を予告する前置き (注意点が3つある / 3つの点が)"
 grep -nE '((注意点|ポイント)が[0-9一二三四五六七八九]つあ|[0-9一二三四五六七八九]つの点が)' -- "$f" || none
 section "未確認の印"
 grep -nE '(未確認|要確認|TBD|未定|要判断)' -- "$f" || none
-section "バイト数"
-wc -c < "$f"
+if (( ! slides )); then
+  section "バイト数"
+  wc -c < "$f"
+fi

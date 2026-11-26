@@ -84,6 +84,25 @@ else
 fi
 rm -f "$empty"
 
+# --slides: 1通の文面として数える項目を出さず、題材しだいの項目に「(スライド: 要確認)」を付ける。
+# 指定なしの出力は上の検査で見ている
+normal_out="$out"
+out=$(bash "$PRECHECK" --slides "$SAMPLE")
+sl_has() { if grep -qxF -- "[$2]" <<< "$out"; then pass=$((pass + 1)); echo "PASS $1"; else fail=$((fail + 1)); echo "FAIL $1 (節「$2」が出力にない)"; fi; }
+sl_not() { if grep -qF -- "[$2" <<< "$out"; then fail=$((fail + 1)); echo "FAIL $1 (節「$2」が出力にある)"; else pass=$((pass + 1)); echo "PASS $1"; fi; }
+sl_not "SL-1 スライドではバイト数を出さない" "バイト数"
+sl_not "SL-2 スライドでは同じ括弧の中身の回数を出さない" "同じ括弧の中身が3回以上"
+sl_not "SL-3 スライドでは長い識別子の回数を出さない" "3回以上の長い識別子"
+sl_has "SL-4 スライドでは外部 AI 言及を要確認として出す" "外部 AI 言及 (スライド: 要確認)"
+sl_has "SL-5 スライドでは内部パス断片を要確認として出す" "内部パス断片 (スライド: 要確認)"
+check "SL-6 スライドでも読点の検査は同じ" has "$COMMA" "5:読点3: 申請者は、利用日の3日前までに"
+out="$normal_out"
+if grep -qxF "[バイト数]" <<< "$out" && grep -qxF "[外部 AI 言及]" <<< "$out"; then
+  pass=$((pass + 1)); echo "PASS SL-7 指定なしの見出しは変わらない"
+else
+  fail=$((fail + 1)); echo "FAIL SL-7 指定なしの見出しは変わらない"
+fi
+
 # ---- session-recall.sh と code-origin.sh ----
 # 会話の記録の置き場を一時ディレクトリに作り、CLAUDE_CONFIG_DIR で指す。記録の中の @HOME@ は
 # 置き場のパスに、@NOW@ は今の時刻に置き換える
