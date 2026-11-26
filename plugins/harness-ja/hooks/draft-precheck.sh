@@ -30,6 +30,13 @@
 #   honorific        見出しでの敬称抜け
 #   externalAi       外部 AI ツール名の言及
 #   longIdentifiers  長い識別子のフル表記の繰り返し
+# 次の 2 項目は、既定が false。draftPrecheck.checks.<名前> を true にしたプロジェクトでだけ動く:
+#   colloquialTerms  話し言葉の語 (hooks/data/colloquial-terms.tsv。「足す」→「追加する」など、使う語を示す)。
+#                    範囲 all の語はすべての文面、範囲 doc の語は colloquial.docTargets[] に一致するファイルで見る。
+#                    「」『』の中、コードブロック、バッククォートの中、URL は見ない
+#   dates            表の外の日付 (2026-08-16 / 2026年8月 / 8月16日 / 8/16)。dates.targets[] か
+#                    dates.strictTargets[] に一致するファイルだけで見る (MCP ツールの本文では見ない)。
+#                    targets[] は、いつの値かを示す日付 (直後が 時点・現在・から・まで・以降・以前) を通す
 #
 # 検査範囲: Write は全文、Edit/MultiEdit は追加・置換後の文字列のみ。
 #
@@ -43,6 +50,11 @@
 #   draftPrecheck.toolRules[]       MCP ツールの規則 tool / fields / requiredFields
 #   draftPrecheck.checks            検査項目ごとの on / off
 #   draftPrecheck.bannedTerms[]     禁止語 (既定値は持たない)
+#   draftPrecheck.colloquial.docTargets[]  範囲 doc の語も見るファイルの case パターン (既定は空)
+#   draftPrecheck.colloquial.extraTerms[]  語の表に追加する語。{ "pattern": grep -P の正規表現, "use": 使う語,
+#                                          "scope": "all" (既定) か "doc" }
+#   draftPrecheck.dates.targets[]          日付を見るファイルの case パターン (いつの値かを示す日付は通す)
+#   draftPrecheck.dates.strictTargets[]    日付を見るファイルの case パターン (すべての日付を止める)
 #   draftPrecheck.honorific.name    敬称の検査対象名 (空なら検査しない)
 #   draftPrecheck.honorific.suffix  付いているべき敬称 (既定「様」)
 
@@ -271,6 +283,45 @@ if check_on longIdentifiers; then
   top_name=$(printf '%s' "$top_ident" | awk '{print $2}')
   if [[ -n "${top_count:-}" && ${top_count:-0} -ge 3 ]]; then
     hits="${hits}  - 長い識別子のフル表記の繰り返し: ${top_name} が ${top_count} 回 (初出のみフル表記し、以後は呼び名で書くか添付へ移す)"$'\n'
+  fi
+fi
+
+# 8) 話し言葉の語 (既定は無効)
+path_matches() { # path_matches <jq の配列のパス>: 編集対象のパスが case パターンのどれかに一致すれば 0
+  local pat
+  [[ "$tool_name" != mcp__* ]] || return 1
+  while IFS= read -r pat; do
+    [[ -z "$pat" ]] && continue
+    # shellcheck disable=SC2254
+    case "$target_file_path" in $pat) return 0 ;; esac
+  done < <(cfg_list "$1")
+  return 1
+}
+if cfg_flag '.draftPrecheck.checks.colloquialTerms' 'false'; then
+  source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/doc-text.sh"
+  scope=all
+  if path_matches '.draftPrecheck.colloquial.docTargets[]?'; then scope=doc; fi
+  HARNESS_EXTRA_TERMS=$(cfg_list '.draftPrecheck.colloquial.extraTerms[]?
+    | select(type == "object" and (.pattern | type) == "string" and (.pattern | length) > 0)
+    | [(.scope // "all"), .pattern, (.use // "書き言葉にする")] | join("\t")')
+  export HARNESS_EXTRA_TERMS
+  matched=$(printf '%s\n' "$content" | harness_colloquial_hits "$scope")
+  if [[ -n "$matched" ]]; then
+    hits="${hits}  - 話し言葉の語検出 (業務の文書で使う書き言葉にする。引用は「」に入れる):"$'\n'"${matched}"$'\n'
+  fi
+fi
+
+# 9) 表の外の日付 (既定は無効。dates.targets[] / dates.strictTargets[] に一致するファイルだけ)
+if cfg_flag '.draftPrecheck.checks.dates' 'false'; then
+  date_mode=""
+  if path_matches '.draftPrecheck.dates.strictTargets[]?'; then date_mode=strict
+  elif path_matches '.draftPrecheck.dates.targets[]?'; then date_mode=asof; fi
+  if [[ -n "$date_mode" ]]; then
+    source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/doc-text.sh"
+    matched=$(printf '%s\n' "$content" | harness_date_hits "$date_mode")
+    if [[ -n "$matched" ]]; then
+      hits="${hits}  - 日付検出 (日程と作業の記録は、資料の本文に入れない。要る日付は表に入れる):"$'\n'"${matched}"$'\n'
+    fi
   fi
 fi
 

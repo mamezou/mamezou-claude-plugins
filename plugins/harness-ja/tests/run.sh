@@ -1,6 +1,6 @@
 #!/bin/bash
 # harness-ja の hook 合成テスト。
-# 一時ディレクトリへ合成の会話履歴 JSONL / hook 入力 / 設定ファイルを作り、8 本の hook を
+# 一時ディレクトリへ合成の会話履歴 JSONL / hook 入力 / 設定ファイルを作り、9 本の hook を
 # 期待値つきで実行する。過去の記録で hook を流す skills/harness-review/replay.sh も、合成の
 # 記録で確かめる。末尾に PASS / FAIL 件数を出し、FAIL が 1 件でもあれば exit 1。
 #
@@ -20,7 +20,7 @@ if ! command -v jq >/dev/null 2>&1; then
   echo "jq が見つかりません。jq を入れてから再実行してください。" >&2
   exit 1
 fi
-for f in cloud-change-check.sh draft-precheck.sh harness-change-check.sh no-inline-powershell.sh \
+for f in cloud-change-check.sh draft-bash-write-check.sh draft-precheck.sh harness-change-check.sh no-inline-powershell.sh \
          require-reading.sh response-quality.sh send-gate.sh tool-result-check.sh; do
   if [[ ! -f "$H/$f" ]]; then
     echo "hook が見つかりません: $H/$f" >&2
@@ -1265,6 +1265,76 @@ rm -f "$REGEN_LOG"
 for _ in 1 2 3; do printf '2026-01-01T00:00:00+0000\t[session:s-notify] [input:u-h] 空約束: [以後注意します]\n' >> "$REGEN_LOG"; done
 check "RQ-77 完了通知で始まった応答は通知の uuid で数える -> block" 2 "$(rq_run "$REGEN_CFG" "$IN/rq-notify-regen.json")"
 check "RQ-78 RQ-77 の記録の集計キー" 1 "$(grep -c '\[input:u-n1\]' "$REGEN_LOG" 2>/dev/null || echo 0)"
+
+# ---------------------------------------------------------------------------
+# 話し言葉の語・日付・Bash での書き換え (0.8.0。既定は無効)
+# ---------------------------------------------------------------------------
+echo
+echo "== draft-precheck (話し言葉の語・日付) =="
+DPCOL="$PROJ/.claude/harness-dpcol.json"
+jq '.draftPrecheck.checks={"colloquialTerms":true,"dates":true,"bashWrites":true}
+    | .draftPrecheck.colloquial={"docTargets":["*/docs/drafts/design-*-draft.md","*/docs/drafts/strict-*-draft.md"],
+                                 "extraTerms":[{"pattern":"めっちゃ","use":"非常に"}]}
+    | .draftPrecheck.dates={"targets":["*/docs/drafts/design-*-draft.md"],"strictTargets":["*/docs/drafts/strict-*-draft.md"]}
+    | .draftPrecheck.bashWriteDirs=["docs/drafts/"]' "$CFG" > "$DPCOL"
+DESIGN="$PROJ/docs/drafts/design-network-draft.md"
+STRICT="$PROJ/docs/drafts/strict-network-draft.md"
+dc_in() { write_input "$TR/rr-noread.jsonl" "$PROJ" "$2" "$3" > "$IN/dc-$1.json"; }
+dc_in mix      "$DRAFT"  "枠は将来の追加を含めて足りる。先方に聞く。2026-08-16に追加した。"
+dc_in tariru   "$DRAFT"  "枠は将来の追加を含めて足りる。"
+dc_in tasu     "$DRAFT"  "サブネットを足しました。"
+dc_in fusoku   "$DRAFT"  "アドレスが不足するため、サブネットを追加しました。"
+dc_in quote    "$DRAFT"  "画面の「足りる」の表示は変更しません。"
+dc_in tomaru   "$DRAFT"  "サーバーが止まる場合があります。"
+dc_in tomaru-d "$DESIGN" "サーバーが止まる場合がある。"
+dc_in extra    "$DRAFT"  "めっちゃ速くなりました。"
+dc_in date     "$DESIGN" "2026-08-16に追加したRAGチャットボットを含む。"
+dc_in asof     "$DESIGN" "2026年7月時点の東京リージョンの単価を使用する。"
+dc_in asof-s   "$STRICT" "2026年7月時点の東京リージョンの単価を使用する。"
+dc_in date-nt  "$DRAFT"  "2026-08-16に追加しました。"
+dc_in date-tbl "$DESIGN" "| 2026-08-16 | RAGチャットボットを追加 |"
+mcp_input "$TR/rr-noread.jsonl" "$PROJ" "mcp__mail__create_draft" '{"subject":"ご連絡","body":"先方に聞きます。"}' > "$IN/dc-mcp.json"
+mcp_input "$TR/dp-bypass.jsonl" "$PROJ" "mcp__mail__create_draft" '{"subject":"ご連絡","body":"先方に聞きます。"}' > "$IN/dc-bypass.json"
+run "DC-1 設定で有効にしていない -> pass" 0 draft-precheck.sh "$CFG" "$IN/dc-mix.json"
+run "DC-2 「足りる」 -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-tariru.json" "十分である"
+run "DC-3 「足す」 -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-tasu.json" "追加する"
+run "DC-4 「不足」は当たらない -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-fusoku.json"
+run "DC-5 「」の中は見ない -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-quote.json"
+run "DC-6 範囲 doc の語は docTargets の外では見ない -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-tomaru.json"
+run "DC-7 範囲 doc の語を docTargets で -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-tomaru-d.json" "停止する"
+run "DC-8 extraTerms の語 -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-extra.json" "非常に"
+run "DC-9 MCP ツールの本文の「聞く」 -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-mcp.json" "確認する"
+run "DC-10 バイパスの文字列だけの行 -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-bypass.json"
+run "DD-1 dates.targets + 2026-08-16 -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-date.json" "日付検出"
+run "DD-2 dates.targets + 「時点」の日付 -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-asof.json"
+run "DD-3 dates.strictTargets + 「時点」の日付 -> block" 2 draft-precheck.sh "$DPCOL" "$IN/dc-asof-s.json" "日付検出"
+run "DD-4 dates の対象でないファイルの日付 -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-date-nt.json"
+run "DD-5 表の行の日付 -> pass" 0 draft-precheck.sh "$DPCOL" "$IN/dc-date-tbl.json"
+
+echo
+echo "== draft-bash-write-check =="
+db_in() { bash_input "${3:-$TR/rr-noread.jsonl}" "$PROJ" "$2" > "$IN/db-$1.json"; }
+db_in sed    "sed -i 's/a/b/' docs/drafts/report-draft.md"
+db_in redir  "echo 追記 >> docs/drafts/report-draft.md"
+db_in py     "python3 -c \"open('docs/drafts/report-draft.md','w').write('x')\""
+db_in cp     "cp /tmp/new.md docs/drafts/report-draft.md"
+db_in grep   "grep -n 追加 docs/drafts/*.md 2>/dev/null > /tmp/out.txt"
+db_in git    "git add docs/drafts/report-draft.md && git commit -m x"
+db_in other  "sed -i 's/a/b/' docs/logs/work.md"
+db_in text   "printf 'docs/drafts/ のファイルは sed -i で書き換えない' >> docs/logs/work.md"
+db_in bypass "sed -i 's/a/b/' docs/drafts/report-draft.md" "$TR/dp-bypass.jsonl"
+run "DB-1 設定で有効にしていない -> pass" 0 draft-bash-write-check.sh "$CFG" "$IN/db-sed.json"
+run "DB-2 sed -i -> block" 2 draft-bash-write-check.sh "$DPCOL" "$IN/db-sed.json" "書き換えの停止"
+run "DB-3 リダイレクト -> block" 2 draft-bash-write-check.sh "$DPCOL" "$IN/db-redir.json" "リダイレクト"
+run "DB-4 スクリプトでの書き込み -> block" 2 draft-bash-write-check.sh "$DPCOL" "$IN/db-py.json" "スクリプト"
+run "DB-5 cp での上書き -> block" 2 draft-bash-write-check.sh "$DPCOL" "$IN/db-cp.json" "cp"
+run "DB-6 読み取りと、ほかの場所へのリダイレクト -> pass" 0 draft-bash-write-check.sh "$DPCOL" "$IN/db-grep.json"
+run "DB-7 git の操作 -> pass" 0 draft-bash-write-check.sh "$DPCOL" "$IN/db-git.json"
+run "DB-8 対象でないフォルダー -> pass" 0 draft-bash-write-check.sh "$DPCOL" "$IN/db-other.json"
+run "DB-9 本文にパスと sed -i の文字があるだけ -> pass" 0 draft-bash-write-check.sh "$DPCOL" "$IN/db-text.json"
+run "DB-10 バイパスの文字列だけの行 -> pass" 0 draft-bash-write-check.sh "$DPCOL" "$IN/db-bypass.json"
+run "DB-11 設定ファイルなし -> pass" 0 draft-bash-write-check.sh "$NOCFG" "$IN/db-sed.json"
+run "DB-12 設定ファイルが壊れている -> block" 2 draft-bash-write-check.sh "$BROKEN" "$IN/db-sed.json" "設定ファイルが読めません"
 
 if bash "$SCRIPT_DIR/project-hooks-relay.test.sh" >/dev/null 2>&1; then
   check "RELAY プロジェクトの hook の中継 (tests/project-hooks-relay.test.sh)" 0 0

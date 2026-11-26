@@ -21,11 +21,11 @@
 
 | 種別 | 内容 |
 |---|---|
-| hooks(9本) | クラウド変更コマンドの停止、設定・規則ファイルの保護、応答の文体検査、送付文面の事前検査、必読資料の先読みの強制、ツールの結果の検査、人に届く送信のツールの停止、インライン PowerShell の禁止、クラウドのセッションでのプロジェクトの hook の中継(任意) |
+| hooks(10本) | クラウド変更コマンドの停止、設定・規則ファイルの保護、応答の文体検査、送付文面の事前検査、必読資料の先読みの強制、ツールの結果の検査、人に届く送信のツールの停止、インライン PowerShell の禁止、クラウドのセッションでのプロジェクトの hook の中継(任意) |
 | Output Style | `Concise JA`。簡潔な日本語応答と、返信文体の規則 |
 | rules テンプレート(3本) | 着手と承認、文章の書き方、サブエージェントへの委任 |
 | Skills(3本) | `/harness-ja:harness-init`(初期設定)、`/harness-ja:harness-review`(検知ログのレビュー)、`/harness-ja:project-rules`(働き方の決まりを claude.ai のプロジェクトへ入れる) |
-| tests | hook 9本の合成入力テスト。`bash tests/run.sh` |
+| tests | hook 10本の合成入力テスト。`bash tests/run.sh` |
 
 ## 用語
 
@@ -78,6 +78,7 @@
 | `harness-change-check.sh` | PreToolUse(Bash / Write / Edit / MultiEdit) | `.claude/` 配下(hooks / rules / skills / settings 等)の書き換えで、`[harness-go]` が無い。例外として、プラグイン配下からの `cp`、`mkdir`、`.claude/harness.json` の新規作成は初期設定のため通す | なし(承認の文字列がバイパスを兼ねる) |
 | `response-quality.sh` | Stop | 応答本文に文体違反(既定は4種類。下の表を参照) | `[hook-bypass: response-quality]` |
 | `draft-precheck.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 送付文面に内部パス・ローカル拡張子・組版記号・外部 AI 言及・禁止語・長い識別子の繰り返し。MCP のツールは `draftPrecheck.toolRules[]` に書いたものだけ、`subject` と `body` などの文字列を検査する | `[hook-bypass: draft-precheck]` |
+| `draft-bash-write-check.sh` | PreToolUse(Bash) | 送付文面・原稿のフォルダー(`draftPrecheck.bashWriteDirs[]`)のファイルを、`sed -i`、リダイレクト、スクリプト、`cp` / `mv` で書き換える(既定は無効。`draftPrecheck.checks.bashWrites` を `true` にしたプロジェクトでだけ動く)。読み取りと git の操作は止めない | `[hook-bypass: draft-precheck]` |
 | `require-reading.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 必読資料を直近で Read せずに対象ファイルを編集(サブエージェントの中では、Read をサブエージェント自身の記録で探す)。対応する読み取りのツールを呼ばずに、外部へ書き込むツールを呼び出し | `[hook-bypass: resource-reading]` |
 | `tool-result-check.sh` | PostToolUse(MCP のツール) | 止めない。ツールの結果に成立の印が無いとき、作成・更新が成立していないことを Claude へ知らせる | なし |
 | `send-gate.sh` | PreToolUse(MCP のツール) | チャットの送信・予約送信、メールの送信・返信・転送のツールを呼び出した。`sendGate.mode` が `"allow"` のプロジェクトでは止めない。設定に `sendGate` を書いていないプロジェクトでは止める | なし(送ってよいプロジェクトは、設定の `sendGate.mode` を `"allow"` にする) |
@@ -90,9 +91,32 @@
 記録が見つからないときは、本体の記録で探します。承認の文字列、バイパスの文字列、外部へ書き込むツールの
 前の読み取り(`requireReading.toolRules[]`)は、今までどおり本体の記録で探します。
 
-設定ファイルが見つからない場合、9本とも何もしません。設定ファイルはあるが JSON として
-読めない場合、PreToolUse の5本は「設定ファイルが読めません: <パス>」を出してツールを止めます。
+設定ファイルが見つからない場合、10本とも何もしません。設定ファイルはあるが JSON として
+読めない場合、PreToolUse の6本は「設定ファイルが読めません: <パス>」を出してツールを止めます。
 Stop の2本と PostToolUse の1本は同じ文を出しますが、応答とツールは止めません。
+
+## 話し言葉の語・日付・Bash での書き換えの検査(0.8.0)
+
+送付文面の事前検査に、既定は無効の検査を3つ追加しました。`draftPrecheck.checks` で `true` に
+したプロジェクトでだけ動き、書いていないプロジェクトの動作は 0.7.0 と同じです。
+
+| 検査 | 止めるもの | 表示の例 |
+|---|---|---|
+| `colloquialTerms` | 話し言葉の語。語の表は `hooks/data/colloquial-terms.tsv`(78行。範囲 all の30行はすべての文面、範囲 doc の48行は `colloquial.docTargets[]` のファイル) | `1行: 足り → 十分である・収容できる(否定は不足する)` |
+| `dates` | `dates.targets[]` / `dates.strictTargets[]` のファイルの、表の外の日付 | `1:2026-08-16に追加したRAGチャットボットを含む。` |
+| `bashWrites` | `bashWriteDirs[]` のフォルダーのファイルを Bash で書き換える操作 | `Bash のコマンド (sed・perl の -i) で書き換えようとしています` |
+
+「」と『』の中、コードブロック、バッククォートの中、URL の語は検査しません。語の表にない語は
+止まりません。プロジェクトで追加する語は `colloquial.extraTerms[]` に書きます。
+
+```json
+"draftPrecheck": {
+  "checks": { "colloquialTerms": true, "dates": true, "bashWrites": true },
+  "colloquial": { "docTargets": ["*/docs/notion/*.md"], "extraTerms": [] },
+  "dates": { "targets": ["*/docs/notion/*.md"], "strictTargets": [] },
+  "bashWriteDirs": ["docs/notion/"]
+}
+```
 
 ## 人に届く送信のツールの停止
 
@@ -218,7 +242,10 @@ Claude Code は hook の設定をセッションの起動時に読みます。�
 | `harnessChange.token` / `excludePatterns[]` | 設定・規則ファイルの保護で使う承認の文字列(既定 `[harness-go]`)と除外パス(既定 `.claude/projects/`) |
 | `draftPrecheck.targets[]` | 送付文面の置き場(bash の case パターン)。`excludePatterns[]`、`bannedTerms[]`、`honorific` |
 | `draftPrecheck.toolRules[]` | 本文を検査する MCP のツール(`tool`、`jq` の `test()` の正規表現)と、検査する引数(`fields`、既定は `subject` と `body`)。`requiredFields` に挙げた引数がない呼び出しは止める。既定は空 |
-| `draftPrecheck.checks` | 検査項目ごとの on / off。`bannedTerms` / `internalPaths` / `extensions` / `typography` / `externalAi` / `honorific` / `longIdentifiers`(既定すべて true) |
+| `draftPrecheck.checks` | 検査項目ごとの on / off。`bannedTerms` / `internalPaths` / `extensions` / `typography` / `externalAi` / `honorific` / `longIdentifiers`(既定すべて true)。`colloquialTerms` / `dates` / `bashWrites` は既定 false で、`true` にしたプロジェクトでだけ動く |
+| `draftPrecheck.colloquial` | 話し言葉の語の検査(`checks.colloquialTerms`)の設定。`docTargets[]` は設計書の語(範囲 doc)も検査するファイルの case パターン、`extraTerms[]` は語の表に追加する語(`pattern`、`use`、`scope`) |
+| `draftPrecheck.dates` | 日付の検査(`checks.dates`)の対象のファイルの case パターン。`targets[]` は「2026年7月時点」のように、いつの値かを示す日付を通し、`strictTargets[]` はすべての日付を止める。表の行の日付は止めない |
+| `draftPrecheck.bashWriteDirs[]` | Bash での書き換えを止めるフォルダー(パスの一部の文字列)。`checks.bashWrites` が `true` のときに使う |
 | `requireReading.rules[]` | 編集対象(`target`)と必読資料(`requiredReadPattern`)の対応表。`mode: "logs"` で作業ログの特例 |
 | `requireReading.toolRules[]` | 外部へ書き込むツール(`tool`)と、先に呼んでおく読み取りのツール(`requiredTool`)の対応表。`sameInput` に、値が等しいことを求める引数の組を書く。既定は空 |
 | `toolResultCheck.rules[]` | ツール(`tool`)と、結果にあるはずの成立の印(`successPattern`)の対応表。既定は空 |
@@ -383,7 +410,7 @@ Skill は集計を読み、`harness.json`・hook・規則の変更前後を【�
 bash tests/run.sh
 ```
 
-hook 9本に合成の会話履歴 JSONL と入力 JSON を与え、差し戻し(終了コード2)と通過
+hook 10本に合成の会話履歴 JSONL と入力 JSON を与え、差し戻し(終了コード2)と通過
 (終了コード0)、承認の文字列、バイパスの文字列、設定なし、設定の壊れ、差し戻し回数の
 上限、検知ログの UTF-8 を確認します。hook や辞書を変えたら実行してください。
 

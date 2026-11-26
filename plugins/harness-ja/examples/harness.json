@@ -58,9 +58,21 @@
       "typography": true,
       "externalAi": true,
       "honorific": true,
-      "longIdentifiers": true
+      "longIdentifiers": true,
+      "colloquialTerms": false,
+      "dates": false,
+      "bashWrites": false
     },
     "bannedTerms": [],
+    "colloquial": {
+      "docTargets": ["*/docs/notion/*.md"],
+      "extraTerms": []
+    },
+    "dates": {
+      "targets": ["*/docs/notion/*.md"],
+      "strictTargets": []
+    },
+    "bashWriteDirs": ["docs/notion/", "docs/drafts/"],
     "honorific": {
       "name": "",
       "suffix": "様"
