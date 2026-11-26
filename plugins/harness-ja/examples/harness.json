@@ -104,6 +104,11 @@
       "hint": "ファイルを置けない環境では、スクリプトの中身を貼り付けて実行する。全体を & { } で包み、param と -File を使わず、ブロックの中に空行を入れない"
     }
   },
+  "sendGate": {
+    "mode": "block",
+    "extraTools": [],
+    "draftHint": "文面は下書きを作るツールで下書きに入れ、その場所を伝えるところまでにしてください。"
+  },
   "projectHooksRelay": {
     "enabled": false
   }

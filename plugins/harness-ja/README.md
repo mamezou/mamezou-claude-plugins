@@ -21,11 +21,11 @@
 
 | 種別 | 内容 |
 |---|---|
-| hooks(8本) | クラウド変更コマンドの停止、設定・規則ファイルの保護、応答の文体検査、送付文面の事前検査、必読資料の先読みの強制、ツールの結果の検査、インライン PowerShell の禁止、クラウドのセッションでのプロジェクトの hook の中継(任意) |
+| hooks(9本) | クラウド変更コマンドの停止、設定・規則ファイルの保護、応答の文体検査、送付文面の事前検査、必読資料の先読みの強制、ツールの結果の検査、人に届く送信のツールの停止、インライン PowerShell の禁止、クラウドのセッションでのプロジェクトの hook の中継(任意) |
 | Output Style | `Concise JA`。簡潔な日本語応答と、返信文体の規則 |
 | rules テンプレート(3本) | 着手と承認、文章の書き方、サブエージェントへの委任 |
 | Skills(2本) | `/harness-ja:harness-init`(初期設定)、`/harness-ja:harness-review`(検知ログのレビュー) |
-| tests | hook 8本の合成入力テスト。`bash tests/run.sh` |
+| tests | hook 9本の合成入力テスト。`bash tests/run.sh` |
 
 ## 用語
 
@@ -80,6 +80,7 @@
 | `draft-precheck.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 送付文面に内部パス・ローカル拡張子・組版記号・外部 AI 言及・禁止語・長い識別子の繰り返し。MCP のツールは `draftPrecheck.toolRules[]` に書いたものだけ、`subject` と `body` などの文字列を検査する | `[hook-bypass: draft-precheck]` |
 | `require-reading.sh` | PreToolUse(Write / Edit / MultiEdit / MCP のツール) | 必読資料を直近で Read せずに対象ファイルを編集(サブエージェントの中では、Read をサブエージェント自身の記録で探す)。対応する読み取りのツールを呼ばずに、外部へ書き込むツールを呼び出し | `[hook-bypass: resource-reading]` |
 | `tool-result-check.sh` | PostToolUse(MCP のツール) | 止めない。ツールの結果に成立の印が無いとき、作成・更新が成立していないことを Claude へ知らせる | なし |
+| `send-gate.sh` | PreToolUse(MCP のツール) | チャットの送信・予約送信、メールの送信・返信・転送のツールを呼び出した。`sendGate.mode` が `"allow"` のプロジェクトでは止めない。設定に `sendGate` を書いていないプロジェクトでは止める | なし(送ってよいプロジェクトは、設定の `sendGate.mode` を `"allow"` にする) |
 | `no-inline-powershell.sh` | Stop | 5行以上の PowerShell をファイル化せずにコードブロックで提示(既定は無効)。`pasteRun` を有効にすると、貼り付けて実行する形に合わないスクリプトと、`-File` での実行を書いた文書・応答も止める | なし |
 | `project-hooks-relay.sh` | PreToolUse・PostToolUse・UserPromptSubmit・Stop(すべてのツール) | 止める条件は持たない。クラウドのセッション(`CLAUDE_CODE_REMOTE` あり)に限り、cwd とその1つ下の階層にあるプロジェクトの `.claude/settings.json` の hook を、呼ばれた時点で流す。中継した hook の終了コード2はそのまま返す。`projectHooksRelay.enabled` が `true` のときだけ動く(既定は無効) | なし |
 
@@ -89,9 +90,35 @@
 記録が見つからないときは、本体の記録で探します。承認の文字列、バイパスの文字列、外部へ書き込むツールの
 前の読み取り(`requireReading.toolRules[]`)は、今までどおり本体の記録で探します。
 
-設定ファイルが見つからない場合、8本とも何もしません。設定ファイルはあるが JSON として
-読めない場合、PreToolUse の4本は「設定ファイルが読めません: <パス>」を出してツールを止めます。
+設定ファイルが見つからない場合、9本とも何もしません。設定ファイルはあるが JSON として
+読めない場合、PreToolUse の5本は「設定ファイルが読めません: <パス>」を出してツールを止めます。
 Stop の2本と PostToolUse の1本は同じ文を出しますが、応答とツールは止めません。
+
+## 人に届く送信のツールの停止
+
+`send-gate.sh` は、チャットとメールを人に届けるツールを、プロジェクトの設定に従って止めます。
+送信してよいかはプロジェクトごとに違うため、`sendGate.mode` で選びます。
+
+| `sendGate.mode` | 動き |
+|---|---|
+| `"block"` | 送信のツールを止める。文面は下書きまでにし、利用者本人が送る |
+| `"allow"` | 送信のツールを通す |
+| 書いていない、ほかの値 | `"block"` と同じ。設定の書き忘れで送信しないようにするため |
+
+既定で止めるツールは、名前が次の正規表現に一致する MCP のツールです。下書きを作るツール
+(`slack_send_message_draft`、`create_draft` など)は止めません。
+
+- `__slack_send_message$`、`__slack_schedule_message$`
+- `Gmail__(send_message|reply|forward)$`
+
+ほかのサービスの送信のツールは、`sendGate.extraTools[]` に正規表現で足します。ほかの hook は
+特定のサービスの名前を持ちませんが、この hook は、設定の書き忘れでも止めるために既定の名前を
+持ちます。
+
+`.claude/harness.json` が無いプロジェクトでは、ほかの hook と同じく何もしません。止めたい
+プロジェクトには、設定ファイルを置いてください。0.5.1 までの設定ファイル(`sendGate` が無い)
+を使っているプロジェクトは、0.6.0 から送信のツールが止まります。送ってよいプロジェクトは
+`"sendGate": { "mode": "allow" }` を足してください。
 
 ## 応答の文体検査
 
@@ -195,6 +222,9 @@ Claude Code は hook の設定をセッションの起動時に読みます。�
 | `requireReading.rules[]` | 編集対象(`target`)と必読資料(`requiredReadPattern`)の対応表。`mode: "logs"` で作業ログの特例 |
 | `requireReading.toolRules[]` | 外部へ書き込むツール(`tool`)と、先に呼んでおく読み取りのツール(`requiredTool`)の対応表。`sameInput` に、値が等しいことを求める引数の組を書く。既定は空 |
 | `toolResultCheck.rules[]` | ツール(`tool`)と、結果にあるはずの成立の印(`successPattern`)の対応表。既定は空 |
+| `sendGate.mode` | `"block"`(既定)か `"allow"`。`"block"` は人に届く送信のツールを止め、`"allow"` は通す。書いていないときと、ほかの値のときは `"block"` として扱う |
+| `sendGate.extraTools[]` | 既定の送信のツールに足す、ツール名の正規表現。既定は空 |
+| `sendGate.draftHint` | 止めたときに示す、代わりの手段の文 |
 | `noInlinePowershell.enabled` | 既定は `false`。使う場合だけ `true` にする |
 | `noInlinePowershell.cwdMatch` | 指定すると、cwd がそのディレクトリ名を含むときだけインライン提示を検査する(案件を限る用途) |
 | `noInlinePowershell.pasteRun` | 貼り付けて実行する形の検査。`enabled`(既定 `false`)、`scriptGlobs` と `docGlobs`(リポジトリ直下からの bash のパターン)、`hint`。cwdMatch によらず、依頼者の最後の入力より後に変えたファイルと、応答の本文を見る。スクリプトは、全体が `& { }` で包まれ、`param(`・`-ExecutionPolicy … -File`・ブロックの中の空行がないこと。文書と応答は `-ExecutionPolicy … -File` がないこと。差し戻し後の再生成ではファイルを見ない |
@@ -341,7 +371,7 @@ Skill は集計を読み、`harness.json`・hook・規則の変更前後を【�
 bash tests/run.sh
 ```
 
-hook 8本に合成の会話履歴 JSONL と入力 JSON を与え、差し戻し(終了コード2)と通過
+hook 9本に合成の会話履歴 JSONL と入力 JSON を与え、差し戻し(終了コード2)と通過
 (終了コード0)、承認の文字列、バイパスの文字列、設定なし、設定の壊れ、差し戻し回数の
 上限、検知ログの UTF-8 を確認します。hook や辞書を変えたら実行してください。
 

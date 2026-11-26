@@ -1,6 +1,6 @@
 #!/bin/bash
 # harness-ja の hook 合成テスト。
-# 一時ディレクトリへ合成の会話履歴 JSONL / hook 入力 / 設定ファイルを作り、7 本の hook を
+# 一時ディレクトリへ合成の会話履歴 JSONL / hook 入力 / 設定ファイルを作り、8 本の hook を
 # 期待値つきで実行する。過去の記録で hook を流す skills/harness-review/replay.sh も、合成の
 # 記録で確かめる。末尾に PASS / FAIL 件数を出し、FAIL が 1 件でもあれば exit 1。
 #
@@ -21,7 +21,7 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 1
 fi
 for f in cloud-change-check.sh draft-precheck.sh harness-change-check.sh no-inline-powershell.sh \
-         require-reading.sh response-quality.sh tool-result-check.sh; do
+         require-reading.sh response-quality.sh send-gate.sh tool-result-check.sh; do
   if [[ ! -f "$H/$f" ]]; then
     echo "hook が見つかりません: $H/$f" >&2
     exit 1
@@ -938,6 +938,53 @@ run "SA-5 agent_id が agent- で始まる。サブエージェントが読ん�
 run "SA-6 サブエージェントが手順書を読んだ + 本体に承認 -> pass" 0 cloud-change-check.sh "$CFG" "$IN/sa-cg-sub.json"
 run "SA-7 本体だけが手順書を読んだ + 本体に承認 -> block" 2 cloud-change-check.sh "$CFG" "$IN/sa-cg-main.json" "直近で手順書"
 run "SA-8 サブエージェントが手順書を読んだ + 承認なし -> block" 2 cloud-change-check.sh "$CFG" "$IN/sa-cg-nogo.json" "[change-go: project-a]"
+
+echo
+echo "== send-gate =="
+SG_ALLOW="$W/sg-allow.json";   jq '.sendGate={mode:"allow"}' "$CFG" > "$SG_ALLOW"
+SG_BLOCK="$W/sg-block.json";   jq '.sendGate={mode:"block"}' "$CFG" > "$SG_BLOCK"
+SG_TYPO="$W/sg-typo.json";     jq '.sendGate={mode:"allow "}' "$CFG" > "$SG_TYPO"
+SG_OFF="$W/sg-off.json";       jq '.sendGate={enabled:false}' "$CFG" > "$SG_OFF"
+SG_EXTRA="$W/sg-extra.json";   jq '.sendGate={extraTools:["__teams_post_message$","(bad"]}' "$CFG" > "$SG_EXTRA"
+SG_AEXTRA="$W/sg-aextra.json"; jq '.sendGate={mode:"allow",extraTools:["__teams_post_message$"]}' "$CFG" > "$SG_AEXTRA"
+SG_HINT="$W/sg-hint.json";     jq '.sendGate={draftHint:"下書きは chat_draft で作る"}' "$CFG" > "$SG_HINT"
+jq 'del(.sendGate)' "$CFG" > "$W/sg-none.json"
+sg_in() { mcp_input "$TR/none.jsonl" "$PROJ" "$1" '{"message":"ok"}' > "$IN/sg-$2.json"; }
+sg_in mcp__Slack__slack_send_message       slack
+sg_in mcp__Slack__slack_schedule_message   sched
+sg_in mcp__Gmail__send_message             gsend
+sg_in mcp__Gmail__reply                    greply
+sg_in mcp__Gmail__forward                  gfwd
+sg_in mcp__Slack__slack_send_message_draft sdraft
+sg_in mcp__Gmail__create_draft             gdraft
+sg_in mcp__Gmail__reply_all_preview        gother
+sg_in mcp__Slack__slack_read_thread        read
+sg_in mcp__teams__teams_post_message       teams
+jq -cn --arg cwd "$PROJ" '{tool_name:"Bash",tool_input:{command:"echo slack_send_message"},cwd:$cwd}' > "$IN/sg-bash.json"
+# 設定ファイルなしの場合は、cwd から上にも .claude/harness.json が無いフォルダーで呼ぶ
+mcp_input "$TR/none.jsonl" "$NOCONF" mcp__Slack__slack_send_message '{"message":"ok"}' > "$IN/sg-noconf.json"
+run "SG-1 設定に sendGate なし + チャットの送信 -> block" 2 send-gate.sh "$W/sg-none.json" "$IN/sg-slack.json" "[送信の停止]"
+run "SG-2 block + 予約送信 -> block" 2 send-gate.sh "$SG_BLOCK" "$IN/sg-sched.json" "[送信の停止]"
+run "SG-3 block + メールの送信 -> block" 2 send-gate.sh "$SG_BLOCK" "$IN/sg-gsend.json" "送信は依頼者本人"
+run "SG-4 block + メールの返信 -> block" 2 send-gate.sh "$SG_BLOCK" "$IN/sg-greply.json"
+run "SG-5 block + メールの転送 -> block" 2 send-gate.sh "$SG_BLOCK" "$IN/sg-gfwd.json"
+run "SG-6 block + チャットの下書き -> pass" 0 send-gate.sh "$SG_BLOCK" "$IN/sg-sdraft.json"
+run "SG-7 block + メールの下書き -> pass" 0 send-gate.sh "$SG_BLOCK" "$IN/sg-gdraft.json"
+run "SG-8 block + 名前が reply で始まる別のツール -> pass" 0 send-gate.sh "$SG_BLOCK" "$IN/sg-gother.json"
+run "SG-9 block + 読み取りのツール -> pass" 0 send-gate.sh "$SG_BLOCK" "$IN/sg-read.json"
+run "SG-10 allow + チャットの送信 -> pass" 0 send-gate.sh "$SG_ALLOW" "$IN/sg-slack.json"
+run "SG-11 allow + メールの送信 -> pass" 0 send-gate.sh "$SG_ALLOW" "$IN/sg-gsend.json"
+run "SG-12 mode の書き間違い -> block" 2 send-gate.sh "$SG_TYPO" "$IN/sg-slack.json" '"block" として扱いました'
+run "SG-13 enabled:false -> pass" 0 send-gate.sh "$SG_OFF" "$IN/sg-slack.json"
+run "SG-14 extraTools に足したツール -> block" 2 send-gate.sh "$SG_EXTRA" "$IN/sg-teams.json" "[送信の停止]"
+run "SG-15 extraTools に無いツール -> pass" 0 send-gate.sh "$SG_BLOCK" "$IN/sg-teams.json"
+run "SG-16 extraTools に読めない正規表現があっても既定は止める -> block" 2 send-gate.sh "$SG_EXTRA" "$IN/sg-slack.json"
+run "SG-17 allow + extraTools のツール -> pass" 0 send-gate.sh "$SG_AEXTRA" "$IN/sg-teams.json"
+run "SG-18 draftHint の文を示す -> block" 2 send-gate.sh "$SG_HINT" "$IN/sg-slack.json" "下書きは chat_draft で作る"
+run "SG-19 設定ファイルなし -> pass" 0 send-gate.sh "$NOCFG" "$IN/sg-noconf.json"
+run "SG-20 設定ファイルが壊れている -> block" 2 send-gate.sh "$BROKEN" "$IN/sg-slack.json" "設定ファイルが読めません"
+run "SG-21 MCP 以外のツール -> pass" 0 send-gate.sh "$SG_BLOCK" "$IN/sg-bash.json"
+run "SG-22 サンプル設定 (examples) + チャットの送信 -> block" 2 send-gate.sh "$EX" "$IN/sg-slack.json"
 
 echo
 echo "== tool-result-check =="
